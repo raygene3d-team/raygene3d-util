@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 
 #pragma once
-#include "../blast3d-core/base.h"
+#include "../raygene3d-core/base.h"
 
 #define GLM_FORCE_LEFT_HANDED
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
