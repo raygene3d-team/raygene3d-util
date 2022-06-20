@@ -117,6 +117,14 @@ namespace RayGene3D
   };
 
 
+  struct Texture
+  {
+    std::vector<glm::u8vec4> texels;
+    uint32_t extent_x{ 0 };
+    uint32_t extent_y{ 0 };
+  };
+
+
   class Raw
   {
   protected:
