@@ -654,36 +654,32 @@ namespace RayGene3D
       const auto& gltf_view = gltf_model.bufferViews[accessor.bufferView];
       const auto length = gltf_view.byteLength;
       const auto offset = gltf_view.byteOffset;
-      const auto stride = gltf_view.byteStride;
-
-      auto& image = gltf_model.images[0];
-      //image.pixel_type
 
       const auto& gltf_buffer = gltf_model.buffers[gltf_view.buffer];
       const auto data = &gltf_buffer.data[gltf_view.byteOffset];
 
-      return std::pair{ data, uint32_t(stride) };
+      return std::pair{ data, uint32_t(length) };
     };
 
 
     const auto create_vertex_fn = [&gltf_model](uint32_t index, float scale,
-      std::pair<const uint8_t*, uint32_t> position_data,
-      std::pair<const uint8_t*, uint32_t> normal_data,
-      std::pair<const uint8_t*, uint32_t> texcoord_data)
+      std::pair<const uint8_t*, uint32_t> pos_data, uint32_t pos_stride,
+      std::pair<const uint8_t*, uint32_t> nrm_data, uint32_t nrm_stride,
+      std::pair<const uint8_t*, uint32_t> tc0_data, uint32_t tc0_stride)
     {
       Vertex vertex;
 
-      const auto position = reinterpret_cast<const float*>(position_data.first + position_data.second * index);
-      vertex.pos = glm::fvec3{ position[0], position[1], position[2] };
+      const auto pos = reinterpret_cast<const float*>(pos_data.first + pos_stride * index);
+      vertex.pos = glm::fvec3{ pos[0], pos[1], pos[2] };
       vertex.pos = vertex.pos * scale;
 
-      const auto normal = reinterpret_cast<const float*>(normal_data.first + normal_data.second * index);
-      vertex.nrm = glm::fvec3{ normal[0], normal[1], normal[2] };
+      const auto nrm = reinterpret_cast<const float*>(nrm_data.first + nrm_stride * index);
+      vertex.nrm = glm::fvec3{ nrm[0], nrm[1], nrm[2] };
       vertex.nrm = glm::normalize(vertex.nrm);
 
-      const auto texcoord = reinterpret_cast<const float*>(texcoord_data.first + texcoord_data.second * index);
-      vertex.u = texcoord[0];
-      vertex.v = texcoord[1];
+      const auto tc0 = reinterpret_cast<const float*>(tc0_data.first + tc0_stride * index);
+      vertex.u = tc0[0];
+      vertex.v = tc0[1];
 
       return vertex;
     };
@@ -718,15 +714,18 @@ namespace RayGene3D
 
         const auto& gltf_positions = gltf_model.accessors[gltf_primitive.attributes.at("POSITION")];
         BLAST_ASSERT(gltf_positions.type == TINYGLTF_TYPE_VEC3 && gltf_positions.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT);
-        const auto position_data = access_buffer_fn(gltf_positions);
+        const auto pos_data = access_buffer_fn(gltf_positions);
+        const auto pos_stride = 12;
 
         const auto& gltf_normals = gltf_model.accessors[gltf_primitive.attributes.at("NORMAL")];
         BLAST_ASSERT(gltf_normals.type == TINYGLTF_TYPE_VEC3 && gltf_normals.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT);
-        const auto normal_data = access_buffer_fn(gltf_normals);
+        const auto nrm_data = access_buffer_fn(gltf_normals);
+        const auto nrm_stride = 12;
 
         const auto& gltf_texcoords = gltf_model.accessors[gltf_primitive.attributes.at("TEXCOORD_0")];
         BLAST_ASSERT(gltf_texcoords.type == TINYGLTF_TYPE_VEC2 && gltf_texcoords.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT);
-        const auto texcoord_data = access_buffer_fn(gltf_texcoords);
+        const auto tc0_data = access_buffer_fn(gltf_texcoords);
+        const auto tc0_stride = 8;
 
         
 
@@ -776,9 +775,12 @@ namespace RayGene3D
 
           for (uint32_t k = 0; k < gltf_indices.count / 3; ++k)
           {
-            const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 0], position_scale, position_data, normal_data, texcoord_data);
-            const auto vtx1 = create_vertex_fn(indices_data[k * 3 + 1], position_scale, position_data, normal_data, texcoord_data);
-            const auto vtx2 = create_vertex_fn(indices_data[k * 3 + 2], position_scale, position_data, normal_data, texcoord_data);
+            const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 0], position_scale, 
+              pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
+            const auto vtx1 = create_vertex_fn(indices_data[k * 3 + 1], position_scale,
+              pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
+            const auto vtx2 = create_vertex_fn(indices_data[k * 3 + 2], position_scale,
+              pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
 
             const auto dp_10 = vtx1.pos - vtx0.pos;
             const auto dp_20 = vtx2.pos - vtx0.pos;
@@ -820,9 +822,12 @@ namespace RayGene3D
           
           for (uint32_t k = 0; k < gltf_indices.count / 3; ++k)
           {
-            const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 0], position_scale, position_data, normal_data, texcoord_data);
-            const auto vtx1 = create_vertex_fn(indices_data[k * 3 + 1], position_scale, position_data, normal_data, texcoord_data);
-            const auto vtx2 = create_vertex_fn(indices_data[k * 3 + 2], position_scale, position_data, normal_data, texcoord_data);
+            const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 0], position_scale,
+              pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
+            const auto vtx1 = create_vertex_fn(indices_data[k * 3 + 1], position_scale,
+              pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
+            const auto vtx2 = create_vertex_fn(indices_data[k * 3 + 2], position_scale,
+              pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
 
             const auto dp_10 = vtx1.pos - vtx0.pos;
             const auto dp_20 = vtx2.pos - vtx0.pos;
@@ -865,16 +870,18 @@ namespace RayGene3D
 
           for (uint32_t k = 0; k < gltf_indices.count / 3; ++k)
           {
-            const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 0], position_scale, position_data, normal_data, texcoord_data);
-            const auto vtx1 = create_vertex_fn(indices_data[k * 3 + 1], position_scale, position_data, normal_data, texcoord_data);
-            const auto vtx2 = create_vertex_fn(indices_data[k * 3 + 2], position_scale, position_data, normal_data, texcoord_data);
+            const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 0], position_scale,
+              pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
+            const auto vtx1 = create_vertex_fn(indices_data[k * 3 + 1], position_scale,
+              pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
+            const auto vtx2 = create_vertex_fn(indices_data[k * 3 + 2], position_scale,
+              pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
 
             const auto idx0 = remap_vertex_fn(vertices, vtx0);
             const auto idx1 = remap_vertex_fn(vertices, vtx1);
             const auto idx2 = remap_vertex_fn(vertices, vtx2);
 
             triangles.push_back({ glm::uvec3(idx0, idx1, idx2) });
-
           }
         }
 
@@ -1613,7 +1620,7 @@ namespace RayGene3D
     ////gltf_ctx.SetImageLoader()
     std::string err;
     std::string warn;
-    const auto ret = gltf_ctx.LoadASCIIFromFile(&model, &err, &warn, (path + name).c_str());
+    BLAST_ASSERT(gltf_ctx.LoadASCIIFromFile(&model, &err, &warn, (path + name).c_str()));
 
     std::vector<Vertex> scene_vertices;
     std::vector<Triangle> scene_triangles;
