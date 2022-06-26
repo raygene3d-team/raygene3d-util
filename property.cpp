@@ -622,32 +622,32 @@ namespace RayGene3D
 
   void ConvertSceneGLTF(const tinygltf::Model& gltf_model,
     std::vector<std::vector<Vertex>>& vertices_arrays, std::vector<std::vector<Triangle>>& triangles_arrays, std::vector<Instance>& instances_array, float position_scale,
-    std::vector<std::string>& textures0_names, std::vector<std::string>& textures1_names, std::vector<std::string>& textures2_names, std::vector<std::string>& textures3_names)
+    std::vector<Texture>& textures_0, std::vector<Texture>& textures_1, std::vector<Texture>& textures_2, std::vector<Texture>& textures_3)
   {
     vertices_arrays.clear();
     triangles_arrays.clear();
     instances_array.clear();
 
-    const auto tex_reindex_fn = [](std::vector<std::string>& tex_names, const std::string& tex_name)
+    const auto tex_reindex_fn = [](std::vector<uint32_t>& tex_ids, uint32_t tex_id)
     {
-      if (tex_name.empty())
+      if (tex_id == -1)
       {
-        return -1;
+        return uint32_t(-1);
       }
 
-      const auto tex_iter = std::find_if(tex_names.cbegin(), tex_names.cend(), [&tex_name](const auto& name) { return tex_name == name; });
-      const auto tex_index = tex_iter == tex_names.cend() ? int32_t(tex_names.size()) : int32_t(tex_iter - tex_names.cbegin());
-      if (tex_index == tex_names.size())
+      const auto tex_iter = std::find_if(tex_ids.cbegin(), tex_ids.cend(), [&tex_id](const auto& index) { return tex_id == index; });
+      const auto tex_index = tex_iter == tex_ids.cend() ? uint32_t(tex_ids.size()) : uint32_t(tex_iter - tex_ids.cbegin());
+      if (tex_index == tex_ids.size())
       {
-        tex_names.push_back(tex_name);
+        tex_ids.push_back(tex_id);
       }
       return tex_index;
     };
 
-    textures0_names.clear(); // diffuse
-    textures1_names.clear(); // normal
-    textures2_names.clear(); // alpha
-    textures3_names.clear(); // specular
+    textures_0.clear(); // base + alpha
+    textures_1.clear(); // emission + occlusion
+    textures_2.clear(); // metallic + roughness
+    textures_3.clear(); // normal or derivatives
 
     const auto access_buffer_fn = [&gltf_model](const tinygltf::Accessor& accessor)
     {
@@ -690,6 +690,11 @@ namespace RayGene3D
 
     uint32_t vertices_offset = 0;
     uint32_t triangles_offset = 0;
+
+    std::vector<uint32_t> texture_0_indices;
+    std::vector<uint32_t> texture_1_indices;
+    std::vector<uint32_t> texture_2_indices;
+    std::vector<uint32_t> texture_3_indices;
 
     const auto gltf_scene = gltf_model.scenes[0];
 
@@ -956,7 +961,7 @@ namespace RayGene3D
         Instance instance;
         instance.transform;
 
-        const auto debug = true;
+        const auto debug = false;
         if(debug)
         {
           instance.emission = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -970,55 +975,28 @@ namespace RayGene3D
           instance.transmittance = glm::vec3(0.0f, 0.0f, 0.0f); // *(1.0f - obj_material.dissolve);
           instance.ior = 1.0f;
         }
-        //else
-        //{
+        else
+        {
+          instance.emission = glm::vec3(0.0f, 0.0f, 0.0f);
+          instance.intensity = 0.0f;
+          //material.ambient = glm::vec3(obj_material.ambient[0], obj_material.ambient[1], obj_material.ambient[2]);
+          //material.dissolve = obj_material.dissolve;
+          instance.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
+          instance.metallic = 1.0f;
+          instance.specular = glm::vec3(0.0f, 0.0f, 0.0f);
+          instance.shininess = 1.0f;
+          instance.transmittance = glm::vec3(0.0f, 0.0f, 0.0f); // *(1.0f - obj_material.dissolve);
+          instance.ior = 1.0f;
 
-        //  instance.emission = glm::vec3(obj_material.emission[0], obj_material.emission[1], obj_material.emission[2]);
-        //  instance.intensity = 10.0f;
-        //  //material.ambient = glm::vec3(obj_material.ambient[0], obj_material.ambient[1], obj_material.ambient[2]);
-        //  //material.dissolve = obj_material.dissolve;
-        //  instance.diffuse = glm::vec3(obj_material.diffuse[0], obj_material.diffuse[1], obj_material.diffuse[2]);
-        //  instance.metallic = obj_material.metallic;
-        //  instance.specular = glm::vec3(obj_material.specular[0], obj_material.specular[1], obj_material.specular[2]);
-        //  instance.shininess = obj_material.shininess;
-        //  instance.transmittance = glm::vec3(obj_material.transmittance[0], obj_material.transmittance[1], obj_material.transmittance[2]) * (1.0f - obj_material.dissolve);
-        //  instance.ior = obj_material.ior;
-
-        //  const auto& texture0_name = obj_material.diffuse_texname;
-        //  instance.texture0_idx = texture0_name.empty() ? uint32_t(-1) : tex_reindex_fn(textures0_names, texture0_name);
-        //  const auto& texture1_name = obj_material.alpha_texname;
-        //  instance.texture1_idx = texture1_name.empty() ? uint32_t(-1) : tex_reindex_fn(textures1_names, texture1_name);
-        //  const auto& texture2_name = obj_material.specular_texname;
-        //  instance.texture2_idx = texture2_name.empty() ? uint32_t(-1) : tex_reindex_fn(textures2_names, texture2_name);
-        //  const auto& texture3_name = obj_material.bump_texname;
-        //  instance.texture3_idx = texture3_name.empty() ? uint32_t(-1) : tex_reindex_fn(textures3_names, texture3_name);
-
-        //  if (!texture0_name.empty())
-        //  {
-        //    instance.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-        //  }
-
-        //  if (!texture2_name.empty())
-        //  {
-        //    instance.specular = glm::vec3(1.0f, 1.0f, 1.0f);
-        //  }
-
-        //  switch (obj_material.illum)
-        //  {
-        //  case 3: // mirror
-        //    instance.diffuse = glm::vec3(0.0f, 0.0f, 0.0f);
-        //    instance.specular = glm::vec3(1.0f, 1.0f, 1.0f);
-        //    instance.transmittance = glm::vec3(0.0f, 0.0f, 0.0f);
-        //    instance.shininess = float(1 << 16);
-        //    break;
-        //  case 7: // glass
-        //    instance.diffuse = glm::vec3(0.0f, 0.0f, 0.0f);
-        //    instance.specular = glm::vec3(0.0f, 0.0f, 0.0f);
-        //    instance.transmittance = glm::vec3(1.0f, 1.0f, 1.0f);
-        //    instance.ior = 1.5f;
-        //    break;
-        //  }
-        //}
+          const auto texture_0_id = gltf_material.pbrMetallicRoughness.baseColorTexture.index;
+          instance.texture0_idx = texture_0_id == -1 ? uint32_t(-1) : tex_reindex_fn(texture_0_indices, texture_0_id);
+          const auto texture_1_id = gltf_material.occlusionTexture.index;
+          instance.texture1_idx = texture_1_id == -1 ? uint32_t(-1) : tex_reindex_fn(texture_1_indices, texture_1_id);
+          const auto texture_2_id = gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.index;
+          instance.texture2_idx = texture_2_id == -1 ? uint32_t(-1) : tex_reindex_fn(texture_2_indices, texture_2_id);
+          const auto texture_3_id = gltf_material.normalTexture.index;
+          instance.texture3_idx = texture_3_id == -1 ? uint32_t(-1) : tex_reindex_fn(texture_3_indices, texture_3_id);
+        }
 
         instance.geometry_idx = uint32_t(instances_array.size());
         //instance.debug_color{ 0.0f, 0.0f, 0.0f };
@@ -1036,6 +1014,62 @@ namespace RayGene3D
         triangles_offset += uint32_t(triangles.size());
       }
     }
+
+    const auto tex_prepare_fn = [&gltf_model](uint32_t texture_index)
+    {
+      const auto image_index = gltf_model.textures[texture_index].source;
+
+      const auto tex_x = gltf_model.images[image_index].width;
+      const auto tex_y = gltf_model.images[image_index].height;
+      const auto tex_n = gltf_model.images[image_index].component;
+      const auto tex_data = gltf_model.images[image_index].image.data();
+
+      Texture texture;
+      texture.texels.resize(tex_x * tex_y);
+
+      for (uint32_t i = 0; i < tex_x * tex_y; ++i)
+      {
+        const uint8_t r = tex_n > 0 ? tex_data[i * tex_n + 0] : 0; //0xFF;
+        const uint8_t g = tex_n > 1 ? tex_data[i * tex_n + 1] : r; //0xFF;
+        const uint8_t b = tex_n > 2 ? tex_data[i * tex_n + 2] : r; //0xFF;
+        const uint8_t a = tex_n > 3 ? tex_data[i * tex_n + 3] : r; //0xFF;
+        texture.texels[i] = glm::u8vec4(r, g, b, a);
+
+      }
+      texture.extent_x = tex_x;
+      texture.extent_y = tex_y;
+
+      return texture;
+    };
+
+    textures_0.resize(texture_0_indices.size());
+    for (uint32_t i = 0; i < uint32_t(texture_0_indices.size()); ++i)
+    {
+      const auto texture_0_index = texture_0_indices[i];
+      textures_0[i] = std::move(tex_prepare_fn(texture_0_index));
+    }
+
+    textures_1.resize(texture_1_indices.size());
+    for (uint32_t i = 0; i < uint32_t(texture_1_indices.size()); ++i)
+    {
+      const auto texture_1_index = texture_1_indices[i];
+      textures_1[i] = std::move(tex_prepare_fn(texture_1_index));
+    }
+
+    textures_2.resize(texture_2_indices.size());
+    for (uint32_t i = 0; i < uint32_t(texture_2_indices.size()); ++i)
+    {
+      const auto texture_2_index = texture_2_indices[i];
+      textures_2[i] = std::move(tex_prepare_fn(texture_2_index));
+    }
+
+    textures_3.resize(texture_3_indices.size());
+    for (uint32_t i = 0; i < uint32_t(texture_3_indices.size()); ++i)
+    {
+      const auto texture_3_index = texture_3_indices[i];
+      textures_3[i] = std::move(tex_prepare_fn(texture_3_index));
+    }
+
   }
 
 
@@ -1585,11 +1619,6 @@ namespace RayGene3D
     std::vector<Triangle> scene_triangles;
     std::vector<Instance> scene_instances;
 
-    std::vector<std::string> textures0_names;
-    std::vector<std::string> textures1_names;
-    std::vector<std::string> textures2_names;
-    std::vector<std::string> textures3_names;
-
     std::vector<Texture> textures_0;
     std::vector<Texture> textures_1;
     std::vector<Texture> textures_2;
@@ -1599,7 +1628,7 @@ namespace RayGene3D
     std::vector<std::vector<Triangle>> temp_triangles;
 
     ConvertSceneGLTF(model, temp_vertices, temp_triangles, scene_instances, scale,
-      textures0_names, textures1_names, textures2_names, textures3_names);
+      textures_0, textures_1, textures_2, textures_3);
 
     for (uint32_t i = 0; i < uint32_t(scene_instances.size()); ++i)
     {
