@@ -206,9 +206,11 @@ namespace RayGene3D
   std::shared_ptr<Property> CreateTextureProperty(const void* data, uint32_t stride, uint32_t size_x, uint32_t size_y, uint32_t mipmaps);
 
   std::shared_ptr<Property> ImportOBJ(const std::string& path, const std::string& name, float scale, uint32_t mipmaps);
+  std::shared_ptr<Property> ImportGLTF(const std::string& path, const std::string& name, float scale, uint32_t mipmaps);
+
   std::shared_ptr<Property> ImportEXR(const std::string& path, const std::string& name, float exposure, uint32_t mipmaps);
 
-  std::shared_ptr<Property> CreatePropertyFromTextures(const std::string& path, const std::vector<std::string>& names, uint32_t mipmaps, bool gamma);
+  std::shared_ptr<Property> CreatePropertyFromTextures(const std::vector<Texture>& textures, uint32_t mipmaps);
 
   void SaveProperty(const std::string& directory, const std::string& name, const std::shared_ptr<Property>& root);
   std::shared_ptr<Property> LoadProperty(const std::string& directory, const std::string& name);
