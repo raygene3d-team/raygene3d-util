@@ -380,7 +380,7 @@ namespace RayGene3D
     return property;
   }
 
-  std::shared_ptr<Property> ParseJSON(const nlohmann::json& node, const std::shared_ptr<Property>& parent_property)
+  std::shared_ptr<Property> ParseJSON(const nlohmann::json& node)
   {
     std::shared_ptr<Property> property;
 
@@ -398,7 +398,7 @@ namespace RayGene3D
       {
         const auto& child_node = it.value();
         const auto& child_name = it.key();
-        const auto child_property = ParseJSON(child_node, property);
+        const auto child_property = ParseJSON(child_node);
         if (child_property)
         {
           property->SetObjectItem(child_name, child_property);
@@ -414,7 +414,7 @@ namespace RayGene3D
       {
         const auto& child_node = node[i];
         const auto& child_index = i;
-        const auto child_property = ParseJSON(child_node, property);
+        const auto child_property = ParseJSON(child_node);
         if (child_property)
         {
           property->SetArrayItem(child_index, child_property);
@@ -621,7 +621,8 @@ namespace RayGene3D
 
 
   void ConvertSceneGLTF(const tinygltf::Model& gltf_model,
-    std::vector<std::vector<Vertex>>& vertices_arrays, std::vector<std::vector<Triangle>>& triangles_arrays, std::vector<Instance>& instances_array, float position_scale,
+    std::vector<std::vector<Vertex>>& vertices_arrays, std::vector<std::vector<Triangle>>& triangles_arrays, std::vector<Instance>& instances_array, 
+    bool coordinate_flip, float position_scale,
     std::vector<Texture>& textures_0, std::vector<Texture>& textures_1, std::vector<Texture>& textures_2, std::vector<Texture>& textures_3)
   {
     vertices_arrays.clear();
@@ -662,7 +663,7 @@ namespace RayGene3D
     };
 
 
-    const auto create_vertex_fn = [&gltf_model](uint32_t index, float scale,
+    const auto create_vertex_fn = [&gltf_model](uint32_t index, bool flip, float scale,
       std::pair<const uint8_t*, uint32_t> pos_data, uint32_t pos_stride,
       std::pair<const uint8_t*, uint32_t> nrm_data, uint32_t nrm_stride,
       std::pair<const uint8_t*, uint32_t> tc0_data, uint32_t tc0_stride)
@@ -670,11 +671,11 @@ namespace RayGene3D
       Vertex vertex;
 
       const auto pos = reinterpret_cast<const float*>(pos_data.first + pos_stride * index);
-      vertex.pos = glm::fvec3{ pos[0], pos[1], pos[2] };
+      vertex.pos = flip ? glm::fvec3{pos[0],-pos[2],-pos[1]} : glm::fvec3{pos[0], pos[1],-pos[2]};
       vertex.pos = vertex.pos * scale;
 
       const auto nrm = reinterpret_cast<const float*>(nrm_data.first + nrm_stride * index);
-      vertex.nrm = glm::fvec3{ nrm[0], nrm[1], nrm[2] };
+      vertex.nrm = flip ? glm::fvec3{nrm[0],-nrm[2],-nrm[1]} : glm::fvec3{nrm[0], nrm[1],-nrm[2]};
       vertex.nrm = glm::normalize(vertex.nrm);
 
       const auto tc0 = reinterpret_cast<const float*>(tc0_data.first + tc0_stride * index);
@@ -775,11 +776,11 @@ namespace RayGene3D
 
           for (uint32_t k = 0; k < gltf_indices.count / 3; ++k)
           {
-            const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 0], position_scale, 
+            const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 0], coordinate_flip, position_scale, 
               pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
-            const auto vtx1 = create_vertex_fn(indices_data[k * 3 + 1], position_scale,
+            const auto vtx1 = create_vertex_fn(indices_data[k * 3 + 1], coordinate_flip, position_scale,
               pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
-            const auto vtx2 = create_vertex_fn(indices_data[k * 3 + 2], position_scale,
+            const auto vtx2 = create_vertex_fn(indices_data[k * 3 + 2], coordinate_flip, position_scale,
               pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
 
             const auto dp_10 = vtx1.pos - vtx0.pos;
@@ -822,11 +823,11 @@ namespace RayGene3D
           
           for (uint32_t k = 0; k < gltf_indices.count / 3; ++k)
           {
-            const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 0], position_scale,
+            const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 0], coordinate_flip, position_scale,
               pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
-            const auto vtx1 = create_vertex_fn(indices_data[k * 3 + 1], position_scale,
+            const auto vtx1 = create_vertex_fn(indices_data[k * 3 + 2], coordinate_flip, position_scale,
               pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
-            const auto vtx2 = create_vertex_fn(indices_data[k * 3 + 2], position_scale,
+            const auto vtx2 = create_vertex_fn(indices_data[k * 3 + 1], coordinate_flip, position_scale,
               pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
 
             const auto dp_10 = vtx1.pos - vtx0.pos;
@@ -870,11 +871,11 @@ namespace RayGene3D
 
           for (uint32_t k = 0; k < gltf_indices.count / 3; ++k)
           {
-            const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 0], position_scale,
+            const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 0], coordinate_flip, position_scale,
               pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
-            const auto vtx1 = create_vertex_fn(indices_data[k * 3 + 1], position_scale,
+            const auto vtx1 = create_vertex_fn(indices_data[k * 3 + 1], coordinate_flip, position_scale,
               pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
-            const auto vtx2 = create_vertex_fn(indices_data[k * 3 + 2], position_scale,
+            const auto vtx2 = create_vertex_fn(indices_data[k * 3 + 2], coordinate_flip, position_scale,
               pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
 
             const auto idx0 = remap_vertex_fn(vertices, vtx0);
@@ -1083,7 +1084,8 @@ namespace RayGene3D
 
 
   void ConvertSceneOBJ(const tinyobj::attrib_t& obj_attrib, const std::vector<tinyobj::shape_t>& obj_shapes, const std::vector<tinyobj::material_t>& obj_materials,
-    std::vector<std::vector<Vertex>>& vertices_arrays, std::vector<std::vector<Triangle>>& triangles_arrays, std::vector<Instance>& instances_array, float position_scale,
+    std::vector<std::vector<Vertex>>& vertices_arrays, std::vector<std::vector<Triangle>>& triangles_arrays, std::vector<Instance>& instances_array, 
+    bool coordinate_flip, float position_scale,
     const std::string& path, std::vector<Texture>& textures_0, std::vector<Texture>& textures_1, std::vector<Texture>& textures_2, std::vector<Texture>& textures_3)
   {
 
@@ -1091,22 +1093,36 @@ namespace RayGene3D
     const auto& obj_normals = obj_attrib.normals;
     const auto& obj_texcoords = obj_attrib.texcoords;
 
-    const auto create_vertex_fn = [&obj_vertices, &obj_normals, &obj_texcoords](const tinyobj::index_t& obj_index, float position_scale)
+    const auto create_vertex_fn = [&obj_vertices, &obj_normals, &obj_texcoords](const tinyobj::index_t& obj_index, bool flip, float scale)
     {
       Vertex vertex;
 
-      const auto& obj_vertex_index = obj_index.vertex_index;
-      vertex.pos = obj_vertex_index == -1 ? glm::fvec3{ 0.0f, 0.0f, 0.0f }
-      : glm::fvec3{ obj_vertices[3 * obj_vertex_index + 0], obj_vertices[3 * obj_vertex_index + 1],-obj_vertices[3 * obj_vertex_index + 2] }  *position_scale;
-      const auto& obj_normal_index = obj_index.normal_index;
-      vertex.nrm = obj_normal_index == -1 ? glm::fvec3{ 0.0f, 0.0f, 0.0f }
-      : glm::fvec3{ obj_normals[3 * obj_normal_index + 0], obj_normals[3 * obj_normal_index + 1], -obj_normals[3 * obj_normal_index + 2] };
-      const auto& obj_texcoord_index = obj_index.texcoord_index;
-      vertex.u = obj_texcoord_index == -1 ? 0.0f : obj_texcoords[2 * obj_texcoord_index + 0];
-      vertex.v = obj_texcoord_index == -1 ? 0.0f : -obj_texcoords[2 * obj_texcoord_index + 1];
 
-      vertex.tgn = glm::fvec3{ 0.0f, 0.0f, 0.0f };
-      vertex.sign = 0.0f;
+      if (obj_index.vertex_index != -1)
+      {
+        const auto pos_x = obj_vertices[3 * obj_index.vertex_index + 0];
+        const auto pos_y = obj_vertices[3 * obj_index.vertex_index + 1];
+        const auto pos_z = obj_vertices[3 * obj_index.vertex_index + 2];
+        vertex.pos = flip ? glm::fvec3{pos_x,-pos_z, pos_y} : glm::fvec3{ pos_x, pos_y,-pos_z };
+        vertex.pos = scale * vertex.pos;
+      }
+
+      if (obj_index.normal_index != -1)
+      {
+        const auto nrm_x = obj_normals[3 * obj_index.normal_index + 0];
+        const auto nrm_y = obj_normals[3 * obj_index.normal_index + 1];
+        const auto nrm_z = obj_normals[3 * obj_index.normal_index + 2];
+        vertex.nrm = flip ? glm::fvec3{nrm_x,-nrm_z, nrm_y} : glm::fvec3{ nrm_x, nrm_y,-nrm_z };
+        vertex.nrm = glm::normalize(vertex.nrm);
+      }
+
+      if (obj_index.texcoord_index != -1)
+      {
+        const auto tc0_x = obj_texcoords[2 * obj_index.texcoord_index + 0];
+        const auto tc0_y = obj_texcoords[2 * obj_index.texcoord_index + 1];
+        vertex.u = tc0_x;
+        vertex.v =-tc0_y;
+      }
 
       return vertex;
     };
@@ -1200,9 +1216,9 @@ namespace RayGene3D
             continue;
           }
 
-          const auto vtx0 = create_vertex_fn(obj_mesh.indices[3 * j + 0], position_scale);
-          const auto vtx1 = create_vertex_fn(obj_mesh.indices[3 * j + 2], position_scale);
-          const auto vtx2 = create_vertex_fn(obj_mesh.indices[3 * j + 1], position_scale);
+          const auto vtx0 = create_vertex_fn(obj_mesh.indices[3 * j + 0], coordinate_flip, position_scale);
+          const auto vtx1 = create_vertex_fn(obj_mesh.indices[3 * j + 2], coordinate_flip, position_scale);
+          const auto vtx2 = create_vertex_fn(obj_mesh.indices[3 * j + 1], coordinate_flip, position_scale);
 
           const auto dp_10 = vtx1.pos - vtx0.pos;
           const auto dp_20 = vtx2.pos - vtx0.pos;
@@ -1553,7 +1569,7 @@ namespace RayGene3D
   }
 
 
-  std::shared_ptr<Property> ImportOBJ(const std::string& path, const std::string& name, float scale, uint32_t mipmaps)
+  std::shared_ptr<Property> ImportOBJ(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps)
   {
     tinyobj::attrib_t obj_attrib;
     std::vector<tinyobj::shape_t> obj_shapes;
@@ -1577,7 +1593,7 @@ namespace RayGene3D
     std::vector<std::vector<Triangle>> temp_triangles;
 
     ConvertSceneOBJ(obj_attrib, obj_shapes, obj_materials, 
-      temp_vertices, temp_triangles, scene_instances, scale, 
+      temp_vertices, temp_triangles, scene_instances, flip, scale, 
       path, textures_0, textures_1, textures_2, textures_3);
 
     for (uint32_t i = 0; i < uint32_t(scene_instances.size()); ++i)
@@ -1611,7 +1627,7 @@ namespace RayGene3D
   }
 
 
-  std::shared_ptr<Property> ImportGLTF(const std::string& path, const std::string& name, float scale, uint32_t mipmaps)
+  std::shared_ptr<Property> ImportGLTF(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps)
   {
     tinygltf::Model model;
     tinygltf::TinyGLTF gltf_ctx;
@@ -1634,7 +1650,7 @@ namespace RayGene3D
     std::vector<std::vector<Vertex>> temp_vertices;
     std::vector<std::vector<Triangle>> temp_triangles;
 
-    ConvertSceneGLTF(model, temp_vertices, temp_triangles, scene_instances, scale,
+    ConvertSceneGLTF(model, temp_vertices, temp_triangles, scene_instances, flip, scale,
       textures_0, textures_1, textures_2, textures_3);
 
     for (uint32_t i = 0; i < uint32_t(scene_instances.size()); ++i)

@@ -98,6 +98,16 @@ namespace RayGene3D
     void RawFree() { std::get<raw_t>(_value).Free(); }
     void SetRawBytes(std::pair<const void*, uint32_t> bytes, uint32_t offset) { std::get<raw_t>(_value).SetBytes(bytes, offset); }
     std::pair<const void*, uint32_t> GetRawBytes(uint32_t offset) const { return std::get<raw_t>(_value).GetBytes(offset); }
+    template<typename T> void SetTypedBytes(std::pair<const T*, uint32_t> bytes, uint32_t offset)
+    {
+      SetRawBytes({ bytes.first, uint32_t(bytes.second * sizeof(T)) }, uint32_t(offset * sizeof(T)));
+    }
+    template<typename T> std::pair<const T*, uint32_t> GetTypedBytes(uint32_t offset)
+    {
+      const auto bytes = GetRawBytes(uint32_t(offset * sizeof(T))); return { reinterpret_cast<const T*>(bytes.first), uint32_t(bytes.second / sizeof(T)) };
+    }
+
+    
     
   public:
     void FromFMat3x4(const glm::f32mat3x4& mat);
@@ -189,7 +199,7 @@ namespace RayGene3D
 
   //};
 
-  std::shared_ptr<Property> ParseJSON(const nlohmann::json& node, const std::shared_ptr<Property>& parent_property);
+  std::shared_ptr<Property> ParseJSON(const nlohmann::json& node);
 
 
 
@@ -205,8 +215,8 @@ namespace RayGene3D
   std::shared_ptr<Property> CreateBufferProperty(const void* data, uint32_t stride, uint32_t count);
   std::shared_ptr<Property> CreateTextureProperty(const void* data, uint32_t stride, uint32_t size_x, uint32_t size_y, uint32_t mipmaps);
 
-  std::shared_ptr<Property> ImportOBJ(const std::string& path, const std::string& name, float scale, uint32_t mipmaps);
-  std::shared_ptr<Property> ImportGLTF(const std::string& path, const std::string& name, float scale, uint32_t mipmaps);
+  std::shared_ptr<Property> ImportOBJ(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps);
+  std::shared_ptr<Property> ImportGLTF(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps);
 
   std::shared_ptr<Property> ImportEXR(const std::string& path, const std::string& name, float exposure, uint32_t mipmaps);
 
