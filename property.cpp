@@ -823,11 +823,11 @@ namespace RayGene3D
           
           for (uint32_t k = 0; k < gltf_indices.count / 3; ++k)
           {
-            const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 0], coordinate_flip, position_scale,
+            const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 1], coordinate_flip, position_scale,
               pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
-            const auto vtx1 = create_vertex_fn(indices_data[k * 3 + 2], coordinate_flip, position_scale,
+            const auto vtx1 = create_vertex_fn(indices_data[k * 3 + 0], coordinate_flip, position_scale,
               pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
-            const auto vtx2 = create_vertex_fn(indices_data[k * 3 + 1], coordinate_flip, position_scale,
+            const auto vtx2 = create_vertex_fn(indices_data[k * 3 + 2], coordinate_flip, position_scale,
               pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
 
             const auto dp_10 = vtx1.pos - vtx0.pos;
@@ -949,11 +949,11 @@ namespace RayGene3D
           {
             auto data = reinterpret_cast<SMikkTSpaceUserData*>(ctx->m_pUserData);
             auto& tgs = data->vertices[data->triangles[iFace].idx[iVert]].tgn;
-            tgs.x = fvTangent[0];
-            tgs.y = fvTangent[1];
-            tgs.z = fvTangent[2];
+            tgs.x = -fvTangent[0];
+            tgs.y = -fvTangent[1];
+            tgs.z = -fvTangent[2];
             auto& sign = data->vertices[data->triangles[iFace].idx[iVert]].sign;
-            sign = fSign;
+            sign = -fSign;
           };
 
           SMikkTSpaceContext context;
