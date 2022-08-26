@@ -91,21 +91,20 @@ namespace RayGene3D
     glm::u32vec4 padding[6];
   };
 
-  struct Camera
+  struct Screen
   {
-    uint32_t size_x{ 0 };
-    uint32_t size_y{ 0 };
+    uint32_t extent_x{ 0 };
+    uint32_t extent_y{ 0 };
+    uint32_t rnd_base{ 0 };
+    uint32_t rnd_seed{ 0 };
+  };
 
-    uint32_t base{ 0 };
-    uint32_t seed{ 0 };
-
-    glm::f32mat3x4 view{ 1.0f };
-    glm::f32mat4 proj{ 1.0f };
-
-    glm::f32mat3x4 view_inv{ 1.0f };
-    glm::f32mat4 proj_inv{ 1.0f };
-
-    glm::u32vec4 padding;
+  struct Frustum
+  {
+    glm::f32mat4x4 view{ 1.0f };
+    glm::f32mat4x4 proj{ 1.0f };
+    glm::f32mat4x4 view_inv{ 1.0f };
+    glm::f32mat4x4 proj_inv{ 1.0f };
   };
 
   struct Box
