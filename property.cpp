@@ -1849,15 +1849,46 @@ namespace RayGene3D
     temp_vertices.clear();
     temp_triangles.clear();
 
+    auto scene_vertices0 = std::vector<Vertex0>(scene_vertices.size());
+    auto scene_vertices1 = std::vector<Vertex1>(scene_vertices.size());
+    auto scene_vertices2 = std::vector<Vertex2>(scene_vertices.size());
+    auto scene_vertices3 = std::vector<Vertex3>(scene_vertices.size());
+
+    for (uint32_t i = 0; i < uint32_t(scene_vertices.size()); ++i)
+    {
+      scene_vertices0[i].pos = scene_vertices[i].pos;
+      scene_vertices0[i].col = scene_vertices[i].col;
+
+      scene_vertices1[i].nrm = scene_vertices[i].nrm;
+      scene_vertices1[i].msk = scene_vertices[i].msk;
+
+      scene_vertices2[i].tng = scene_vertices[i].tng;
+      scene_vertices2[i].sgn = scene_vertices[i].sgn;
+
+      scene_vertices3[i].tc0 = scene_vertices[i].tc0;
+      scene_vertices3[i].tc1 = scene_vertices[i].tc1;
+    }
+
     auto root = std::shared_ptr<Property>(new Property(Property::TYPE_OBJECT));
     //root->SetValue(Property::object());
 
-    const auto vertices_property = CreateBufferProperty(scene_vertices.data(), uint32_t(sizeof(Vertex)), uint32_t(scene_vertices.size()));
-    root->SetObjectItem("vertices", vertices_property);
-    const auto triangles_property = CreateBufferProperty(scene_triangles.data(), uint32_t(sizeof(Triangle)), uint32_t(scene_triangles.size()));
-    root->SetObjectItem("triangles", triangles_property);
+    //const auto vertices_property = CreateBufferProperty(scene_vertices.data(), uint32_t(sizeof(Vertex)), uint32_t(scene_vertices.size()));
+    //root->SetObjectItem("vertices", vertices_property);
+
     const auto instances_property = CreateBufferProperty(scene_instances.data(), uint32_t(sizeof(Instance)), uint32_t(scene_instances.size()));
     root->SetObjectItem("instances", instances_property);
+
+    const auto triangles_property = CreateBufferProperty(scene_triangles.data(), uint32_t(sizeof(Triangle)), uint32_t(scene_triangles.size()));
+    root->SetObjectItem("triangles", triangles_property);
+
+    const auto vertices0_property = CreateBufferProperty(scene_vertices0.data(), uint32_t(sizeof(Vertex0)), uint32_t(scene_vertices0.size()));
+    root->SetObjectItem("vertices0", vertices0_property);
+    const auto vertices1_property = CreateBufferProperty(scene_vertices1.data(), uint32_t(sizeof(Vertex1)), uint32_t(scene_vertices1.size()));
+    root->SetObjectItem("vertices1", vertices1_property);
+    const auto vertices2_property = CreateBufferProperty(scene_vertices2.data(), uint32_t(sizeof(Vertex2)), uint32_t(scene_vertices2.size()));
+    root->SetObjectItem("vertices2", vertices2_property);
+    const auto vertices3_property = CreateBufferProperty(scene_vertices3.data(), uint32_t(sizeof(Vertex3)), uint32_t(scene_vertices3.size()));
+    root->SetObjectItem("vertices3", vertices3_property);
 
     const auto textures0_property = CreatePropertyFromTextures(textures_0, mipmaps);
     root->SetObjectItem("textures0", textures0_property);
@@ -1910,16 +1941,46 @@ namespace RayGene3D
     temp_vertices.clear();
     temp_triangles.clear();
 
+    auto scene_vertices0 = std::vector<Vertex0>(scene_vertices.size());
+    auto scene_vertices1 = std::vector<Vertex1>(scene_vertices.size());
+    auto scene_vertices2 = std::vector<Vertex2>(scene_vertices.size());
+    auto scene_vertices3 = std::vector<Vertex3>(scene_vertices.size());
+
+    for (uint32_t i = 0; i < uint32_t(scene_vertices.size()); ++i)
+    {
+      scene_vertices0[i].pos = scene_vertices[i].pos;
+      scene_vertices0[i].col = scene_vertices[i].col;
+
+      scene_vertices1[i].nrm = scene_vertices[i].nrm;
+      scene_vertices1[i].msk = scene_vertices[i].msk;
+
+      scene_vertices2[i].tng = scene_vertices[i].tng;
+      scene_vertices2[i].sgn = scene_vertices[i].sgn;
+
+      scene_vertices3[i].tc0 = scene_vertices[i].tc0;
+      scene_vertices3[i].tc1 = scene_vertices[i].tc1;
+    }
+
     auto root = std::shared_ptr<Property>(new Property(Property::TYPE_OBJECT));
     //root->SetValue(Property::object());
 
-    const auto vertices_property = CreateBufferProperty(scene_vertices.data(), uint32_t(sizeof(Vertex)), uint32_t(scene_vertices.size()));
-    root->SetObjectItem("vertices", vertices_property);
-    const auto triangles_property = CreateBufferProperty(scene_triangles.data(), uint32_t(sizeof(Triangle)), uint32_t(scene_triangles.size()));
-    root->SetObjectItem("triangles", triangles_property);
-    //const auto instances_property = CreateInstanceProperty(scene_instances);
+    //const auto vertices_property = CreateBufferProperty(scene_vertices.data(), uint32_t(sizeof(Vertex)), uint32_t(scene_vertices.size()));
+    //root->SetObjectItem("vertices", vertices_property);
+
     const auto instances_property = CreateBufferProperty(scene_instances.data(), uint32_t(sizeof(Instance)), uint32_t(scene_instances.size()));
     root->SetObjectItem("instances", instances_property);
+
+    const auto triangles_property = CreateBufferProperty(scene_triangles.data(), uint32_t(sizeof(Triangle)), uint32_t(scene_triangles.size()));
+    root->SetObjectItem("triangles", triangles_property);
+
+    const auto vertices0_property = CreateBufferProperty(scene_vertices0.data(), uint32_t(sizeof(Vertex0)), uint32_t(scene_vertices0.size()));
+    root->SetObjectItem("vertices0", vertices0_property);
+    const auto vertices1_property = CreateBufferProperty(scene_vertices1.data(), uint32_t(sizeof(Vertex1)), uint32_t(scene_vertices1.size()));
+    root->SetObjectItem("vertices1", vertices1_property);
+    const auto vertices2_property = CreateBufferProperty(scene_vertices2.data(), uint32_t(sizeof(Vertex2)), uint32_t(scene_vertices2.size()));
+    root->SetObjectItem("vertices2", vertices2_property);
+    const auto vertices3_property = CreateBufferProperty(scene_vertices3.data(), uint32_t(sizeof(Vertex3)), uint32_t(scene_vertices3.size()));
+    root->SetObjectItem("vertices3", vertices3_property);
 
     const auto textures0_property = CreatePropertyFromTextures(textures_0, mipmaps);
     root->SetObjectItem("textures0", textures0_property);

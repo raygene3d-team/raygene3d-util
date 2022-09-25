@@ -68,6 +68,30 @@ namespace RayGene3D
     glm::f32vec2 tc1{ 0.0f, 0.0f };
   };
 
+  struct Vertex0
+  {
+    glm::f32vec3 pos{ 0.0f, 0.0f, 0.0f };
+    glm::u8vec4 col{ 0u, 0u, 0u, 0u };
+  };
+
+  struct Vertex1
+  {
+    glm::f32vec3 nrm{ 0.0f, 0.0f, 0.0f };
+    uint32_t msk{ 0u };
+  };
+
+  struct Vertex2
+  {
+    glm::f32vec3 tng{ 0.0f, 0.0f, 0.0f };
+    float sgn{ 0.0f };
+  };
+
+  struct Vertex3
+  {
+    glm::f32vec2 tc0{ 0.0f, 0.0f };
+    glm::f32vec2 tc1{ 0.0f, 0.0f };
+  };
+
   struct Triangle
   {
     glm::u32vec3 idx{ uint32_t(-1), uint32_t(-1) , uint32_t(-1) };
