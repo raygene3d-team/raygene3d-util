@@ -32,6 +32,8 @@ THE SOFTWARE.
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobjloader/tiny_obj_loader.h>
 
+#define OBJ_TRIANGULATE
+
 #define TINYGLTF_IMPLEMENTATION
 //#define TINYGLTF_NO_STB_IMAGE
 //#define TINYGLTF_NO_STB_IMAGE_WRITE
@@ -47,8 +49,9 @@ THE SOFTWARE.
 #include <stb/stb_image_write.h>
 #include <stb/stb_image_resize.h>
 
-
 #include <mikktspace/mikktspace.h>
+
+#include <xatlas/xatlas.h>
 
 namespace RayGene3D
 {
@@ -623,7 +626,7 @@ namespace RayGene3D
   void ConvertSceneGLTF(const tinygltf::Model& gltf_model,
     std::vector<std::vector<Vertex>>& vertices_arrays, std::vector<std::vector<Triangle>>& triangles_arrays, std::vector<Instance>& instances_array, 
     bool coordinate_flip, float position_scale,
-    std::vector<Texture>& textures_0, std::vector<Texture>& textures_1, std::vector<Texture>& textures_2, std::vector<Texture>& textures_3)
+    std::vector<Texture>& textures_0, std::vector<Texture>& textures_1, std::vector<Texture>& textures_2, std::vector<Texture>& textures_3, std::vector<Texture>& textures_4)
   {
     vertices_arrays.clear();
     triangles_arrays.clear();
@@ -649,6 +652,7 @@ namespace RayGene3D
     textures_1.clear(); // emission + occlusion
     textures_2.clear(); // metallic + roughness
     textures_3.clear(); // normal or derivatives
+    textures_4.clear(); // lightmap + shadowmask
 
     const auto access_buffer_fn = [&gltf_model](const tinygltf::Accessor& accessor)
     {
@@ -671,16 +675,13 @@ namespace RayGene3D
       Vertex vertex;
 
       const auto pos = reinterpret_cast<const float*>(pos_data.first + pos_stride * index);
-      vertex.pos = flip ? glm::fvec3{pos[0],-pos[2],-pos[1]} : glm::fvec3{pos[0], pos[1],-pos[2]};
-      vertex.pos = vertex.pos * scale;
+      vertex.pos = scale * (flip ? glm::fvec3{ pos[0],-pos[2],-pos[1] } : glm::fvec3{ pos[0], pos[1],-pos[2] });
 
       const auto nrm = reinterpret_cast<const float*>(nrm_data.first + nrm_stride * index);
-      vertex.nrm = flip ? glm::fvec3{nrm[0],-nrm[2],-nrm[1]} : glm::fvec3{nrm[0], nrm[1],-nrm[2]};
-      vertex.nrm = glm::normalize(vertex.nrm);
+      vertex.nrm = glm::normalize(flip ? glm::fvec3{nrm[0],-nrm[2],-nrm[1]} : glm::fvec3{nrm[0], nrm[1],-nrm[2]});
 
       const auto tc0 = reinterpret_cast<const float*>(tc0_data.first + tc0_stride * index);
-      vertex.u = tc0[0];
-      vertex.v = tc0[1];
+      vertex.tc0 = glm::f32vec2(tc0[0], tc0[1]);
 
       return vertex;
     };
@@ -736,12 +737,15 @@ namespace RayGene3D
 
         const auto& hash_vertex_fn = [](const Vertex& vertex)
         {
-          const auto uref = reinterpret_cast<const uint32_t*>(&vertex);
-          const auto hash0 = std::hash<glm::u32vec4>()(glm::f32vec4{ uref[0], uref[1], uref[2], uref[3] });
-          const auto hash1 = std::hash<glm::u32vec4>()(glm::f32vec4{ uref[4], uref[5], uref[6], uref[7] });
-          const auto hash2 = std::hash<glm::u32vec4>()(glm::f32vec4{ uref[8], uref[9], uref[10], uref[11] });
-          return ((hash0 ^ (hash1 << 1)) >> 1) ^ (hash2 << 1);
-          //return (hash0 ^ (hash1 << 1));
+          const auto uref = reinterpret_cast<const glm::u32vec4*>(&vertex);
+          
+          auto hash = 0u;
+          hash ^= std::hash<glm::u32vec4>()(uref[0]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+          hash ^= std::hash<glm::u32vec4>()(uref[1]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+          hash ^= std::hash<glm::u32vec4>()(uref[2]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+          hash ^= std::hash<glm::u32vec4>()(uref[3]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+
+          return hash;
         };
         auto compare_vertex_fn = [](const Vertex& l, const Vertex& r)
         {
@@ -754,7 +758,7 @@ namespace RayGene3D
           const auto result = vertex_map.emplace(vertex, uint32_t(vertices.size()));
           if (result.second)
           {
-            vertices.push_back({ vertex.pos, vertex.u, vertex.nrm, vertex.v });
+            vertices.push_back(vertex);
           }
           return result.first->second;
         };
@@ -800,8 +804,8 @@ namespace RayGene3D
 
             if (has_textures)
             {
-              const auto duv_10 = glm::fvec2(vtx1.u, vtx1.v) - glm::fvec2(vtx0.u, vtx0.v);
-              const auto duv_20 = glm::fvec2(vtx2.u, vtx2.v) - glm::fvec2(vtx0.u, vtx0.v);
+              const auto duv_10 = vtx1.tc0 - vtx0.tc0;
+              const auto duv_20 = vtx2.tc0 - vtx0.tc0;
               const auto det = glm::determinant(glm::fmat2x2(duv_10, duv_20));
               if (det == 0.0f)
               {
@@ -848,8 +852,8 @@ namespace RayGene3D
 
             if (has_textures)
             {
-              const auto duv_10 = glm::fvec2(vtx1.u, vtx1.v) - glm::fvec2(vtx0.u, vtx0.v);
-              const auto duv_20 = glm::fvec2(vtx2.u, vtx2.v) - glm::fvec2(vtx0.u, vtx0.v);
+              const auto duv_10 = vtx1.tc0 - vtx0.tc0;
+              const auto duv_20 = vtx2.tc0 - vtx0.tc0;
               const auto det = glm::determinant(glm::fmat2x2(duv_10, duv_20));
               if (det == 0.0f)
               {
@@ -885,83 +889,7 @@ namespace RayGene3D
             triangles.push_back({ glm::uvec3(idx0, idx1, idx2) });
           }
         }
-
-        BLAST_LOG("Instance %d: Degenerated geom/wrap prims: %d/%d", j, degenerated_geom_prim_count, degenerated_wrap_prim_count);
-
-
-        {
-          struct SMikkTSpaceUserData
-          {
-            std::vector<Triangle>& triangles;
-            std::vector<Vertex>& vertices;
-          };
-          SMikkTSpaceUserData data{ triangles, vertices };
-
-
-          SMikkTSpaceInterface input = { 0 };
-          input.m_getNumFaces = [](const SMikkTSpaceContext* ctx)
-          {
-            const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-            return int32_t(data->triangles.size());
-          };
-
-          input.m_getNumVerticesOfFace = [](const SMikkTSpaceContext* ctx, const int iFace)
-          {
-            const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-            return 3;
-          };
-
-          //input.m_getPosition = &GetPositionCb;
-          //input.m_getNormal = &GetNormalCb;
-          //input.m_getTexCoord = &GetTexCoordCb;
-          //input.m_setTSpaceBasic = &SetTspaceBasicCb;
-          //input.m_setTSpace = NULL;
-
-
-          input.m_getPosition = [](const SMikkTSpaceContext* ctx, float fvPosOut[], int iFace, int iVert)
-          {
-            const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-            const auto& pos = data->vertices[data->triangles[iFace].idx[iVert]].pos;
-            fvPosOut[0] = pos.x;
-            fvPosOut[1] = pos.y;
-            fvPosOut[2] = pos.z;
-          };
-
-          input.m_getNormal = [](const SMikkTSpaceContext* ctx, float fvNormOut[], int iFace, int iVert)
-          {
-            const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-            const auto& nrm = data->vertices[data->triangles[iFace].idx[iVert]].nrm;
-            fvNormOut[0] = nrm.x;
-            fvNormOut[1] = nrm.y;
-            fvNormOut[2] = nrm.z;
-          };
-
-          input.m_getTexCoord = [](const SMikkTSpaceContext* ctx, float fvTexcOut[], int iFace, int iVert)
-          {
-            const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-            const auto& u = data->vertices[data->triangles[iFace].idx[iVert]].u;
-            const auto& v = data->vertices[data->triangles[iFace].idx[iVert]].v;
-            fvTexcOut[0] = u;
-            fvTexcOut[1] = v;
-          };
-
-          input.m_setTSpaceBasic = [](const SMikkTSpaceContext* ctx, const float fvTangent[], float fSign, int iFace, int iVert)
-          {
-            auto data = reinterpret_cast<SMikkTSpaceUserData*>(ctx->m_pUserData);
-            auto& tgs = data->vertices[data->triangles[iFace].idx[iVert]].tgn;
-            tgs.x = -fvTangent[0];
-            tgs.y = -fvTangent[1];
-            tgs.z = -fvTangent[2];
-            auto& sign = data->vertices[data->triangles[iFace].idx[iVert]].sign;
-            sign = -fSign;
-          };
-
-          SMikkTSpaceContext context;
-          context.m_pInterface = &input;
-          context.m_pUserData = &data;
-
-          genTangSpaceDefault(&context);
-        }
+        if (vertices.empty() || triangles.empty()) continue;
 
 
         BLAST_LOG("Instance %d: Added vert/prim: %d/%d", j, vertices.size(), triangles.size());
@@ -1021,6 +949,268 @@ namespace RayGene3D
         vertices_offset += uint32_t(vertices.size());
         triangles_offset += uint32_t(triangles.size());
       }
+    }
+
+    for (uint32_t i = 0; i < uint32_t(instances_array.size()); ++i)
+    {
+      struct SMikkTSpaceUserData
+      {
+        std::vector<Triangle>& triangles;
+        std::vector<Vertex>& vertices;
+      };
+      SMikkTSpaceUserData data{ triangles_arrays[i], vertices_arrays[i] };
+
+      SMikkTSpaceInterface input = { 0 };
+      input.m_getNumFaces = [](const SMikkTSpaceContext* ctx)
+      {
+        const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
+        return int32_t(data->triangles.size());
+      };
+
+      input.m_getNumVerticesOfFace = [](const SMikkTSpaceContext* ctx, const int iFace)
+      {
+        const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
+        return 3;
+      };
+
+      //input.m_getPosition = &GetPositionCb;
+      //input.m_getNormal = &GetNormalCb;
+      //input.m_getTexCoord = &GetTexCoordCb;
+      //input.m_setTSpaceBasic = &SetTspaceBasicCb;
+      //input.m_setTSpace = NULL;
+
+
+      input.m_getPosition = [](const SMikkTSpaceContext* ctx, float fvPosOut[], int iFace, int iVert)
+      {
+        const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
+        const auto& pos = data->vertices[data->triangles[iFace].idx[iVert]].pos;
+        fvPosOut[0] = pos.x;
+        fvPosOut[1] = pos.y;
+        fvPosOut[2] = pos.z;
+      };
+
+      input.m_getNormal = [](const SMikkTSpaceContext* ctx, float fvNormOut[], int iFace, int iVert)
+      {
+        const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
+        const auto& nrm = data->vertices[data->triangles[iFace].idx[iVert]].nrm;
+        fvNormOut[0] = nrm.x;
+        fvNormOut[1] = nrm.y;
+        fvNormOut[2] = nrm.z;
+      };
+
+      input.m_getTexCoord = [](const SMikkTSpaceContext* ctx, float fvTexcOut[], int iFace, int iVert)
+      {
+        const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
+        const auto& tc0 = data->vertices[data->triangles[iFace].idx[iVert]].tc0;
+        fvTexcOut[0] = tc0.x;
+        fvTexcOut[1] = tc0.y;
+      };
+
+      input.m_setTSpaceBasic = [](const SMikkTSpaceContext* ctx, const float fvTangent[], float fSign, int iFace, int iVert)
+      {
+        auto data = reinterpret_cast<SMikkTSpaceUserData*>(ctx->m_pUserData);
+        auto& tng = data->vertices[data->triangles[iFace].idx[iVert]].tng;
+        tng.x = fvTangent[0];
+        tng.y = fvTangent[1];
+        tng.z = fvTangent[2];
+        auto& sgn = data->vertices[data->triangles[iFace].idx[iVert]].sgn;
+        sgn = fSign;
+      };
+
+      SMikkTSpaceContext context;
+      context.m_pInterface = &input;
+      context.m_pUserData = &data;
+
+      BLAST_ASSERT(1 == genTangSpaceDefault(&context));
+    }
+
+    {
+      auto atlas = xatlas::Create();
+
+      for (uint32_t i = 0; i < uint32_t(instances_array.size()); ++i)
+      {
+        const auto& vertices = vertices_arrays[i];
+        const auto vertex_data = reinterpret_cast<const uint8_t*>(vertices.data());
+        const auto vertex_count = uint32_t(vertices.size());
+        const auto vertex_stride = uint32_t(sizeof(Vertex));
+
+        const auto& triangles = triangles_arrays[i];
+        const auto index_data = reinterpret_cast<const uint8_t*>(triangles.data());
+        const auto index_count = uint32_t(triangles.size()) * 3;
+        const auto index_format = xatlas::IndexFormat::UInt32;
+
+        xatlas::MeshDecl mesh_decl;
+        mesh_decl.vertexCount = vertex_count;
+        mesh_decl.vertexPositionData = vertex_data + 0;
+        mesh_decl.vertexPositionStride = vertex_stride;
+        mesh_decl.vertexNormalData = vertex_data + 16;
+        mesh_decl.vertexNormalStride = vertex_stride;
+        mesh_decl.vertexUvData = vertex_data + 48;
+        mesh_decl.vertexUvStride = vertex_stride;
+        mesh_decl.indexCount = index_count;
+        mesh_decl.indexData = index_data;
+        mesh_decl.indexFormat = index_format;
+        BLAST_ASSERT(xatlas::AddMeshError::Success == xatlas::AddMesh(atlas, mesh_decl));
+
+        //xatlas::UvMeshDecl uv_mesh_decl;
+        //uv_mesh_decl.vertexCount = vertex_count;
+        //uv_mesh_decl.vertexStride = vertex_stride;
+        //uv_mesh_decl.vertexUvData = vertex_data + 48;
+        //uv_mesh_decl.indexCount = index_count;
+        //uv_mesh_decl.indexData = index_data;
+        //uv_mesh_decl.indexFormat = index_format;
+        //uv_mesh_decl.indexOffset = 0;
+        //BLAST_ASSERT(xatlas::AddMeshError::Success == xatlas::AddUvMesh(atlas, uv_mesh_decl));
+      }
+
+      xatlas::ChartOptions chartOptions;
+      chartOptions.useInputMeshUvs = true;
+      xatlas::ComputeCharts(atlas, chartOptions);
+
+      xatlas::PackOptions packOptions;
+      packOptions.resolution = 2048;
+      packOptions.texelsPerUnit = 200.0;
+      xatlas::PackCharts(atlas, packOptions);
+
+      BLAST_ASSERT(atlas->meshCount == uint32_t(instances_array.size()));
+
+      for (uint32_t i = 0; i < atlas->meshCount; i++)
+      {
+        const auto& triangles = triangles_arrays[i];
+        const auto& mesh = atlas->meshes[i];
+        BLAST_ASSERT(mesh.indexCount == 3 * uint32_t(triangles.size()))
+
+        const auto& vertices = vertices_arrays[i];
+
+        std::vector<Vertex> temp_vertices(mesh.vertexCount);
+        for (uint32_t j = 0; j < mesh.vertexCount; j++)
+        {
+          const auto& vertex = mesh.vertexArray[j];
+
+          temp_vertices[j] = vertices[vertex.xref];
+          temp_vertices[j].msk = vertex.atlasIndex;
+          temp_vertices[j].tc1 = { vertex.uv[0] / atlas->width, vertex.uv[1] / atlas->height };
+        }
+
+        std::vector<Triangle> temp_triangles(mesh.indexCount / 3);
+        for (uint32_t j = 0; j < mesh.indexCount / 3; j++)
+        {
+          temp_triangles[j].idx[0] = mesh.indexArray[j * 3 + 0];
+          temp_triangles[j].idx[1] = mesh.indexArray[j * 3 + 1];
+          temp_triangles[j].idx[2] = mesh.indexArray[j * 3 + 2];
+        }
+
+        std::swap(vertices_arrays[i], temp_vertices);
+        std::swap(triangles_arrays[i], temp_triangles);
+
+        instances_array[i].vert_count = uint32_t(vertices_arrays[i].size());
+        instances_array[i].vert_offset = i > 0 ? instances_array[i - 1].vert_offset + instances_array[i - 1].vert_count : 0;
+        instances_array[i].prim_count = uint32_t(triangles_arrays[i].size());
+        instances_array[i].prim_offset = i > 0 ? instances_array[i - 1].prim_offset + instances_array[i - 1].prim_count : 0;
+      }
+
+      if (atlas->width > 0 && atlas->height > 0)
+      {
+        const auto white = glm::u8vec4(255, 255, 255, 255);
+
+        const auto triangle_raster_fn = [](glm::u8vec4* pixels, uint32_t size_x, uint32_t size_y, const float* v0, const float* v1, const float* v2, const glm::u8vec4& color)
+        {
+          const auto tc0 = glm::f32vec2(v0[0], v0[1]);
+          const auto tc1 = glm::f32vec2(v1[0], v1[1]);
+          const auto tc2 = glm::f32vec2(v2[0], v2[1]);
+
+          const auto min = glm::min(glm::min(tc0, tc1), tc2);
+          const auto max = glm::max(glm::max(tc0, tc1), tc2);
+
+          const auto denom = glm::determinant(glm::f32mat2x2(tc1 - tc0, tc2 - tc0));
+
+          for (uint32_t i = 0; i < size_y; ++i)
+          {
+            if (i < min.y || i > max.y) continue;
+
+            for (uint32_t j = 0; j < size_x; ++j)
+            {
+              if (j < min.x || j > max.x) continue;
+
+              const auto pnt = glm::f32vec2(j + 0.0f, i + 0.0f);
+
+              const auto v = glm::determinant(glm::f32mat2x2(pnt - tc0, tc2 - tc0)) / denom;
+              if (v < 0.0f || v > 1.0f) continue;
+
+              const auto w = glm::determinant(glm::f32mat2x2(tc1 - tc0, pnt - tc0)) / denom;
+              if (w < 0.0f || w > 1.0f) continue;
+              
+              const auto u = 1.0f - v - w;
+              if (u < 0.0f || u > 1.0f) continue;
+
+              pixels[(size_x * i + j)] = color;
+
+              const auto pattern = glm::floor(pnt / 16.0f);
+              const auto fading = 0.5f * glm::fract(0.5f * (pattern.x + pattern.y)) + 0.5f;
+
+              pixels[(size_x * i + j)].x *= fading;
+              pixels[(size_x * i + j)].y *= fading;
+              pixels[(size_x * i + j)].z *= fading;
+            }
+          }
+        };
+
+        textures_4.resize(atlas->atlasCount);
+
+        for(uint32_t z = 0; z < atlas->atlasCount; ++z)
+        {
+          //std::vector<uint8_t> image(atlas->width* atlas->height * 3);
+
+          Texture texture;
+          texture.texels.resize(atlas->width * atlas->height);
+          texture.extent_x = atlas->width;
+          texture.extent_y = atlas->height;
+        
+          for (uint32_t i = 0; i < atlas->meshCount; ++i)
+          {
+            const auto& mesh = atlas->meshes[i];
+
+            for (uint32_t j = 0; j < mesh.chartCount; ++j)
+            {
+              const auto& chart = mesh.chartArray[j];
+              if (chart.atlasIndex != z) continue;
+
+              BLAST_ASSERT(chart.atlasIndex != -1);
+
+              const auto color = glm::u8vec4(uint8_t((rand() % 255 + 192) * 0.5f), uint8_t((rand() % 255 + 192) * 0.5f), uint8_t((rand() % 255 + 192) * 0.5f), 255);
+
+              for (uint32_t k = 0; k < chart.faceCount; ++k)
+              {
+                const auto face = chart.faceArray[k];
+
+                const auto& vtx0 = mesh.vertexArray[mesh.indexArray[3 * face + 0]];
+                const auto& vtx1 = mesh.vertexArray[mesh.indexArray[3 * face + 1]];
+                const auto& vtx2 = mesh.vertexArray[mesh.indexArray[3 * face + 2]];
+
+
+                const int v0[2] = { int(vtx0.uv[0]), int(vtx0.uv[1]) };
+                const int v1[2] = { int(vtx1.uv[0]), int(vtx1.uv[1]) };
+                const int v2[2] = { int(vtx2.uv[0]), int(vtx2.uv[1]) };
+
+                triangle_raster_fn(texture.texels.data(), texture.extent_x, texture.extent_y, vtx0.uv, vtx1.uv, vtx2.uv, color);
+
+                //RasterizeLine(texture.texels.data(), texture.extent_x, texture.extent_y, v0, v1, white);
+                //RasterizeLine(texture.texels.data(), texture.extent_x, texture.extent_y, v1, v2, white);
+                //RasterizeLine(texture.texels.data(), texture.extent_x, texture.extent_y, v2, v0, white);
+              }
+            }
+          }
+
+          char filename[256];
+          snprintf(filename, sizeof(filename), "example_tris%02u.png", z);
+          printf("Writing '%s'...\n", filename);
+          stbi_write_png(filename, texture.extent_x, texture.extent_y, 4, texture.texels.data(), 4 * texture.extent_x);
+
+          textures_4[z] = std::move(texture);
+        }
+      }
+
+      xatlas::Destroy(atlas);
     }
 
     const auto tex_prepare_fn = [&gltf_model](uint32_t texture_index)
@@ -1084,9 +1274,9 @@ namespace RayGene3D
 
 
   void ConvertSceneOBJ(const tinyobj::attrib_t& obj_attrib, const std::vector<tinyobj::shape_t>& obj_shapes, const std::vector<tinyobj::material_t>& obj_materials,
-    std::vector<std::vector<Vertex>>& vertices_arrays, std::vector<std::vector<Triangle>>& triangles_arrays, std::vector<Instance>& instances_array, 
-    bool coordinate_flip, float position_scale,
-    const std::string& path, std::vector<Texture>& textures_0, std::vector<Texture>& textures_1, std::vector<Texture>& textures_2, std::vector<Texture>& textures_3)
+    std::vector<std::vector<Vertex>>& vertices_arrays, std::vector<std::vector<Triangle>>& triangles_arrays, std::vector<Instance>& instances_array,
+    bool coordinate_flip, float position_scale, const std::string& path,
+    std::vector<Texture>& textures_0, std::vector<Texture>& textures_1, std::vector<Texture>& textures_2, std::vector<Texture>& textures_3, std::vector<Texture>& textures_4)
   {
 
     const auto& obj_vertices = obj_attrib.vertices;
@@ -1103,8 +1293,7 @@ namespace RayGene3D
         const auto pos_x = obj_vertices[3 * obj_index.vertex_index + 0];
         const auto pos_y = obj_vertices[3 * obj_index.vertex_index + 1];
         const auto pos_z = obj_vertices[3 * obj_index.vertex_index + 2];
-        vertex.pos = flip ? glm::fvec3{pos_x,-pos_z, pos_y} : glm::fvec3{ pos_x, pos_y,-pos_z };
-        vertex.pos = scale * vertex.pos;
+        vertex.pos = scale * (flip ? glm::fvec3{ pos_x,-pos_z, pos_y } : glm::fvec3{ pos_x, pos_y,-pos_z });
       }
 
       if (obj_index.normal_index != -1)
@@ -1112,16 +1301,14 @@ namespace RayGene3D
         const auto nrm_x = obj_normals[3 * obj_index.normal_index + 0];
         const auto nrm_y = obj_normals[3 * obj_index.normal_index + 1];
         const auto nrm_z = obj_normals[3 * obj_index.normal_index + 2];
-        vertex.nrm = flip ? glm::fvec3{nrm_x,-nrm_z, nrm_y} : glm::fvec3{ nrm_x, nrm_y,-nrm_z };
-        vertex.nrm = glm::normalize(vertex.nrm);
+        const auto nrm = glm::normalize(flip ? glm::fvec3{ nrm_x,-nrm_z, nrm_y } : glm::fvec3{ nrm_x, nrm_y,-nrm_z });
       }
 
       if (obj_index.texcoord_index != -1)
       {
         const auto tc0_x = obj_texcoords[2 * obj_index.texcoord_index + 0];
         const auto tc0_y = obj_texcoords[2 * obj_index.texcoord_index + 1];
-        vertex.u = tc0_x;
-        vertex.v =-tc0_y;
+        vertex.tc0 = glm::f32vec2(tc0_x, -tc0_y);
       }
 
       return vertex;
@@ -1159,8 +1346,8 @@ namespace RayGene3D
     textures_3.clear();  // specular
 
 
-    uint32_t vertices_offset = 0;
-    uint32_t triangles_offset = 0;
+    auto vertices_offset = 0u;
+    auto triangles_offset = 0u;
 
     for (uint32_t i = 0; i < uint32_t(obj_shapes.size()); ++i)
     {
@@ -1182,12 +1369,15 @@ namespace RayGene3D
 
         auto hash_vertex_fn = [](const Vertex& vertex)
         {
-          const auto uref = reinterpret_cast<const uint32_t*>(&vertex);
-          const auto hash0 = std::hash<glm::u32vec4>()(glm::f32vec4{ uref[0], uref[1], uref[2], uref[3] });
-          const auto hash1 = std::hash<glm::u32vec4>()(glm::f32vec4{ uref[4], uref[5], uref[6], uref[7] });
-          const auto hash2 = std::hash<glm::u32vec4>()(glm::f32vec4{ uref[8], uref[9], uref[10], uref[11] });
-          return ((hash0 ^ (hash1 << 1)) >> 1) ^ (hash2 << 1);
-          //return (hash0 ^ (hash1 << 1));
+          const auto uref = reinterpret_cast<const glm::u32vec4*>(&vertex);
+
+          auto hash = 0u;
+          hash ^= std::hash<glm::u32vec4>()(uref[0]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+          hash ^= std::hash<glm::u32vec4>()(uref[1]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+          hash ^= std::hash<glm::u32vec4>()(uref[2]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+          hash ^= std::hash<glm::u32vec4>()(uref[3]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+
+          return hash;
         };
         auto compare_vertex_fn = [](const Vertex& l, const Vertex& r)
         {
@@ -1200,7 +1390,7 @@ namespace RayGene3D
           const auto result = vertex_map.emplace(vertex, uint32_t(vertices.size()));
           if (result.second)
           {
-            vertices.push_back({ vertex.pos, vertex.u, vertex.nrm, vertex.v });
+            vertices.push_back(vertex);
           }
           return result.first->second;
         };
@@ -1237,8 +1427,8 @@ namespace RayGene3D
 
           if (has_textures)
           {
-            const auto duv_10 = glm::fvec2(vtx1.u, vtx1.v) - glm::fvec2(vtx0.u, vtx0.v);
-            const auto duv_20 = glm::fvec2(vtx2.u, vtx2.v) - glm::fvec2(vtx0.u, vtx0.v);
+            const auto duv_10 = vtx1.tc0 - vtx0.tc0;
+            const auto duv_20 = vtx2.tc0 - vtx0.tc0;
             const auto det = glm::determinant(glm::fmat2x2(duv_10, duv_20));
             if (det == 0.0f)
             {
@@ -1255,82 +1445,6 @@ namespace RayGene3D
         }
 
         if (vertices.empty() || triangles.empty()) continue;
-
-
-        {
-          struct SMikkTSpaceUserData
-          {
-            std::vector<Triangle>& triangles;
-            std::vector<Vertex>& vertices;
-          };
-          SMikkTSpaceUserData data{ triangles, vertices };
-
-
-          SMikkTSpaceInterface input = { 0 };
-          input.m_getNumFaces = [](const SMikkTSpaceContext* ctx)
-          {
-            const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-            return int32_t(data->triangles.size());
-          };
-
-          input.m_getNumVerticesOfFace = [](const SMikkTSpaceContext* ctx, const int iFace)
-          {
-            const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-            return 3;
-          };
-
-          //input.m_getPosition = &GetPositionCb;
-          //input.m_getNormal = &GetNormalCb;
-          //input.m_getTexCoord = &GetTexCoordCb;
-          //input.m_setTSpaceBasic = &SetTspaceBasicCb;
-          //input.m_setTSpace = NULL;
-
-
-          input.m_getPosition = [](const SMikkTSpaceContext* ctx, float fvPosOut[], int iFace, int iVert)
-          {
-            const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-            const auto& pos = data->vertices[data->triangles[iFace].idx[iVert]].pos;
-            fvPosOut[0] = pos.x;
-            fvPosOut[1] = pos.y;
-            fvPosOut[2] = pos.z;
-          };
-
-          input.m_getNormal = [](const SMikkTSpaceContext* ctx, float fvNormOut[], int iFace, int iVert)
-          {
-            const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-            const auto& nrm = data->vertices[data->triangles[iFace].idx[iVert]].nrm;
-            fvNormOut[0] = nrm.x;
-            fvNormOut[1] = nrm.y;
-            fvNormOut[2] = nrm.z;
-          };
-
-          input.m_getTexCoord = [](const SMikkTSpaceContext* ctx, float fvTexcOut[], int iFace, int iVert)
-          {
-            const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-            const auto& u = data->vertices[data->triangles[iFace].idx[iVert]].u;
-            const auto& v = data->vertices[data->triangles[iFace].idx[iVert]].v;
-            fvTexcOut[0] = u;
-            fvTexcOut[1] = v;
-          };
-
-          input.m_setTSpaceBasic = [](const SMikkTSpaceContext* ctx, const float fvTangent[], float fSign, int iFace, int iVert)
-          {
-            auto data = reinterpret_cast<SMikkTSpaceUserData*>(ctx->m_pUserData);
-            auto& tgs = data->vertices[data->triangles[iFace].idx[iVert]].tgn;
-            tgs.x = fvTangent[0];
-            tgs.y = fvTangent[1];
-            tgs.z = fvTangent[2];
-            auto& sign = data->vertices[data->triangles[iFace].idx[iVert]].sign;
-            sign = fSign;
-          };
-
-          SMikkTSpaceContext context;
-          context.m_pInterface = &input;
-          context.m_pUserData = &data;
-
-          genTangSpaceDefault(&context);
-        }
-
 
         BLAST_LOG("Instance %d [%s]: Added vert/prim: %d/%d", i, obj_shapes[i].name.c_str(), vertices.size(), triangles.size());
 
@@ -1414,6 +1528,136 @@ namespace RayGene3D
 
       }
     }
+
+
+    for (uint32_t i = 0; i < uint32_t(instances_array.size()); ++i)
+    {
+      struct SMikkTSpaceUserData
+      {
+        std::vector<Triangle>& triangles;
+        std::vector<Vertex>& vertices;
+      };
+      SMikkTSpaceUserData data{ triangles_arrays[i], vertices_arrays[i] };
+
+      SMikkTSpaceInterface input = { 0 };
+      input.m_getNumFaces = [](const SMikkTSpaceContext* ctx)
+      {
+        const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
+        return int32_t(data->triangles.size());
+      };
+
+      input.m_getNumVerticesOfFace = [](const SMikkTSpaceContext* ctx, const int iFace)
+      {
+        const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
+        return 3;
+      };
+
+      //input.m_getPosition = &GetPositionCb;
+      //input.m_getNormal = &GetNormalCb;
+      //input.m_getTexCoord = &GetTexCoordCb;
+      //input.m_setTSpaceBasic = &SetTspaceBasicCb;
+      //input.m_setTSpace = NULL;
+
+
+      input.m_getPosition = [](const SMikkTSpaceContext* ctx, float fvPosOut[], int iFace, int iVert)
+      {
+        const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
+        const auto& pos = data->vertices[data->triangles[iFace].idx[iVert]].pos;
+        fvPosOut[0] = pos.x;
+        fvPosOut[1] = pos.y;
+        fvPosOut[2] = pos.z;
+      };
+
+      input.m_getNormal = [](const SMikkTSpaceContext* ctx, float fvNormOut[], int iFace, int iVert)
+      {
+        const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
+        const auto& nrm = data->vertices[data->triangles[iFace].idx[iVert]].nrm;
+        fvNormOut[0] = nrm.x;
+        fvNormOut[1] = nrm.y;
+        fvNormOut[2] = nrm.z;
+      };
+
+      input.m_getTexCoord = [](const SMikkTSpaceContext* ctx, float fvTexcOut[], int iFace, int iVert)
+      {
+        const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
+        const auto& tc0 = data->vertices[data->triangles[iFace].idx[iVert]].tc0;
+        fvTexcOut[0] = tc0.x;
+        fvTexcOut[1] = tc0.y;
+      };
+
+      input.m_setTSpaceBasic = [](const SMikkTSpaceContext* ctx, const float fvTangent[], float fSign, int iFace, int iVert)
+      {
+        auto data = reinterpret_cast<SMikkTSpaceUserData*>(ctx->m_pUserData);
+        auto& tng = data->vertices[data->triangles[iFace].idx[iVert]].tng;
+        tng.x = fvTangent[0];
+        tng.y = fvTangent[1];
+        tng.z = fvTangent[2];
+        auto& sgn = data->vertices[data->triangles[iFace].idx[iVert]].sgn;
+        sgn = fSign;
+      };
+
+      SMikkTSpaceContext context;
+      context.m_pInterface = &input;
+      context.m_pUserData = &data;
+
+      BLAST_ASSERT(1 == genTangSpaceDefault(&context));
+    }
+
+    {
+      auto atlas = xatlas::Create();
+
+      for (uint32_t i = 0; i < uint32_t(instances_array.size()); ++i)
+      {
+        const auto& vertices = vertices_arrays[i];
+        const auto vertex_data = reinterpret_cast<const uint8_t*>(vertices.data());
+        const auto vertex_count = uint32_t(vertices.size());
+        const auto vertex_stride = uint32_t(sizeof(Vertex));
+
+        const auto& triangles = triangles_arrays[i];
+        const auto index_data = reinterpret_cast<const uint8_t*>(triangles.data());
+        const auto index_count = uint32_t(triangles.size()) * 3;
+        const auto index_format = xatlas::IndexFormat::UInt32;
+
+        xatlas::MeshDecl mesh_decl;
+        mesh_decl.vertexCount = vertex_count;
+        mesh_decl.vertexPositionData = vertex_data + 0;
+        mesh_decl.vertexPositionStride = vertex_stride;
+        mesh_decl.vertexNormalData = vertex_data + 16;
+        mesh_decl.vertexNormalStride = vertex_stride;
+        mesh_decl.vertexUvData = vertex_data + 48;
+        mesh_decl.vertexUvStride = vertex_stride;
+        mesh_decl.indexCount = index_count;
+        mesh_decl.indexData = index_data;
+        mesh_decl.indexFormat = index_format;
+
+        BLAST_ASSERT(xatlas::AddMeshError::Success == xatlas::AddMesh(atlas, mesh_decl));
+      }
+
+      xatlas::Generate(atlas);
+      BLAST_ASSERT(atlas->meshCount == uint32_t(instances_array.size()));
+
+      for (uint32_t i = 0; i < atlas->meshCount; i++)
+      {
+        const auto& triangles = triangles_arrays[i];
+        const auto& mesh = atlas->meshes[i];
+        BLAST_ASSERT(mesh.indexCount == 3 * uint32_t(triangles.size()))
+
+          auto& vertices = vertices_arrays[i];
+
+        for (uint32_t j = 0; j < mesh.vertexCount; j++)
+        {
+          const auto& vertex = mesh.vertexArray[j];
+
+          vertices[vertex.xref].tc1 = { vertex.uv[0], vertex.uv[1] };
+        }
+      }
+
+      xatlas::Destroy(atlas);
+    }
+
+   
+
+
 
     const auto load_texture_fn = [&path](const std::string& name)
     {
@@ -1588,13 +1832,14 @@ namespace RayGene3D
     std::vector<Texture> textures_1;
     std::vector<Texture> textures_2;
     std::vector<Texture> textures_3;
+    std::vector<Texture> textures_4;
 
     std::vector<std::vector<Vertex>> temp_vertices;
     std::vector<std::vector<Triangle>> temp_triangles;
 
-    ConvertSceneOBJ(obj_attrib, obj_shapes, obj_materials, 
-      temp_vertices, temp_triangles, scene_instances, flip, scale, 
-      path, textures_0, textures_1, textures_2, textures_3);
+    ConvertSceneOBJ(obj_attrib, obj_shapes, obj_materials,
+      temp_vertices, temp_triangles, scene_instances, flip, scale, path,
+      textures_0, textures_1, textures_2, textures_3, textures_4);
 
     for (uint32_t i = 0; i < uint32_t(scene_instances.size()); ++i)
     {
@@ -1623,6 +1868,9 @@ namespace RayGene3D
     const auto textures3_property = CreatePropertyFromTextures(textures_3, mipmaps);
     root->SetObjectItem("textures3", textures3_property);
 
+    const auto textures4_property = CreatePropertyFromTextures(textures_4, mipmaps);
+    root->SetObjectItem("textures4", textures4_property);
+
     return root;
   }
 
@@ -1646,12 +1894,13 @@ namespace RayGene3D
     std::vector<Texture> textures_1;
     std::vector<Texture> textures_2;
     std::vector<Texture> textures_3;
+    std::vector<Texture> textures_4;
 
     std::vector<std::vector<Vertex>> temp_vertices;
     std::vector<std::vector<Triangle>> temp_triangles;
 
     ConvertSceneGLTF(model, temp_vertices, temp_triangles, scene_instances, flip, scale,
-      textures_0, textures_1, textures_2, textures_3);
+      textures_0, textures_1, textures_2, textures_3, textures_4);
 
     for (uint32_t i = 0; i < uint32_t(scene_instances.size()); ++i)
     {
@@ -1680,6 +1929,9 @@ namespace RayGene3D
     root->SetObjectItem("textures2", textures2_property);
     const auto textures3_property = CreatePropertyFromTextures(textures_3, mipmaps);
     root->SetObjectItem("textures3", textures3_property);
+
+    const auto textures4_property = CreatePropertyFromTextures(textures_4, mipmaps);
+    root->SetObjectItem("textures4", textures4_property);
 
     return root;
   }

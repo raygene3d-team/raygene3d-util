@@ -46,14 +46,26 @@ THE SOFTWARE.
 
 namespace RayGene3D
 {
+  //struct Vertex
+  //{
+  //  glm::f32vec3 pos{ 0.0f, 0.0f, 0.0f };
+  //  float u{ 0.0f };
+  //  glm::f32vec3 nrm{ 0.0f, 0.0f, 0.0f };
+  //  float v{ 0.0f };
+  //  glm::f32vec3 tgn{ 0.0f, 0.0f, 0.0f };
+  //  float sign{ 0.0f };
+  //};
+
   struct Vertex
   {
     glm::f32vec3 pos{ 0.0f, 0.0f, 0.0f };
-    float u{ 0.0f };
+    glm::u8vec4 col{ 0u, 0u, 0u, 0u };
     glm::f32vec3 nrm{ 0.0f, 0.0f, 0.0f };
-    float v{ 0.0f };
-    glm::f32vec3 tgn{ 0.0f, 0.0f, 0.0f };
-    float sign{ 0.0f };
+    uint32_t msk{ uint32_t(-1) };
+    glm::f32vec3 tng{ 0.0f, 0.0f, 0.0f };
+    float sgn{ 0.0f };
+    glm::f32vec2 tc0{ 0.0f, 0.0f };
+    glm::f32vec2 tc1{ 0.0f, 0.0f };
   };
 
   struct Triangle
@@ -122,7 +134,6 @@ namespace RayGene3D
     uint32_t extent_x{ 0 };
     uint32_t extent_y{ 0 };
   };
-
 
   class Raw
   {
