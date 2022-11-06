@@ -101,14 +101,17 @@ namespace RayGene3D
   {
     glm::f32mat3x4 transform;
 
+    uint32_t prim_offset{ 0 };
+    uint32_t prim_count{ 0 };
+    uint32_t vert_offset{ 0 };
+    uint32_t vert_count{ 0 };
+
     glm::f32vec3 emission{ 0.0f, 0.0f, 0.0f }; // emission color
     float intensity{ 0.0f }; // emission intensity 
     glm::f32vec3 diffuse{ 0.0f, 0.0f, 0.0f }; // diffuse color
-    float metallic{ 0.0f }; // metallic ratio (energy distribution between specular and diffuse) 
+    float shininess{ 0.0f }; // specular coherency
     glm::f32vec3 specular{ 0.0f, 0.0f, 0.0f }; // specular color
-    float shininess{ 0.0f }; // roughness value (specular reflection coherency)
-    glm::f32vec3 transmittance{ 0.0f, 0.0f, 0.0f }; // transmission color
-    float ior{ 1.0f }; // refraction index (energy distribution upon transmission)
+    float alpha{ 0.0f }; // transparency or ior
 
     uint32_t texture0_idx{ uint32_t(-1) };
     uint32_t texture1_idx{ uint32_t(-1) };
@@ -118,13 +121,7 @@ namespace RayGene3D
     glm::f32vec3 debug_color{ 0.0f, 0.0f, 0.0f };
     uint32_t geometry_idx{ uint32_t(-1) };
 
-
-    uint32_t prim_offset{ 0 };
-    uint32_t prim_count{ 0 };
-    uint32_t vert_offset{ 0 };
-    uint32_t vert_count{ 0 };
-
-    glm::u32vec4 padding[6];
+    glm::u32vec4 padding[7];
   };
 
   struct Screen
