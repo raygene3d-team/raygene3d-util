@@ -902,31 +902,23 @@ namespace RayGene3D
         {
           instance.emission = glm::vec3(0.0f, 0.0f, 0.0f);
           instance.intensity = 0.0f;
-          //material.ambient = glm::vec3(obj_material.ambient[0], obj_material.ambient[1], obj_material.ambient[2]);
-          //material.dissolve = obj_material.dissolve;
           instance.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-          instance.metallic = 1.0f;
-          instance.specular = glm::vec3(0.0f, 0.0f, 0.0f);
           instance.shininess = 1.0f;
-          instance.transmittance = glm::vec3(0.0f, 0.0f, 0.0f); // *(1.0f - obj_material.dissolve);
-          instance.ior = 1.0f;
+          instance.specular = glm::vec3(0.0f, 0.0f, 0.0f);
+          instance.alpha = 1.0f;
         }
         else
         {
           instance.emission = glm::vec3(0.0f, 0.0f, 0.0f);
           instance.intensity = 0.0f;
-          //material.ambient = glm::vec3(obj_material.ambient[0], obj_material.ambient[1], obj_material.ambient[2]);
-          //material.dissolve = obj_material.dissolve;
           instance.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-          instance.metallic = 1.0f;
-          instance.specular = glm::vec3(0.0f, 0.0f, 0.0f);
           instance.shininess = 1.0f;
-          instance.transmittance = glm::vec3(0.0f, 0.0f, 0.0f); // *(1.0f - obj_material.dissolve);
-          instance.ior = 1.0f;
+          instance.specular = glm::vec3(0.0f, 0.0f, 0.0f);
+          instance.alpha = 1.0f;
 
           const auto texture_0_id = gltf_material.pbrMetallicRoughness.baseColorTexture.index;
           instance.texture0_idx = texture_0_id == -1 ? uint32_t(-1) : tex_reindex_fn(texture_0_indices, texture_0_id);
-          const auto texture_1_id = gltf_material.occlusionTexture.index;
+          const auto texture_1_id = gltf_material.emissiveTexture.index;
           instance.texture1_idx = texture_1_id == -1 ? uint32_t(-1) : tex_reindex_fn(texture_1_indices, texture_1_id);
           const auto texture_2_id = gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.index;
           instance.texture2_idx = texture_2_id == -1 ? uint32_t(-1) : tex_reindex_fn(texture_2_indices, texture_2_id);
@@ -1458,11 +1450,11 @@ namespace RayGene3D
           //material.ambient = glm::vec3(obj_material.ambient[0], obj_material.ambient[1], obj_material.ambient[2]);
           //material.dissolve = obj_material.dissolve;
           instance.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-          instance.metallic = 1.0f;
-          instance.specular = glm::vec3(0.0f, 0.0f, 0.0f);
           instance.shininess = 1.0f;
-          instance.transmittance = glm::vec3(0.0f, 0.0f, 0.0f) * (1.0f - obj_material.dissolve);
-          instance.ior = 1.0f;
+          instance.specular = glm::vec3(0.0f, 0.0f, 0.0f);
+          instance.alpha = 1.0f;
+          //instance.transmittance = glm::vec3(0.0f, 0.0f, 0.0f) * (1.0f - obj_material.dissolve);
+          //instance.ior = 1.0f;
         }
         else
         {
@@ -1472,11 +1464,11 @@ namespace RayGene3D
           //material.ambient = glm::vec3(obj_material.ambient[0], obj_material.ambient[1], obj_material.ambient[2]);
           //material.dissolve = obj_material.dissolve;
           instance.diffuse = glm::vec3(obj_material.diffuse[0], obj_material.diffuse[1], obj_material.diffuse[2]);
-          instance.metallic = obj_material.metallic;
-          instance.specular = glm::vec3(obj_material.specular[0], obj_material.specular[1], obj_material.specular[2]);
           instance.shininess = obj_material.shininess;
-          instance.transmittance = glm::vec3(obj_material.transmittance[0], obj_material.transmittance[1], obj_material.transmittance[2]) * (1.0f - obj_material.dissolve);
-          instance.ior = obj_material.ior;
+          instance.specular = glm::vec3(obj_material.specular[0], obj_material.specular[1], obj_material.specular[2]);
+          instance.alpha = 1.0f; // -obj_material.dissolve;
+          //instance.transmittance = glm::vec3(obj_material.transmittance[0], obj_material.transmittance[1], obj_material.transmittance[2]) * (1.0f - obj_material.dissolve);
+          //instance.ior = obj_material.ior;
 
           const auto& texture_0_name = obj_material.diffuse_texname;
           instance.texture0_idx = texture_0_name.empty() ? uint32_t(-1) : tex_reindex_fn(textures_0_names, texture_0_name);
@@ -1494,14 +1486,12 @@ namespace RayGene3D
           case 3: // mirror
             instance.diffuse = glm::vec3(0.0f, 0.0f, 0.0f);
             instance.specular = glm::vec3(1.0f, 1.0f, 1.0f);
-            instance.transmittance = glm::vec3(0.0f, 0.0f, 0.0f);
             instance.shininess = float(1 << 16);
             break;
           case 7: // glass
             instance.diffuse = glm::vec3(0.0f, 0.0f, 0.0f);
             instance.specular = glm::vec3(0.0f, 0.0f, 0.0f);
-            instance.transmittance = glm::vec3(1.0f, 1.0f, 1.0f);
-            instance.ior = 1.5f;
+            instance.alpha = 1.5f;
             break;
           }
         }
@@ -1870,71 +1860,28 @@ namespace RayGene3D
       const auto item_property = std::shared_ptr<Property>(new Property(Property::TYPE_OBJECT));
       //item_property->SetValue(Property::object());
 
-      const auto transform_property = CreateFMat3x4Property();
-      const auto emission_property = CreateFVec3Property();
-      const auto intensity_property = CreateFloatProperty();
-      const auto diffuse_property = CreateFVec3Property();
-      const auto metallic_property = CreateFloatProperty();
-      const auto specular_property = CreateFVec3Property();
-      const auto shininess_propert = CreateFloatProperty();
-      const auto transmittance_property = CreateFVec3Property();
-      const auto ior_property = CreateFloatProperty();
+      const auto transform_property = CreateFMat3x4Property();   transform_property->FromFMat3x4(instance.transform);     item_property->SetObjectItem("transform", transform_property);
 
-      const auto texture0_idx_property = CreateUIntProperty();
-      const auto texture1_idx_property = CreateUIntProperty();
-      const auto texture2_idx_property = CreateUIntProperty();
-      const auto texture3_idx_property = CreateUIntProperty();
+      const auto prim_offset_property = CreateUIntProperty();    prim_offset_property->FromUInt(instance.prim_offset);    item_property->SetObjectItem("prim_offset", prim_offset_property);
+      const auto prim_count_property = CreateUIntProperty();     prim_count_property->FromUInt(instance.prim_count);      item_property->SetObjectItem("prim_count", prim_count_property);
+      const auto vert_offset_property = CreateUIntProperty();    vert_offset_property->FromUInt(instance.vert_offset);    item_property->SetObjectItem("vert_offset", vert_offset_property);
+      const auto vert_count_property = CreateUIntProperty();     vert_count_property->FromUInt(instance.vert_count);      item_property->SetObjectItem("vert_count", vert_count_property);
 
-      const auto debug_color_property = CreateFVec3Property();
+      const auto emission_property = CreateFVec3Property();      emission_property->FromFVec3(instance.emission);         item_property->SetObjectItem("emission", emission_property);
+      const auto intensity_property = CreateFloatProperty();     intensity_property->FromFloat(instance.intensity);       item_property->SetObjectItem("intensity", intensity_property);
+      const auto diffuse_property = CreateFVec3Property();       diffuse_property->FromFVec3(instance.diffuse);           item_property->SetObjectItem("diffuse", diffuse_property);
+      const auto shininess_property = CreateFloatProperty();     shininess_property->FromFloat(instance.shininess);       item_property->SetObjectItem("shininess", shininess_property);
+      const auto specular_property = CreateFVec3Property();      specular_property->FromFVec3(instance.specular);         item_property->SetObjectItem("specular", specular_property);
+      const auto alpha_property = CreateFloatProperty();         alpha_property->FromFloat(instance.alpha);               item_property->SetObjectItem("ior", alpha_property);
 
-      const auto geometry_idx_property = CreateUIntProperty();
+      const auto texture0_idx_property = CreateUIntProperty();   texture0_idx_property->FromUInt(instance.texture0_idx);  item_property->SetObjectItem("texture0_idx", texture0_idx_property);
+      const auto texture1_idx_property = CreateUIntProperty();   texture1_idx_property->FromUInt(instance.texture1_idx);  item_property->SetObjectItem("texture1_idx", texture1_idx_property);
+      const auto texture2_idx_property = CreateUIntProperty();   texture2_idx_property->FromUInt(instance.texture2_idx);  item_property->SetObjectItem("texture2_idx", texture2_idx_property);
+      const auto texture3_idx_property = CreateUIntProperty();   texture3_idx_property->FromUInt(instance.texture3_idx);  item_property->SetObjectItem("texture3_idx", texture3_idx_property);
 
-      const auto prim_offset_property = CreateUIntProperty();
-      const auto prim_count_property = CreateUIntProperty();
-      const auto vert_offset_property = CreateUIntProperty();
-      const auto vert_count_property = CreateUIntProperty();
-
-      transform_property->FromFMat3x4(instance.transform);
-      emission_property->FromFVec3(instance.emission);
-      intensity_property->FromFloat(instance.intensity);
-      diffuse_property->FromFVec3(instance.diffuse);
-      metallic_property->FromFloat(instance.metallic);
-      specular_property->FromFVec3(instance.specular);
-      shininess_propert->FromFloat(instance.shininess);
-      transmittance_property->FromFVec3(instance.transmittance);
-      ior_property->FromFloat(instance.ior);
-
-      texture0_idx_property->FromUInt(instance.texture0_idx);
-      texture1_idx_property->FromUInt(instance.texture1_idx);
-      texture2_idx_property->FromUInt(instance.texture2_idx);
-      texture3_idx_property->FromUInt(instance.texture3_idx);
-
-      debug_color_property->FromFVec3(instance.debug_color);
-
-      prim_offset_property->FromUInt(instance.prim_offset);
-      prim_count_property->FromUInt(instance.prim_count);
-      vert_offset_property->FromUInt(instance.vert_offset);
-      vert_count_property->FromUInt(instance.vert_count);
-
-      item_property->SetObjectItem("transform", transform_property);
-      item_property->SetObjectItem("emission", emission_property);
-      item_property->SetObjectItem("intensity", intensity_property);
-      item_property->SetObjectItem("diffuse", diffuse_property);
-      item_property->SetObjectItem("metallic", metallic_property);
-      item_property->SetObjectItem("specular", specular_property);
-      item_property->SetObjectItem("shininess", shininess_propert);
-      item_property->SetObjectItem("transmittance", transmittance_property);
-      item_property->SetObjectItem("ior", ior_property);
-      item_property->SetObjectItem("texture0_idx", texture0_idx_property);
-      item_property->SetObjectItem("texture1_idx", texture1_idx_property);
-      item_property->SetObjectItem("texture2_idx", texture2_idx_property);
-      item_property->SetObjectItem("texture3_idx", texture3_idx_property);
-      item_property->SetObjectItem("debug_color", debug_color_property);
-      item_property->SetObjectItem("prim_offset", prim_offset_property);
-      item_property->SetObjectItem("prim_count", prim_count_property);
-      item_property->SetObjectItem("vert_offset", vert_offset_property);
-      item_property->SetObjectItem("vert_count", vert_count_property);
-
+      const auto debug_color_property = CreateFVec3Property();   debug_color_property->FromFVec3(instance.debug_color);   item_property->SetObjectItem("debug_color", debug_color_property);
+      const auto geometry_idx_property = CreateUIntProperty();   geometry_idx_property->FromUInt(instance.geometry_idx);  item_property->SetObjectItem("geometry_idx", geometry_idx_property);
+      
       root_property->SetArrayItem(i, item_property);
     }
 
