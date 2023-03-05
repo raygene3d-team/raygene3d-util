@@ -156,6 +156,13 @@ namespace RayGene3D
     uint32_t extent_y{ 0 };
   };
 
+  struct ReflectionProbeLevel
+  {
+    uint32_t level{ 0 };
+    uint32_t size{ 0 };
+    uint32_t dummy[14];
+  };
+
   class Raw
   {
   protected:
