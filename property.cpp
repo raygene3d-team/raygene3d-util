@@ -2176,7 +2176,7 @@ namespace RayGene3D
 
   std::shared_ptr<Property> ImportAsCubeMapEXR(const std::string& path, const std::string& name, float exposure, uint32_t mipmaps)
   {
-    const auto cubemap_layer_counter = uint32_t(6);
+    const auto cubemap_layer_counter = 6u;
     const auto cubemap_layer_size = 1 << (mipmaps - 1);
 
     auto texture_property = std::shared_ptr<Property>(new Property(Property::TYPE_ARRAY));
@@ -2192,41 +2192,29 @@ namespace RayGene3D
       CUBEMAP_NEGATIVE_Z
     };
 
-    const auto uv_to_cube = [](const float& u, const float& v, const uint32_t& layer)
+    const auto uv_to_cube = [](float u, float v, uint32_t layer)
     {
       glm::fvec3 text_coord = { 0.0f, 0.0f, 0.0f };
 
       switch (layer)
       {
       case CUBEMAP_POSITIVE_X:
-        text_coord.x = 1.0f;
-        text_coord.y = -(2.0f * v - 1.0f);
-        text_coord.z = -(2.0f * u - 1.0f);
+        text_coord = { 1.0f, -(2.0f * v - 1.0f), -(2.0f * u - 1.0f) };
         break;
       case CUBEMAP_NEGATIVE_X:
-        text_coord.x = -1.0f;
-        text_coord.y = -(2.0f * v - 1.0f);
-        text_coord.z = (2.0f * u - 1.0f);
+        text_coord = { -1.0f, -(2.0f * v - 1.0f), (2.0f * u - 1.0f) };
         break;
       case CUBEMAP_POSITIVE_Y:
-        text_coord.x = (2.0f * u - 1.0f);
-        text_coord.y = 1.0f;
-        text_coord.z = (2.0f * v - 1.0f);
+        text_coord = { (2.0f * u - 1.0f), 1.0f, (2.0f * v - 1.0f) };
         break;
       case CUBEMAP_NEGATIVE_Y:
-        text_coord.x = (2.0f * u - 1.0f);
-        text_coord.y = -1.0f;
-        text_coord.z = -(2.0f * v - 1.0f);
+        text_coord = { (2.0f * u - 1.0f), -1.0f, -(2.0f * v - 1.0f) };
         break;
       case CUBEMAP_POSITIVE_Z:
-        text_coord.x = (2.0f * u - 1.0f);
-        text_coord.y = -(2.0f * v - 1.0f);
-        text_coord.z = 1.0f;
+        text_coord = { (2.0f * u - 1.0f), -(2.0f * v - 1.0f), 1.0f };
         break;
       case CUBEMAP_NEGATIVE_Z:
-        text_coord.x = -(2.0f * u - 1.0f);
-        text_coord.y = -(2.0f * v - 1.0f);
-        text_coord.z = -1.0f;
+        text_coord = { -(2.0f * u - 1.0f), -(2.0f * v - 1.0f), -1.0f };
         break;
       }
       return glm::normalize(text_coord);
@@ -2240,10 +2228,10 @@ namespace RayGene3D
       return text_coord;
     };
 
-    int32_t pano_tex_x = 0;
-    int32_t pano_tex_y = 0;
-    int32_t src_tex_n = 4;
-    int32_t dst_tex_n = 4;
+    const auto src_tex_n = 4;
+    const auto dst_tex_n = 4;
+    auto pano_tex_x = 0;
+    auto pano_tex_y = 0;
     float* pano_tex_data = nullptr;
     BLAST_ASSERT(0 == LoadEXR(&pano_tex_data, &pano_tex_x, &pano_tex_y, (name).c_str(), nullptr));
 
@@ -2275,10 +2263,10 @@ namespace RayGene3D
             const auto index = j + k * dst_tex_x;
             const auto offset = index * dst_tex_n;
 
-            dst_tex_data[offset + 0] = src_tex_n > 0 ? pano_tex_data[texel_num * src_tex_n + 0] * exposure : 0;
-            dst_tex_data[offset + 1] = src_tex_n > 1 ? pano_tex_data[texel_num * src_tex_n + 1] * exposure : 0;
-            dst_tex_data[offset + 2] = src_tex_n > 2 ? pano_tex_data[texel_num * src_tex_n + 2] * exposure : 0;
-            dst_tex_data[offset + 3] = src_tex_n > 3 ? pano_tex_data[texel_num * src_tex_n + 3] * exposure : 0;
+            dst_tex_data[offset + 0] = pano_tex_data[texel_num * src_tex_n + 0] * exposure;
+            dst_tex_data[offset + 1] = pano_tex_data[texel_num * src_tex_n + 1] * exposure;
+            dst_tex_data[offset + 2] = pano_tex_data[texel_num * src_tex_n + 2] * exposure;
+            dst_tex_data[offset + 3] = pano_tex_data[texel_num * src_tex_n + 3] * exposure;
           }
         }
       }

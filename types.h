@@ -160,7 +160,7 @@ namespace RayGene3D
   {
     uint32_t level{ 0 };
     uint32_t size{ 0 };
-    uint32_t dummy[14];
+    uint32_t dummy[62];
   };
 
   class Raw
