@@ -59,7 +59,7 @@ namespace RayGene3D
     typedef bool bool_t;
     typedef float real_t;
     typedef int32_t sint_t;
-    typedef uint32_t uint_t;    
+    typedef uint32_t uint_t;
     typedef std::string string_t;
     typedef std::map<std::string, std::shared_ptr<Property>> object_t;
     typedef std::vector<std::shared_ptr<Property>> array_t;
@@ -92,7 +92,7 @@ namespace RayGene3D
     const std::shared_ptr<Property>& GetArrayItem(uint32_t index) const { return std::get<array_t>(_value).at(index); }
     void SetArrayItem(uint32_t index, const std::shared_ptr<Property>& property) { std::get<array_t>(_value).at(index) = property; }
     uint32_t GetArraySize() const { return uint32_t(std::get<array_t>(_value).size()); }
-    void SetArraySize(uint32_t size) { std::get<array_t>(_value).resize(size); }    
+    void SetArraySize(uint32_t size) { std::get<array_t>(_value).resize(size); }
 
     void RawAllocate(uint32_t size) { std::get<raw_t>(_value).Allocate(size); }
     void RawFree() { std::get<raw_t>(_value).Free(); }
@@ -107,8 +107,8 @@ namespace RayGene3D
       const auto bytes = GetRawBytes(uint32_t(offset * sizeof(T))); return { reinterpret_cast<const T*>(bytes.first), uint32_t(bytes.second / sizeof(T)) };
     }
 
-    
-    
+
+
   public:
     void FromFMat3x4(const glm::f32mat3x4& mat);
     void FromFVec4(const glm::f32vec4& vec);
@@ -225,3 +225,5 @@ namespace RayGene3D
   void SaveProperty(const std::string& directory, const std::string& name, const std::shared_ptr<Property>& root);
   std::shared_ptr<Property> LoadProperty(const std::string& directory, const std::string& name);
 }
+
+

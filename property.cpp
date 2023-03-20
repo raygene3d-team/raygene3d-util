@@ -27,7 +27,7 @@ THE SOFTWARE.
 ================================================================================*/
 
 
-#include "property.h"
+#include "node.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobjloader/tiny_obj_loader.h>
@@ -481,10 +481,10 @@ namespace RayGene3D
   }
 
   std::shared_ptr<Property> CreateFVec4Property()
-  {  
+  {
     auto property = std::shared_ptr<Property>(new Property(Property::TYPE_ARRAY));
     property->SetArraySize(4);
-    
+
     for (uint32_t i = 0; i < property->GetArraySize(); ++i)
     {
       auto temp = std::shared_ptr<Property>(new Property(Property::TYPE_REAL));
@@ -533,10 +533,10 @@ namespace RayGene3D
   }
 
   std::shared_ptr<Property> CreateUVec4Property()
-  {  
+  {
     auto property = std::shared_ptr<Property>(new Property(Property::TYPE_ARRAY));
     property->SetArraySize(4);
-    
+
     for (uint32_t i = 0; i < property->GetArraySize(); ++i)
     {
       auto temp = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
@@ -624,7 +624,7 @@ namespace RayGene3D
 
 
   void ConvertSceneGLTF(const tinygltf::Model& gltf_model,
-    std::vector<std::vector<Vertex>>& vertices_arrays, std::vector<std::vector<Triangle>>& triangles_arrays, std::vector<Instance>& instances_array, 
+    std::vector<std::vector<Vertex>>& vertices_arrays, std::vector<std::vector<Triangle>>& triangles_arrays, std::vector<Instance>& instances_array,
     bool coordinate_flip, float position_scale,
     std::vector<Texture>& textures_0, std::vector<Texture>& textures_1, std::vector<Texture>& textures_2, std::vector<Texture>& textures_3, std::vector<Texture>& textures_4)
   {
@@ -678,7 +678,7 @@ namespace RayGene3D
       vertex.pos = scale * (flip ? glm::fvec3{ pos[0],-pos[2],-pos[1] } : glm::fvec3{ pos[0], pos[1],-pos[2] });
 
       const auto nrm = reinterpret_cast<const float*>(nrm_data.first + nrm_stride * index);
-      vertex.nrm = glm::normalize(flip ? glm::fvec3{nrm[0],-nrm[2],-nrm[1]} : glm::fvec3{nrm[0], nrm[1],-nrm[2]});
+      vertex.nrm = glm::normalize(flip ? glm::fvec3{ nrm[0],-nrm[2],-nrm[1] } : glm::fvec3{ nrm[0], nrm[1],-nrm[2] });
 
       const auto tc0 = reinterpret_cast<const float*>(tc0_data.first + tc0_stride * index);
       vertex.tc0 = glm::f32vec2(tc0[0], tc0[1]);
@@ -729,7 +729,7 @@ namespace RayGene3D
         const auto tc0_data = access_buffer_fn(gltf_texcoords);
         const auto tc0_stride = 8;
 
-        
+
 
 
         auto degenerated_geom_prim_count = 0;
@@ -738,7 +738,7 @@ namespace RayGene3D
         const auto& hash_vertex_fn = [](const Vertex& vertex)
         {
           const auto uref = reinterpret_cast<const glm::u32vec4*>(&vertex);
-          
+
           auto hash = 0u;
           hash ^= std::hash<glm::u32vec4>()(uref[0]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
           hash ^= std::hash<glm::u32vec4>()(uref[1]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
@@ -772,7 +772,7 @@ namespace RayGene3D
         const auto indices_stride = indices_view.byteStride;
 
         const auto& indices_buffer = gltf_model.buffers[indices_view.buffer];
-        
+
 
         if (gltf_indices.componentType == TINYGLTF_COMPONENT_TYPE_INT || gltf_indices.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT)
         {
@@ -780,7 +780,7 @@ namespace RayGene3D
 
           for (uint32_t k = 0; k < gltf_indices.count / 3; ++k)
           {
-            const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 0], coordinate_flip, position_scale, 
+            const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 0], coordinate_flip, position_scale,
               pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
             const auto vtx1 = create_vertex_fn(indices_data[k * 3 + 1], coordinate_flip, position_scale,
               pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
@@ -824,7 +824,7 @@ namespace RayGene3D
         else if (gltf_indices.componentType == TINYGLTF_COMPONENT_TYPE_SHORT || gltf_indices.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT)
         {
           const auto indices_data = reinterpret_cast<const uint16_t*>(&indices_buffer.data[gltf_indices.byteOffset]);
-          
+
           for (uint32_t k = 0; k < gltf_indices.count / 3; ++k)
           {
             const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 1], coordinate_flip, position_scale,
@@ -898,7 +898,7 @@ namespace RayGene3D
         instance.transform;
 
         const auto debug = false;
-        if(debug)
+        if (debug)
         {
           instance.emission = glm::vec3(0.0f, 0.0f, 0.0f);
           instance.intensity = 0.0f;
@@ -1072,7 +1072,7 @@ namespace RayGene3D
         const auto& mesh = atlas->meshes[i];
         BLAST_ASSERT(mesh.indexCount == 3 * uint32_t(triangles.size()))
 
-        const auto& vertices = vertices_arrays[i];
+          const auto& vertices = vertices_arrays[i];
 
         std::vector<Vertex> temp_vertices(mesh.vertexCount);
         for (uint32_t j = 0; j < mesh.vertexCount; j++)
@@ -1131,7 +1131,7 @@ namespace RayGene3D
 
               const auto w = glm::determinant(glm::f32mat2x2(tc1 - tc0, pnt - tc0)) / denom;
               if (w < 0.0f || w > 1.0f) continue;
-              
+
               const auto u = 1.0f - v - w;
               if (u < 0.0f || u > 1.0f) continue;
 
@@ -1149,7 +1149,7 @@ namespace RayGene3D
 
         textures_4.resize(atlas->atlasCount);
 
-        for(uint32_t z = 0; z < atlas->atlasCount; ++z)
+        for (uint32_t z = 0; z < atlas->atlasCount; ++z)
         {
           //std::vector<uint8_t> image(atlas->width* atlas->height * 3);
 
@@ -1157,7 +1157,7 @@ namespace RayGene3D
           texture.texels.resize(atlas->width * atlas->height);
           texture.extent_x = atlas->width;
           texture.extent_y = atlas->height;
-        
+
           for (uint32_t i = 0; i < atlas->meshCount; ++i)
           {
             const auto& mesh = atlas->meshes[i];
@@ -1774,7 +1774,7 @@ namespace RayGene3D
       xatlas::Destroy(atlas);
     }
 
-   
+
 
 
 
@@ -1813,7 +1813,7 @@ namespace RayGene3D
         textures_0[i] = std::move(load_texture_fn(textures_0_names[i]));
       }
 
-  //    instance.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
+      //    instance.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
     }
 
     if (!textures_1_names.empty())
@@ -1881,7 +1881,7 @@ namespace RayGene3D
 
       const auto debug_color_property = CreateFVec3Property();   debug_color_property->FromFVec3(instance.debug_color);   item_property->SetObjectItem("debug_color", debug_color_property);
       const auto geometry_idx_property = CreateUIntProperty();   geometry_idx_property->FromUInt(instance.geometry_idx);  item_property->SetObjectItem("geometry_idx", geometry_idx_property);
-      
+
       root_property->SetArrayItem(i, item_property);
     }
 
@@ -2348,7 +2348,7 @@ namespace RayGene3D
   std::shared_ptr<Property> CreatePropertyFromTextures(const std::vector<Texture>& textures, uint32_t mipmaps)
   {
     auto textures_property = std::shared_ptr<Property>(new Property(Property::TYPE_ARRAY));
- 
+
     if (textures.empty())
     {
       textures_property->SetArraySize(uint32_t(1));
