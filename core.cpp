@@ -28,10 +28,10 @@ THE SOFTWARE.
 
 
 #include "core.h"
-#include "../raygene3d-base/vlk/vlk_device.h"
+#include "../raygene3d-core/vlk/vlk_device.h"
 
 #ifdef _WIN32
-#include "../raygene3d-base/d11/d11_device.h"
+#include "../raygene3d-core/d11/d11_device.h"
 #endif
 
 namespace RayGene3D

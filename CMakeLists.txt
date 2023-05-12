@@ -1,6 +1,6 @@
 set(NAME raygene3d)
 
-set(CORE_DIR ${CMAKE_SOURCE_DIR}/${NAME}-core)
+set(CORE_DIR ${CMAKE_SOURCE_DIR}/${NAME}-util)
 
 #set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
@@ -29,16 +29,16 @@ set(SOURCE core.h core.cpp
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCE})
 
-add_library(${NAME}-core STATIC ${SOURCE})
+add_library(${NAME}-util STATIC ${SOURCE})
 	
-target_include_directories(${NAME}-core PUBLIC
+target_include_directories(${NAME}-util PUBLIC
 	${CMAKE_SOURCE_DIR}/3rdparty
 )
 
 IF(WIN32)
 
 ELSE(WIN32)
-target_link_libraries(${NAME}-core PRIVATE
+target_link_libraries(${NAME}-util PRIVATE
 	optimized -ldl
 	optimized -lpthread
 )

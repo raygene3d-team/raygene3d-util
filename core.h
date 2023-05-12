@@ -30,7 +30,7 @@ THE SOFTWARE.
 #include "property.h"
 #include "handler.h"
 
-#include "../raygene3d-base/device.h"
+#include "../raygene3d-core/device.h"
 
 namespace RayGene3D
 {
