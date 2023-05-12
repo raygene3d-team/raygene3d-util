@@ -28,12 +28,17 @@ THE SOFTWARE.
 
 
 #pragma once
-#include "types.h"
+#include "property.h"
+#
 
 namespace RayGene3D
 {
+  class Core;
+
   class Handler : public Usable
   {
+  protected:
+    std::weak_ptr<Core> core;
 
   public:
     void Initialize() override;
@@ -41,7 +46,7 @@ namespace RayGene3D
     void Discard() override;
 
   public:
-    Handler(const std::string& name);
+    Handler(const std::string& name, const std::shared_ptr<Core>& core) : Usable(name), core(core) {}
     virtual ~Handler();
   };
 }

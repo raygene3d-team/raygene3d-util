@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 
 #pragma once
-#include "../raygene3d-core/base.h"
+#include "../raygene3d-base/base.h"
 
 #define GLM_FORCE_LEFT_HANDED
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -108,10 +108,10 @@ namespace RayGene3D
 
     glm::f32vec3 emission{ 0.0f, 0.0f, 0.0f }; // emission color
     float intensity{ 0.0f }; // emission intensity 
-    glm::f32vec3 diffuse{ 0.0f, 0.0f, 0.0f }; // diffuse color
+    glm::f32vec3 diffuse{ 1.0f, 1.0f, 1.0f }; // diffuse color
     float shininess{ 0.0f }; // specular coherency
     glm::f32vec3 specular{ 0.0f, 0.0f, 0.0f }; // specular color
-    float alpha{ 0.0f }; // transparency or ior
+    float alpha{ 1.0f }; // transparency or ior
 
     uint32_t texture0_idx{ uint32_t(-1) };
     uint32_t texture1_idx{ uint32_t(-1) };
@@ -155,6 +155,8 @@ namespace RayGene3D
     uint32_t extent_x{ 0 };
     uint32_t extent_y{ 0 };
   };
+
+
 
   class Raw
   {

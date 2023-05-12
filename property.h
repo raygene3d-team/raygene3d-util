@@ -37,6 +37,29 @@ THE SOFTWARE.
 
 namespace RayGene3D
 {
+  //class Tickable
+  //{
+  //protected:
+  //  std::string name;
+
+  //protected:
+  //  uint32_t limit{ 1u };
+  //  uint32_t count{ 0u };
+
+  //public:
+  //  virtual void Tick() = 0;
+
+  //public:
+  //  const std::string& GetName() const { return name; }
+
+  //public:
+  //  uint32_t GetLimit() const { return limit; }
+  //  uint32_t GetCount() const { return count; }
+
+  //public:
+  //  Tickable(const std::string& name) : name(name) {};
+  //  virtual ~Tickable() {}
+  //};
 
   class Property
   {
