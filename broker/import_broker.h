@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 
 #pragma once
-#include "../handler.h"
+#include "../broker.h"
 
 namespace RayGene3D
 {
@@ -36,7 +36,7 @@ namespace RayGene3D
 
   //class tinygltf::Model;
 
-  class ImportHandler : public Handler
+  class ImportBroker : public Broker
   {
   protected:
     std::string file_name;
@@ -87,7 +87,7 @@ namespace RayGene3D
 
 
   public:
-    ImportHandler(const std::string& name, const std::shared_ptr<Core>& core);
-    virtual ~ImportHandler();
+    ImportBroker(const std::shared_ptr<Core>& core, const std::shared_ptr<Util>& util);
+    virtual ~ImportBroker();
   };
 }

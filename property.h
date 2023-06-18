@@ -61,7 +61,8 @@ namespace RayGene3D
   //  virtual ~Tickable() {}
   //};
 
-  class Property
+
+  class Property //Entity
   {
   public:
     enum Type
@@ -238,10 +239,10 @@ namespace RayGene3D
   std::shared_ptr<Property> CreateBufferProperty(const void* data, uint32_t stride, uint32_t count);
   std::shared_ptr<Property> CreateTextureProperty(const void* data, uint32_t stride, uint32_t size_x, uint32_t size_y, uint32_t mipmaps);
 
-  std::shared_ptr<Property> ImportOBJ(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps);
-  std::shared_ptr<Property> ImportGLTF(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps);
+  //std::shared_ptr<Property> ImportOBJ(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps);
+  //std::shared_ptr<Property> ImportGLTF(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps);
 
-  std::shared_ptr<Property> ImportEXR(const std::string& path, const std::string& name, float exposure, uint32_t mipmaps);
+  //std::shared_ptr<Property> ImportEXR(const std::string& path, const std::string& name, float exposure, uint32_t mipmaps);
 
   std::shared_ptr<Property> CreatePropertyFromTextures(const std::vector<Texture>& textures, uint32_t mipmaps);
 

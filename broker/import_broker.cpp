@@ -25,9 +25,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ================================================================================*/
+#pragma once
 
-
-#include "import_handler.h"
+#include "import_broker.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobjloader/tiny_obj_loader.h>
@@ -441,7 +441,7 @@ namespace RayGene3D
   //  }
   //}
 
-  void ImportHandler::Initialize()
+  void ImportBroker::Initialize()
   {
     const auto extension = ExtractExtension(file_name);
 
@@ -458,17 +458,17 @@ namespace RayGene3D
     UpdateTangents(instances, triangles, vertices);
   }
 
-  void ImportHandler::Use()
+  void ImportBroker::Use()
   {}
 
-  void ImportHandler::Discard()
+  void ImportBroker::Discard()
   {
     instances.clear();
     triangles.clear();
     vertices.clear();
   }
 
-  void ImportHandler::ImportGLTF()
+  void ImportBroker::ImportGLTF()
   {
     tinygltf::TinyGLTF gltf_ctx;
 
@@ -641,7 +641,7 @@ namespace RayGene3D
     }
   }
 
-  void ImportHandler::ImportOBJM()
+  void ImportBroker::ImportOBJM()
   {
     tinyobj::attrib_t obj_attrib;
     std::vector<tinyobj::shape_t> obj_shapes;
@@ -855,10 +855,10 @@ namespace RayGene3D
     }
   }
 
-  ImportHandler::ImportHandler(const std::string& name, const std::shared_ptr<Core>& core)
-    : Handler(name, core)
+  ImportBroker::ImportBroker(const std::shared_ptr<Core>& core, const std::shared_ptr<Util>& util)
+    : Broker("ImportBroker", core, util)
   {}
 
-  ImportHandler::~ImportHandler()
+  ImportBroker::~ImportBroker()
   {}
 }

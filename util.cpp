@@ -27,26 +27,30 @@ THE SOFTWARE.
 ================================================================================*/
 
 
-#pragma once
-#include "property.h"
-#
+#include "util.h"
 
 namespace RayGene3D
 {
-  class Core;
 
-  class Handler : public Usable
+  void Util::Initialize()
   {
-  protected:
-    std::weak_ptr<Core> core;
+  }
 
-  public:
-    void Initialize() override;
-    void Use() override;
-    void Discard() override;
+  void Util::Use()
+  {
+  }
 
-  public:
-    Handler(const std::string& name, const std::shared_ptr<Core>& core) : Usable(name), core(core) {}
-    virtual ~Handler();
+  void Util::Discard()
+  {
+  }
+
+  Util::Util(Storage storage)
+    : Usable("raygene3d-util")
+    , storage(storage)
+  {
+  }
+
+  Util::~Util()
+  {
   };
 }

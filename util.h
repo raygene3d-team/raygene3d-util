@@ -26,55 +26,46 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ================================================================================*/
 
-
-#include "core.h"
-#include "../raygene3d-core/vlk/vlk_device.h"
-
-#ifdef _WIN32
-#include "../raygene3d-core/d11/d11_device.h"
-#endif
+#pragma once
+#include "property.h"
+#include "broker.h"
 
 namespace RayGene3D
 {
-
-  void Core::Initialize()
+  class Util : public Usable
   {
-    device->Initialize();
-  }
-
-  void Core::Use()
-  {
-    device->Use();
-  }
-
-  void Core::Discard()
-  {
-    device->Discard();
-  }
-
-  Core::Core(Acceleration acceleration, Storage storage)
-    : Usable("raygene3d-core")
-    , acceleration(acceleration)
-    , storage(storage)
-  {
-    switch (acceleration)
+  public:
+    enum Storage
     {
-    case ACCELERATION_VLK:
-      device = std::shared_ptr<Device>(new VLKDevice("vlk_device"));
-      break;
+      STORAGE_UNKNOWN = 0,
+      STORAGE_LOCAL = 1,
+      STORAGE_REMOTE = 2,
+    };
 
-    case ACCELERATION_D11:
-#ifdef _WIN32
-      device = std::shared_ptr<Device>(new D11Device("d11_device"));
-#else
-      device = std::shared_ptr<Device>(new VLKDevice("vlk_device"));
-#endif
-      break;
-    }
-  }
+  protected:
+    Storage storage;
 
-  Core::~Core()
-  {
-    device.reset();
+  protected:
+    std::shared_ptr<Property> property;
+
+  protected:
+    std::list<std::weak_ptr<Broker>> brokers;
+
+  public:
+    void Initialize() override;
+    void Use() override;
+    void Discard() override;
+
+  public:
+    const std::shared_ptr<Property>& AccessProperty() { return property; }
+
+  public:
+    void AddBroker(const std::shared_ptr<Broker>& broker) { return brokers.push_back(broker); }
+    void VisitBroker(std::function<void(const std::shared_ptr<Broker>&)> visitor) { for (auto& broker : brokers) visitor(broker.lock()); }
+    void RemoveBroker(const std::shared_ptr<Broker>& broker) { return brokers.remove(broker); }
+
+  public:
+    Util(Storage storage);
+    virtual ~Util();
   };
 }

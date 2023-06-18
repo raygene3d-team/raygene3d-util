@@ -26,41 +26,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ================================================================================*/
 
+
 #pragma once
 #include "property.h"
-#include "handler.h"
-
-#include "../raygene3d-core/device.h"
 
 namespace RayGene3D
 {
-  class Core : public Usable
+  class Core;
+  class Util;
+
+  class Broker : public Usable
   {
-  public:
-    enum Storage
-    {
-      STORAGE_UNKNOWN = 0,
-      STORAGE_LOCAL = 1,
-      STORAGE_REMOTE = 2,
-    };
-
-    enum Acceleration
-    {
-      ACCELERATION_UNKNOWN = 0,
-      ACCELERATION_D11 = 1,
-      ACCELERATION_VLK = 2,
-    };
-
   protected:
-    Storage storage;
-    Acceleration acceleration;
-
-  protected:
-    std::shared_ptr<Property> property;
-    std::shared_ptr<Device> device;
-
-  protected:
-    std::list<std::shared_ptr<Handler>> handlers;
+    std::weak_ptr<Core> core;
+    std::weak_ptr<Util> util;
 
   public:
     void Initialize() override;
@@ -68,15 +47,11 @@ namespace RayGene3D
     void Discard() override;
 
   public:
-    const std::shared_ptr<Property>& AccessProperty() { return property; }
-    const std::shared_ptr<Device>& AccessDevice() { return device; }
-
-  public:
-    void RegisterHandler(const std::shared_ptr<Handler>& handler) { handlers.push_back(handler); }
-    void UnregisterHandler(const std::shared_ptr<Handler>& handler) { handlers.remove(handler); }
-
-  public:
-    Core(Acceleration acceleration, Storage storage);
-    virtual ~Core();
+    Broker(const std::string& name, const std::shared_ptr<Core>& core, const std::shared_ptr<Util>& util)
+      : Usable(name)
+      , core(core)
+      , util(util)
+    {}
+    virtual ~Broker();
   };
 }
