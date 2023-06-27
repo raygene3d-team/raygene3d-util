@@ -57,11 +57,11 @@ namespace RayGene3D
     void Discard() override;
 
   public:
-    const std::shared_ptr<Property>& AccessProperty() { return property; }
+    const std::shared_ptr<Property>& GetProperty() { return property; }
 
   public:
     void AddBroker(const std::shared_ptr<Broker>& broker) { return brokers.push_back(broker); }
-    void VisitBroker(std::function<void(const std::shared_ptr<Broker>&)> visitor) { for (auto& broker : brokers) visitor(broker.lock()); }
+    void VisitBroker(std::function<void(const std::shared_ptr<Broker>&)> visitor) { for (const auto& broker : brokers) visitor(broker.lock()); }
     void RemoveBroker(const std::shared_ptr<Broker>& broker) { return brokers.remove(broker); }
 
   public:
