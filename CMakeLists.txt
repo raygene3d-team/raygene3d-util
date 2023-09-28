@@ -2,23 +2,24 @@ set(NAME raygene3d)
 
 set(UTIL_DIR ${CMAKE_SOURCE_DIR}/${NAME}-util/util)
 set(UTIL_SOURCE
-	${UTIL_DIR}/broker.h
-	${UTIL_DIR}/broker.cpp
+	${UTIL_DIR}/property.h
+	${UTIL_DIR}/property.cpp
+	${UTIL_DIR}/storage.h
+	${UTIL_DIR}/storage.cpp
+	${UTIL_DIR}/types.h
+	${UTIL_DIR}/types.cpp
 )
-
-set(UTIL_BROKER_DIR ${UTIL_DIR}/broker)
-set(UTIL_BROKER_SOURCE
-	${UTIL_BROKER_DIR}/import_broker.h
-	${UTIL_BROKER_DIR}/import_broker.cpp
-	${UTIL_BROKER_DIR}/lightmap_broker.h
-	${UTIL_BROKER_DIR}/lightmap_broker.cpp
-	${UTIL_BROKER_DIR}/environment_broker.h
-	${UTIL_BROKER_DIR}/environment_broker.cpp
+set(UTIL_STORAGE_DIR ${UTIL_DIR}/storage)
+set(UTIL_STORAGE_SOURCE
+	${UTIL_STORAGE_DIR}/local_storage.h
+	${UTIL_STORAGE_DIR}/local_storage.cpp
+	${UTIL_STORAGE_DIR}/remote_storage.h
+	${UTIL_STORAGE_DIR}/remote_storage.cpp
 )
 
 set(SOURCE util.h util.cpp
 	${UTIL_SOURCE}
-	${UTIL_BROKER_SOURCE}
+	${UTIL_STORAGE_SOURCE}
 )
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCE})

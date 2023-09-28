@@ -244,6 +244,9 @@ ModelManifest.xml
 #CMake
 out/*
 
+#dependecies
+3rdparty/*
+
 #conan
 conanbuildinfo.cmake
 conanbuildinfo.txt

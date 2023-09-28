@@ -26,37 +26,29 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ================================================================================*/
 
-
-#include "util.h"
-#include "util/storage/local_storage.h"
+#include "../storage.h"
 
 namespace RayGene3D
 {
-  void Util::Initialize()
+  class LocalStorage : public Storage
   {
-  }
+  protected:
+    std::string folder{ "cache" };
 
-  void Util::Use()
-  {
-  }
+  public:
+    void Save(const std::string& alias, const std::shared_ptr<Property>& property) override;
+    void Load(const std::string& alias, std::shared_ptr<Property>& property) const override;
 
-  void Util::Discard()
-  {
-  }
+  public:
+    void Initialize() override {};
+    void Use() override {};
+    void Discard() override {};
 
-  Util::Util(StorageType type)
-    : Usable("raygene3d-util")
-    , type(type)
-  {
-    switch (type)
-    {
-    case STORAGE_LOCAL:
-      storage = std::unique_ptr<Storage>(new LocalStorage());
-      break;
-    }
-  }
-
-  Util::~Util()
-  {
+  public:
+    LocalStorage()
+      : Storage("local_storage")
+    {}
+    virtual ~LocalStorage()
+    {}
   };
 }

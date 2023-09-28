@@ -25,46 +25,56 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ================================================================================*/
-
 #pragma once
-#include "util/storage.h"
+#include "property.h"
 
 namespace RayGene3D
 {
-  class Util : public Usable
+  class Storage : public Usable //Serializable
   {
+  protected:
+    std::shared_ptr<Property> tree;
+
+  //protected:
+  //  std::string alias;
+
+  //public:
+  //  void SetProperty(const std::shared_ptr<Property>& property) { this->property = property; }
+  //  const std::shared_ptr<Property>& GetProperty() const { return property; }
+
+  //public:
+  //  void SetAlias(const std::string& alias) { this->alias = alias; }
+  //  const std::string& GetAlias() const { return alias; }
+
+  //public:
+  //  void Set(const std::string& name, const std::shared_ptr<Property>& property) { this->property->SetObjectItem(name, property); }
+  //  const std::shared_ptr<Property>& Get(const std::string& name) const { return this->property->GetObjectItem(name); }
+  //  bool Has(const std::string& name) { return this->property->HasObjectItem(name); }
+  //  void Remove(const std::string& name) { this->property->RemoveObjectItem(name); }
+
   public:
-    enum StorageType
+    void SetTree(const std::shared_ptr<Property>& tree) { this->tree = tree; }
+    const std::shared_ptr<Property>& GetTree() const { return tree; }
+    
+  public:
+    virtual void Save(const std::string& alias, const std::shared_ptr<Property>& property) = 0;
+    virtual void Load(const std::string& alias, std::shared_ptr<Property>& property) const = 0;
+
+  public:
+    void Initialize() override = 0;
+    void Use() override = 0;
+    void Discard() override = 0;
+
+  public:
+    Storage(const std::string& name) 
+      : Usable(name) 
     {
-      STORAGE_UNKNOWN = 0,
-      STORAGE_LOCAL = 1,
-      STORAGE_REMOTE = 2,
+      //property = std::shared_ptr<Property>(new Property(Property::TYPE_OBJECT));
     };
 
-  protected:
-    StorageType type;
-
-  protected:
-    std::unique_ptr<Storage> storage;
-
-  protected:
-    std::list<std::weak_ptr<Property>> properties;
-
-  public:
-    void Initialize() override;
-    void Use() override;
-    void Discard() override;
-
-  public:
-    const std::unique_ptr<Storage>& GetStorage() { return storage; }
-
-  public:
-    void AddProperty(const std::shared_ptr<Property>& property) { return properties.push_back(property); }
-    void VisitProperty(std::function<void(const std::shared_ptr<Property>&)> visitor) { for (const auto& property : properties) visitor(property.lock()); }
-    //void RemoveProperty(const std::shared_ptr<Property>& property) { return properties.remove(property); }
-
-  public:
-    Util(StorageType type);
-    virtual ~Util();
+    virtual ~Storage()
+    {
+      //property.reset();
+    };
   };
 }

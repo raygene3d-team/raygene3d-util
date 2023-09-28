@@ -27,36 +27,16 @@ THE SOFTWARE.
 ================================================================================*/
 
 
-#include "util.h"
-#include "util/storage/local_storage.h"
+//#pragma once
+//#include "object.h"
 
-namespace RayGene3D
-{
-  void Util::Initialize()
-  {
-  }
-
-  void Util::Use()
-  {
-  }
-
-  void Util::Discard()
-  {
-  }
-
-  Util::Util(StorageType type)
-    : Usable("raygene3d-util")
-    , type(type)
-  {
-    switch (type)
-    {
-    case STORAGE_LOCAL:
-      storage = std::unique_ptr<Storage>(new LocalStorage());
-      break;
-    }
-  }
-
-  Util::~Util()
-  {
-  };
-}
+//void Property::Initialize()
+//{
+//
+//}
+//
+//
+//void Property::Discard()
+//{
+//
+//}
