@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 
 #pragma once
-#include "../../raygene3d-root/base.h"
+#include "../../raygene3d-wrap/base.h"
 
 #define GLM_FORCE_LEFT_HANDED
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
