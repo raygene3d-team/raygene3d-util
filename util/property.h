@@ -37,9 +37,47 @@ THE SOFTWARE.
 
 namespace RayGene3D
 {
+  //class Tickable
+  //{
+  //protected:
+  //  std::string name;
 
-  class Property
+  //protected:
+  //  uint32_t limit{ 1u };
+  //  uint32_t count{ 0u };
+
+  //public:
+  //  virtual void Tick() = 0;
+
+  //public:
+  //  const std::string& GetName() const { return name; }
+
+  //public:
+  //  uint32_t GetLimit() const { return limit; }
+  //  uint32_t GetCount() const { return count; }
+
+  //public:
+  //  Tickable(const std::string& name) : name(name) {};
+  //  virtual ~Tickable() {}
+  //};
+
+
+  class Property //Entity
   {
+  //protected:
+  //  std::string name;
+
+  public:
+    enum Operation
+    {
+      OPERATION_NONE = 0,
+      OPERATION_LOAD = 1,
+      OPERATION_SAVE = 2,
+    };
+
+  protected:
+    Operation operation{ OPERATION_NONE };
+
   public:
     enum Type
     {
@@ -59,7 +97,7 @@ namespace RayGene3D
     typedef bool bool_t;
     typedef float real_t;
     typedef int32_t sint_t;
-    typedef uint32_t uint_t;    
+    typedef uint32_t uint_t;
     typedef std::string string_t;
     typedef std::map<std::string, std::shared_ptr<Property>> object_t;
     typedef std::vector<std::shared_ptr<Property>> array_t;
@@ -84,15 +122,15 @@ namespace RayGene3D
 
     const std::shared_ptr<Property>& GetObjectItem(const std::string& name) const { return std::get<object_t>(_value).at(name); }
     void SetObjectItem(const std::string& name, const std::shared_ptr<Property>& property) { std::get<object_t>(_value)[name] = property; }
-    bool CheckObjectItem(const std::string& name) { return std::get<object_t>(_value).find(name) != std::get<object_t>(_value).end(); }
-    //void RemoveObjectItem(const std::string& name) { std::get<object>(_value).erase(name); }
+    bool HasObjectItem(const std::string& name) { return std::get<object_t>(_value).find(name) != std::get<object_t>(_value).end(); }
+    void RemoveObjectItem(const std::string& name) { std::get<object_t>(_value).erase(name); }
     //void VisitObjectItem(std::function<void(const std::string&, const std::shared_ptr<Property>&)> visitor) { for (auto& v : std::get<object>(_value)) visitor(v.first, v.second); }
     //uint32_t CountObjectItem(){ return static_cast<uint32_t>(std::get<object>(_value).size()); }
 
     const std::shared_ptr<Property>& GetArrayItem(uint32_t index) const { return std::get<array_t>(_value).at(index); }
     void SetArrayItem(uint32_t index, const std::shared_ptr<Property>& property) { std::get<array_t>(_value).at(index) = property; }
     uint32_t GetArraySize() const { return uint32_t(std::get<array_t>(_value).size()); }
-    void SetArraySize(uint32_t size) { std::get<array_t>(_value).resize(size); }    
+    void SetArraySize(uint32_t size) { std::get<array_t>(_value).resize(size); }
 
     void RawAllocate(uint32_t size) { std::get<raw_t>(_value).Allocate(size); }
     void RawFree() { std::get<raw_t>(_value).Free(); }
@@ -107,8 +145,8 @@ namespace RayGene3D
       const auto bytes = GetRawBytes(uint32_t(offset * sizeof(T))); return { reinterpret_cast<const T*>(bytes.first), uint32_t(bytes.second / sizeof(T)) };
     }
 
-    
-    
+
+
   public:
     void FromFMat3x4(const glm::f32mat3x4& mat);
     void FromFVec4(const glm::f32vec4& vec);
@@ -215,14 +253,16 @@ namespace RayGene3D
   std::shared_ptr<Property> CreateBufferProperty(const void* data, uint32_t stride, uint32_t count);
   std::shared_ptr<Property> CreateTextureProperty(const void* data, uint32_t stride, uint32_t size_x, uint32_t size_y, uint32_t mipmaps);
 
-  std::shared_ptr<Property> ImportOBJ(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps);
-  std::shared_ptr<Property> ImportGLTF(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps);
+  //std::shared_ptr<Property> ImportOBJ(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps);
+  //std::shared_ptr<Property> ImportGLTF(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps);
 
-  std::shared_ptr<Property> ImportAsPanoEXR(const std::string& path, const std::string& name, float exposure, uint32_t mipmaps);
-  std::shared_ptr<Property> ImportAsCubeMapEXR(const std::string& path, const std::string& name, float exposure, uint32_t mipmaps);
+  //std::shared_ptr<Property> ImportAsPanoEXR(const std::string& path, const std::string& name, float exposure, uint32_t mipmaps);
+  //std::shared_ptr<Property> ImportAsCubeMapEXR(const std::string& path, const std::string& name, float exposure, uint32_t mipmaps);
 
-  std::shared_ptr<Property> CreatePropertyFromTextures(const std::vector<Texture>& textures, uint32_t mipmaps);
+  //std::shared_ptr<Property> CreatePropertyFromTextures(const std::vector<Texture>& textures, uint32_t mipmaps);
 
   void SaveProperty(const std::string& directory, const std::string& name, const std::shared_ptr<Property>& root);
   std::shared_ptr<Property> LoadProperty(const std::string& directory, const std::string& name);
 }
+
+

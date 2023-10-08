@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 
 #pragma once
-#include "../raygene3d-core/base.h"
+#include "../../raygene3d-wrap/base.h"
 
 #define GLM_FORCE_LEFT_HANDED
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -68,29 +68,29 @@ namespace RayGene3D
     glm::f32vec2 tc1{ 0.0f, 0.0f };
   };
 
-  struct Vertex0
-  {
-    glm::f32vec3 pos{ 0.0f, 0.0f, 0.0f };
-    glm::u8vec4 col{ 0u, 0u, 0u, 0u };
-  };
+  //struct Vertex0
+  //{
+  //  glm::f32vec3 pos{ 0.0f, 0.0f, 0.0f };
+  //  glm::u8vec4 col{ 0u, 0u, 0u, 0u };
+  //};
 
-  struct Vertex1
-  {
-    glm::f32vec3 nrm{ 0.0f, 0.0f, 0.0f };
-    uint32_t msk{ 0u };
-  };
+  //struct Vertex1
+  //{
+  //  glm::f32vec3 nrm{ 0.0f, 0.0f, 0.0f };
+  //  uint32_t msk{ 0u };
+  //};
 
-  struct Vertex2
-  {
-    glm::f32vec3 tng{ 0.0f, 0.0f, 0.0f };
-    float sgn{ 0.0f };
-  };
+  //struct Vertex2
+  //{
+  //  glm::f32vec3 tng{ 0.0f, 0.0f, 0.0f };
+  //  float sgn{ 0.0f };
+  //};
 
-  struct Vertex3
-  {
-    glm::f32vec2 tc0{ 0.0f, 0.0f };
-    glm::f32vec2 tc1{ 0.0f, 0.0f };
-  };
+  //struct Vertex3
+  //{
+  //  glm::f32vec2 tc0{ 0.0f, 0.0f };
+  //  glm::f32vec2 tc1{ 0.0f, 0.0f };
+  //};
 
   struct Triangle
   {
@@ -108,10 +108,10 @@ namespace RayGene3D
 
     glm::f32vec3 emission{ 0.0f, 0.0f, 0.0f }; // emission color
     float intensity{ 0.0f }; // emission intensity 
-    glm::f32vec3 diffuse{ 0.0f, 0.0f, 0.0f }; // diffuse color
+    glm::f32vec3 diffuse{ 1.0f, 1.0f, 1.0f }; // diffuse color
     float shininess{ 0.0f }; // specular coherency
     glm::f32vec3 specular{ 0.0f, 0.0f, 0.0f }; // specular color
-    float alpha{ 0.0f }; // transparency or ior
+    float alpha{ 1.0f }; // transparency or ior
 
     uint32_t texture0_idx{ uint32_t(-1) };
     uint32_t texture1_idx{ uint32_t(-1) };
@@ -155,6 +155,8 @@ namespace RayGene3D
     uint32_t extent_x{ 0 };
     uint32_t extent_y{ 0 };
   };
+
+
 
   struct ReflectionProbeLevel
   {
