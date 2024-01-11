@@ -67,16 +67,16 @@ namespace RayGene3D
   //protected:
   //  std::string name;
 
-  public:
-    enum Operation
-    {
-      OPERATION_NONE = 0,
-      OPERATION_LOAD = 1,
-      OPERATION_SAVE = 2,
-    };
+  //public:
+  //  enum Operation
+  //  {
+  //    OPERATION_NONE = 0,
+  //    OPERATION_LOAD = 1,
+  //    OPERATION_SAVE = 2,
+  //  };
 
-  protected:
-    Operation operation{ OPERATION_NONE };
+  //protected:
+  //  Operation operation{ OPERATION_NONE };
 
   public:
     enum Type
@@ -190,6 +190,10 @@ namespace RayGene3D
     static nlohmann::json ToJSON(const std::shared_ptr<Property>& property, std::map<std::shared_ptr<Property>, std::string>& binaries);
     static std::shared_ptr<Property> FromJSON(const nlohmann::json& node, std::map<std::shared_ptr<Property>, std::string>& binaries);
   };
+
+  typedef std::shared_ptr<Property> SPtrProperty;
+  typedef std::weak_ptr<Property> WPtrProperty;
+  typedef std::unique_ptr<Property> UPtrProperty;
 
   //class Prop;
   //
