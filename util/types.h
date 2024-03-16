@@ -42,6 +42,7 @@ THE SOFTWARE.
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/rotate_vector.hpp>
+#include <glm/gtx/polar_coordinates.hpp>
 #include <glm/gtc/round.hpp>
 
 namespace RayGene3D
@@ -121,7 +122,12 @@ namespace RayGene3D
     glm::f32vec3 debug_color{ 0.0f, 0.0f, 0.0f };
     uint32_t geometry_idx{ uint32_t(-1) };
 
-    glm::u32vec4 padding[7];
+    glm::f32vec3 bb_min{ FLT_MAX, FLT_MAX, FLT_MAX };
+    uint32_t bb_min_padding{ 0 };
+    glm::f32vec3 bb_max{-FLT_MAX,-FLT_MAX,-FLT_MAX };
+    uint32_t bb_max_padding{ 0 };
+
+    glm::u32vec4 padding[5];
   };
 
   struct Screen
