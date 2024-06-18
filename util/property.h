@@ -254,8 +254,17 @@ namespace RayGene3D
   std::shared_ptr<Property> CreateUVec3Property();
   std::shared_ptr<Property> CreateUVec2Property();
   std::shared_ptr<Property> CreateUIntProperty();
-  std::shared_ptr<Property> CreateBufferProperty(const void* data, uint32_t stride, uint32_t count);
-  std::shared_ptr<Property> CreateTextureProperty(const void* data, uint32_t stride, uint32_t size_x, uint32_t size_y, uint32_t mipmaps);
+
+  std::shared_ptr<Property> CreateBufferProperty(const std::pair<const void*, uint32_t>& bytes,
+    uint32_t stride, uint32_t count);
+  std::shared_ptr<Property> CreateTextureProperty(const std::pair<const void*, uint32_t>& texels,
+    uint32_t extent_x, uint32_t extent_y, uint32_t extent_z, Format format, uint32_t mipmap);
+
+  void ExportTexture(const std::string& path, const std::shared_ptr<Property>& root);
+  std::shared_ptr<Property> ImportTexture(const std::string& path, uint32_t mipmaps);
+
+  void ExportBuffer(const std::string& path, const std::shared_ptr<Property>& root);
+  std::shared_ptr<Property> ImportBuffer(const std::string& path, uint32_t stride);
 
   //std::shared_ptr<Property> ImportOBJ(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps);
   //std::shared_ptr<Property> ImportGLTF(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps);

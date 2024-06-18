@@ -29,29 +29,12 @@ THE SOFTWARE.
 
 #include "property.h"
 
-//#define TINYOBJLOADER_IMPLEMENTATION
-//#include <tinyobjloader/tiny_obj_loader.h>
-
-//#define OBJ_TRIANGULATE
-
-//#define TINYGLTF_IMPLEMENTATION
-//#define TINYGLTF_NO_STB_IMAGE
-//#define TINYGLTF_NO_STB_IMAGE_WRITE
-//#include <tinygltf/tiny_gltf.h>
-
-//#define TINYEXR_IMPLEMENTATION
-//#include <tinyexr/tinyexr.h>
-
-//#define STB_IMAGE_IMPLEMENTATION
-//#define STB_IMAGE_WRITE_IMPLEMENTATION
-//#define STB_IMAGE_RESIZE_IMPLEMENTATION
-//#include <stb/stb_image.h>
-//#include <stb/stb_image_write.h>
-//#include <stb/stb_image_resize.h>
-
-//#include <mikktspace/mikktspace.h>
-
-//#include <xatlas/xatlas.h>
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+#include <stb/stb_image.h>
+#include <stb/stb_image_write.h>
+#include <stb/stb_image_resize.h>
 
 namespace RayGene3D
 {
@@ -584,1267 +567,60 @@ namespace RayGene3D
     return property;
   }
 
-  std::shared_ptr<Property> CreateBufferProperty(const void* data, uint32_t stride, uint32_t count)
-  {
-    const auto root_property = std::shared_ptr<Property>(new Property(Property::TYPE_RAW));
-    root_property->RawAllocate(stride * count);
-    root_property->SetRawBytes({ data, stride * count }, 0);
-
-    return root_property;
-  }
-
-
-  std::shared_ptr<Property> CreateTextureProperty(const void* data, uint32_t stride, uint32_t size_x, uint32_t size_y, uint32_t mipmaps)
+  std::shared_ptr<Property> CreateBufferProperty(const std::pair<const void*, uint32_t>& bytes,
+    uint32_t stride, uint32_t count)
   {
     const auto root_property = std::shared_ptr<Property>(new Property(Property::TYPE_OBJECT));
 
     const auto stride_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
-    stride_property->SetUint(mipmaps);
+    stride_property->SetUint(stride);
     root_property->SetObjectItem("stride", stride_property);
 
-    const auto size_x_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
-    size_x_property->SetUint(uint32_t(1 << (mipmaps - 1)));
-    root_property->SetObjectItem("size_x", size_x_property);
+    const auto count_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
+    count_property->SetUint(count);
+    root_property->SetObjectItem("count", count_property);
 
-    const auto size_y_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
-    size_y_property->SetUint(uint32_t(1 << (mipmaps - 1)));
-    root_property->SetObjectItem("size_y", size_y_property);
-
-    const auto mipmaps_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
-    mipmaps_property->SetUint(mipmaps);
-    root_property->SetObjectItem("mipmaps", mipmaps_property);
-
-    const auto data_property = std::shared_ptr<Property>(new Property(Property::TYPE_RAW));
-    data_property->RawAllocate(stride * size_x * size_y);
-    data_property->SetRawBytes({ data, stride * size_x * size_y }, 0);
-    root_property->SetObjectItem("bytes", data_property);
+    const auto bytes_property = std::shared_ptr<Property>(new Property(Property::TYPE_RAW));
+    bytes_property->RawAllocate(bytes.second);
+    bytes_property->SetRawBytes(bytes, 0);
+    root_property->SetObjectItem("bytes", bytes_property);
 
     return root_property;
   }
 
 
-  //void ConvertSceneGLTF(const tinygltf::Model& gltf_model,
-  //  std::vector<std::vector<Vertex>>& vertices_arrays, std::vector<std::vector<Triangle>>& triangles_arrays, std::vector<Instance>& instances_array,
-  //  bool coordinate_flip, float position_scale,
-  //  std::vector<Texture>& textures_0, std::vector<Texture>& textures_1, std::vector<Texture>& textures_2, std::vector<Texture>& textures_3, std::vector<Texture>& textures_4)
-  //{
-  //  vertices_arrays.clear();
-  //  triangles_arrays.clear();
-  //  instances_array.clear();
-
-  //  const auto tex_reindex_fn = [](std::vector<uint32_t>& tex_ids, uint32_t tex_id)
-  //  {
-  //    if (tex_id == -1)
-  //    {
-  //      return uint32_t(-1);
-  //    }
-
-  //    const auto tex_iter = std::find_if(tex_ids.cbegin(), tex_ids.cend(), [&tex_id](const auto& index) { return tex_id == index; });
-  //    const auto tex_index = tex_iter == tex_ids.cend() ? uint32_t(tex_ids.size()) : uint32_t(tex_iter - tex_ids.cbegin());
-  //    if (tex_index == tex_ids.size())
-  //    {
-  //      tex_ids.push_back(tex_id);
-  //    }
-  //    return tex_index;
-  //  };
-
-  //  textures_0.clear(); // base + alpha
-  //  textures_1.clear(); // emission + occlusion
-  //  textures_2.clear(); // metallic + roughness
-  //  textures_3.clear(); // normal or derivatives
-  //  textures_4.clear(); // lightmap + shadowmask
-
-  //  const auto access_buffer_fn = [&gltf_model](const tinygltf::Accessor& accessor)
-  //  {
-  //    const auto& gltf_view = gltf_model.bufferViews[accessor.bufferView];
-  //    const auto length = gltf_view.byteLength;
-  //    const auto offset = gltf_view.byteOffset;
-
-  //    const auto& gltf_buffer = gltf_model.buffers[gltf_view.buffer];
-  //    const auto data = &gltf_buffer.data[gltf_view.byteOffset];
-
-  //    return std::pair{ data, uint32_t(length) };
-  //  };
-
-
-  //  const auto create_vertex_fn = [&gltf_model](uint32_t index, bool flip, float scale,
-  //    std::pair<const uint8_t*, uint32_t> pos_data, uint32_t pos_stride,
-  //    std::pair<const uint8_t*, uint32_t> nrm_data, uint32_t nrm_stride,
-  //    std::pair<const uint8_t*, uint32_t> tc0_data, uint32_t tc0_stride)
-  //  {
-  //    Vertex vertex;
-
-  //    const auto pos = reinterpret_cast<const float*>(pos_data.first + pos_stride * index);
-  //    vertex.pos = scale * (flip ? glm::fvec3{ pos[0],-pos[2],-pos[1] } : glm::fvec3{ pos[0], pos[1],-pos[2] });
-
-  //    const auto nrm = reinterpret_cast<const float*>(nrm_data.first + nrm_stride * index);
-  //    vertex.nrm = glm::normalize(flip ? glm::fvec3{ nrm[0],-nrm[2],-nrm[1] } : glm::fvec3{ nrm[0], nrm[1],-nrm[2] });
-
-  //    const auto tc0 = reinterpret_cast<const float*>(tc0_data.first + tc0_stride * index);
-  //    vertex.tc0 = glm::f32vec2(tc0[0], tc0[1]);
-
-  //    return vertex;
-  //  };
-
-  //  uint32_t vertices_offset = 0;
-  //  uint32_t triangles_offset = 0;
-
-  //  std::vector<uint32_t> texture_0_indices;
-  //  std::vector<uint32_t> texture_1_indices;
-  //  std::vector<uint32_t> texture_2_indices;
-  //  std::vector<uint32_t> texture_3_indices;
-
-  //  const auto gltf_scene = gltf_model.scenes[0];
-
-
-  //  for (uint32_t i = 0; i < uint32_t(gltf_scene.nodes.size()); ++i)
-  //  {
-  //    const auto& gltf_node = gltf_model.nodes[gltf_scene.nodes[i]];
-
-  //    const auto& gltf_mesh = gltf_model.meshes[gltf_node.mesh];
-
-  //    uint32_t offset = 0;
-  //    for (uint32_t j = 0; j < uint32_t(gltf_mesh.primitives.size()); ++j)
-  //    {
-  //      std::vector<Vertex> vertices;
-  //      std::vector<Triangle> triangles;
-
-  //      const auto& gltf_primitive = gltf_mesh.primitives[j];
-  //      BLAST_ASSERT(gltf_primitive.mode == TINYGLTF_MODE_TRIANGLES);
-
-  //      const auto& gltf_material = gltf_model.materials[gltf_primitive.material];
-
-  //      const auto& gltf_positions = gltf_model.accessors[gltf_primitive.attributes.at("POSITION")];
-  //      BLAST_ASSERT(gltf_positions.type == TINYGLTF_TYPE_VEC3 && gltf_positions.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT);
-  //      const auto pos_data = access_buffer_fn(gltf_positions);
-  //      const auto pos_stride = 12;
-
-  //      const auto& gltf_normals = gltf_model.accessors[gltf_primitive.attributes.at("NORMAL")];
-  //      BLAST_ASSERT(gltf_normals.type == TINYGLTF_TYPE_VEC3 && gltf_normals.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT);
-  //      const auto nrm_data = access_buffer_fn(gltf_normals);
-  //      const auto nrm_stride = 12;
-
-  //      const auto& gltf_texcoords = gltf_model.accessors[gltf_primitive.attributes.at("TEXCOORD_0")];
-  //      BLAST_ASSERT(gltf_texcoords.type == TINYGLTF_TYPE_VEC2 && gltf_texcoords.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT);
-  //      const auto tc0_data = access_buffer_fn(gltf_texcoords);
-  //      const auto tc0_stride = 8;
-
-
-
-
-  //      auto degenerated_geom_prim_count = 0;
-  //      auto degenerated_wrap_prim_count = 0;
-
-  //      const auto& hash_vertex_fn = [](const Vertex& vertex)
-  //      {
-  //        const auto uref = reinterpret_cast<const glm::u32vec4*>(&vertex);
-
-  //        auto hash = 0u;
-  //        hash ^= std::hash<glm::u32vec4>()(uref[0]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-  //        hash ^= std::hash<glm::u32vec4>()(uref[1]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-  //        hash ^= std::hash<glm::u32vec4>()(uref[2]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-  //        hash ^= std::hash<glm::u32vec4>()(uref[3]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-
-  //        return hash;
-  //      };
-  //      auto compare_vertex_fn = [](const Vertex& l, const Vertex& r)
-  //      {
-  //        return (memcmp(&l, &r, sizeof(Vertex)) == 0);
-  //      };
-  //      std::unordered_map<Vertex, uint32_t, decltype(hash_vertex_fn), decltype(compare_vertex_fn)> vertex_map(8, hash_vertex_fn, compare_vertex_fn);
-
-  //      const auto& remap_vertex_fn = [&vertex_map](std::vector<Vertex>& vertices, const Vertex& vertex)
-  //      {
-  //        const auto result = vertex_map.emplace(vertex, uint32_t(vertices.size()));
-  //        if (result.second)
-  //        {
-  //          vertices.push_back(vertex);
-  //        }
-  //        return result.first->second;
-  //      };
-
-  //      const auto& gltf_indices = gltf_model.accessors[gltf_primitive.indices];
-  //      BLAST_ASSERT(gltf_indices.type == TINYGLTF_TYPE_SCALAR);
-
-  //      const auto& indices_view = gltf_model.bufferViews[gltf_indices.bufferView];
-  //      const auto indices_length = indices_view.byteLength;
-  //      const auto indices_offset = indices_view.byteOffset;
-  //      const auto indices_stride = indices_view.byteStride;
-
-  //      const auto& indices_buffer = gltf_model.buffers[indices_view.buffer];
-
-
-  //      if (gltf_indices.componentType == TINYGLTF_COMPONENT_TYPE_INT || gltf_indices.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT)
-  //      {
-  //        const auto indices_data = reinterpret_cast<const uint32_t*>(&indices_buffer.data[gltf_indices.byteOffset]);
-
-  //        for (uint32_t k = 0; k < gltf_indices.count / 3; ++k)
-  //        {
-  //          const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 0], coordinate_flip, position_scale,
-  //            pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
-  //          const auto vtx1 = create_vertex_fn(indices_data[k * 3 + 1], coordinate_flip, position_scale,
-  //            pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
-  //          const auto vtx2 = create_vertex_fn(indices_data[k * 3 + 2], coordinate_flip, position_scale,
-  //            pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
-
-  //          const auto dp_10 = vtx1.pos - vtx0.pos;
-  //          const auto dp_20 = vtx2.pos - vtx0.pos;
-  //          const auto ng = glm::cross(dp_10, dp_20);
-  //          if (glm::length(ng) == 0.0f)
-  //          {
-  //            ++degenerated_geom_prim_count;
-  //            continue;
-  //          }
-
-  //          auto has_textures = false;
-  //          //has_textures = obj_materials[obj_mesh.material_ids[j]].diffuse_texname.empty() ? has_textures : true;
-  //          //has_textures = obj_materials[obj_mesh.material_ids[j]].alpha_texname.empty() ? has_textures : true;
-  //          //has_textures = obj_materials[obj_mesh.material_ids[j]].specular_texname.empty() ? has_textures : true;
-  //          //has_textures = obj_materials[obj_mesh.material_ids[j]].bump_texname.empty() ? has_textures : true;
-
-  //          if (has_textures)
-  //          {
-  //            const auto duv_10 = vtx1.tc0 - vtx0.tc0;
-  //            const auto duv_20 = vtx2.tc0 - vtx0.tc0;
-  //            const auto det = glm::determinant(glm::fmat2x2(duv_10, duv_20));
-  //            if (det == 0.0f)
-  //            {
-  //              ++degenerated_wrap_prim_count;
-  //              continue;
-  //            }
-  //          }
-
-  //          const auto idx0 = remap_vertex_fn(vertices, vtx0);
-  //          const auto idx1 = remap_vertex_fn(vertices, vtx1);
-  //          const auto idx2 = remap_vertex_fn(vertices, vtx2);
-
-  //          triangles.push_back({ glm::uvec3(idx0, idx1, idx2) });
-  //        }
-  //      }
-  //      else if (gltf_indices.componentType == TINYGLTF_COMPONENT_TYPE_SHORT || gltf_indices.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT)
-  //      {
-  //        const auto indices_data = reinterpret_cast<const uint16_t*>(&indices_buffer.data[gltf_indices.byteOffset]);
-
-  //        for (uint32_t k = 0; k < gltf_indices.count / 3; ++k)
-  //        {
-  //          const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 1], coordinate_flip, position_scale,
-  //            pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
-  //          const auto vtx1 = create_vertex_fn(indices_data[k * 3 + 0], coordinate_flip, position_scale,
-  //            pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
-  //          const auto vtx2 = create_vertex_fn(indices_data[k * 3 + 2], coordinate_flip, position_scale,
-  //            pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
-
-  //          const auto dp_10 = vtx1.pos - vtx0.pos;
-  //          const auto dp_20 = vtx2.pos - vtx0.pos;
-  //          const auto ng = glm::cross(dp_10, dp_20);
-  //          if (glm::length(ng) == 0.0f)
-  //          {
-  //            ++degenerated_geom_prim_count;
-  //            continue;
-  //          }
-
-
-  //          auto has_textures = false;
-  //          //has_textures = obj_materials[obj_mesh.material_ids[j]].diffuse_texname.empty() ? has_textures : true;
-  //          //has_textures = obj_materials[obj_mesh.material_ids[j]].alpha_texname.empty() ? has_textures : true;
-  //          //has_textures = obj_materials[obj_mesh.material_ids[j]].specular_texname.empty() ? has_textures : true;
-  //          //has_textures = obj_materials[obj_mesh.material_ids[j]].bump_texname.empty() ? has_textures : true;
-
-  //          if (has_textures)
-  //          {
-  //            const auto duv_10 = vtx1.tc0 - vtx0.tc0;
-  //            const auto duv_20 = vtx2.tc0 - vtx0.tc0;
-  //            const auto det = glm::determinant(glm::fmat2x2(duv_10, duv_20));
-  //            if (det == 0.0f)
-  //            {
-  //              ++degenerated_wrap_prim_count;
-  //              continue;
-  //            }
-  //          }
-
-  //          const auto idx0 = remap_vertex_fn(vertices, vtx0);
-  //          const auto idx1 = remap_vertex_fn(vertices, vtx1);
-  //          const auto idx2 = remap_vertex_fn(vertices, vtx2);
-
-  //          triangles.push_back({ glm::uvec3(idx0, idx1, idx2) });
-  //        }
-  //      }
-  //      else if (gltf_indices.componentType == TINYGLTF_COMPONENT_TYPE_BYTE || gltf_indices.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE)
-  //      {
-  //        const auto indices_data = reinterpret_cast<const uint8_t*>(&indices_buffer.data[gltf_indices.byteOffset]);
-
-  //        for (uint32_t k = 0; k < gltf_indices.count / 3; ++k)
-  //        {
-  //          const auto vtx0 = create_vertex_fn(indices_data[k * 3 + 0], coordinate_flip, position_scale,
-  //            pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
-  //          const auto vtx1 = create_vertex_fn(indices_data[k * 3 + 1], coordinate_flip, position_scale,
-  //            pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
-  //          const auto vtx2 = create_vertex_fn(indices_data[k * 3 + 2], coordinate_flip, position_scale,
-  //            pos_data, pos_stride, nrm_data, nrm_stride, tc0_data, tc0_stride);
-
-  //          const auto idx0 = remap_vertex_fn(vertices, vtx0);
-  //          const auto idx1 = remap_vertex_fn(vertices, vtx1);
-  //          const auto idx2 = remap_vertex_fn(vertices, vtx2);
-
-  //          triangles.push_back({ glm::uvec3(idx0, idx1, idx2) });
-  //        }
-  //      }
-  //      if (vertices.empty() || triangles.empty()) continue;
-
-
-  //      BLAST_LOG("Instance %d: Added vert/prim: %d/%d", j, vertices.size(), triangles.size());
-
-  //      Instance instance;
-  //      instance.transform;
-
-  //      const auto debug = false;
-  //      if (debug)
-  //      {
-  //        instance.emission = glm::vec3(0.0f, 0.0f, 0.0f);
-  //        instance.intensity = 0.0f;
-  //        instance.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-  //        instance.shininess = 1.0f;
-  //        instance.specular = glm::vec3(0.0f, 0.0f, 0.0f);
-  //        instance.alpha = 1.0f;
-  //      }
-  //      else
-  //      {
-  //        instance.emission = glm::vec3(0.0f, 0.0f, 0.0f);
-  //        instance.intensity = 0.0f;
-  //        instance.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-  //        instance.shininess = 1.0f;
-  //        instance.specular = glm::vec3(0.0f, 0.0f, 0.0f);
-  //        instance.alpha = 1.0f;
-
-  //        const auto texture_0_id = gltf_material.pbrMetallicRoughness.baseColorTexture.index;
-  //        instance.texture0_idx = texture_0_id == -1 ? uint32_t(-1) : tex_reindex_fn(texture_0_indices, texture_0_id);
-  //        const auto texture_1_id = gltf_material.emissiveTexture.index;
-  //        instance.texture1_idx = texture_1_id == -1 ? uint32_t(-1) : tex_reindex_fn(texture_1_indices, texture_1_id);
-  //        const auto texture_2_id = gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.index;
-  //        instance.texture2_idx = texture_2_id == -1 ? uint32_t(-1) : tex_reindex_fn(texture_2_indices, texture_2_id);
-  //        const auto texture_3_id = gltf_material.normalTexture.index;
-  //        instance.texture3_idx = texture_3_id == -1 ? uint32_t(-1) : tex_reindex_fn(texture_3_indices, texture_3_id);
-  //      }
-
-  //      instance.geometry_idx = uint32_t(instances_array.size());
-  //      //instance.debug_color{ 0.0f, 0.0f, 0.0f };
-
-  //      instance.vert_count = uint32_t(vertices.size());
-  //      instance.vert_offset = uint32_t(vertices_offset);
-  //      instance.prim_count = uint32_t(triangles.size());
-  //      instance.prim_offset = uint32_t(triangles_offset);
-
-  //      vertices_arrays.push_back(vertices);
-  //      triangles_arrays.push_back(triangles);
-  //      instances_array.push_back(instance);
-
-  //      vertices_offset += uint32_t(vertices.size());
-  //      triangles_offset += uint32_t(triangles.size());
-  //    }
-  //  }
-
-  //  for (uint32_t i = 0; i < uint32_t(instances_array.size()); ++i)
-  //  {
-  //    struct SMikkTSpaceUserData
-  //    {
-  //      std::vector<Triangle>& triangles;
-  //      std::vector<Vertex>& vertices;
-  //    };
-  //    SMikkTSpaceUserData data{ triangles_arrays[i], vertices_arrays[i] };
-
-  //    SMikkTSpaceInterface input = { 0 };
-  //    input.m_getNumFaces = [](const SMikkTSpaceContext* ctx)
-  //    {
-  //      const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-  //      return int32_t(data->triangles.size());
-  //    };
-
-  //    input.m_getNumVerticesOfFace = [](const SMikkTSpaceContext* ctx, const int iFace)
-  //    {
-  //      const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-  //      return 3;
-  //    };
-
-  //    //input.m_getPosition = &GetPositionCb;
-  //    //input.m_getNormal = &GetNormalCb;
-  //    //input.m_getTexCoord = &GetTexCoordCb;
-  //    //input.m_setTSpaceBasic = &SetTspaceBasicCb;
-  //    //input.m_setTSpace = NULL;
-
-
-  //    input.m_getPosition = [](const SMikkTSpaceContext* ctx, float fvPosOut[], int iFace, int iVert)
-  //    {
-  //      const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-  //      const auto& pos = data->vertices[data->triangles[iFace].idx[iVert]].pos;
-  //      fvPosOut[0] = pos.x;
-  //      fvPosOut[1] = pos.y;
-  //      fvPosOut[2] = pos.z;
-  //    };
-
-  //    input.m_getNormal = [](const SMikkTSpaceContext* ctx, float fvNormOut[], int iFace, int iVert)
-  //    {
-  //      const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-  //      const auto& nrm = data->vertices[data->triangles[iFace].idx[iVert]].nrm;
-  //      fvNormOut[0] = nrm.x;
-  //      fvNormOut[1] = nrm.y;
-  //      fvNormOut[2] = nrm.z;
-  //    };
-
-  //    input.m_getTexCoord = [](const SMikkTSpaceContext* ctx, float fvTexcOut[], int iFace, int iVert)
-  //    {
-  //      const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-  //      const auto& tc0 = data->vertices[data->triangles[iFace].idx[iVert]].tc0;
-  //      fvTexcOut[0] = tc0.x;
-  //      fvTexcOut[1] = tc0.y;
-  //    };
-
-  //    input.m_setTSpaceBasic = [](const SMikkTSpaceContext* ctx, const float fvTangent[], float fSign, int iFace, int iVert)
-  //    {
-  //      auto data = reinterpret_cast<SMikkTSpaceUserData*>(ctx->m_pUserData);
-  //      auto& tng = data->vertices[data->triangles[iFace].idx[iVert]].tng;
-  //      tng.x = fvTangent[0];
-  //      tng.y = fvTangent[1];
-  //      tng.z = fvTangent[2];
-  //      auto& sgn = data->vertices[data->triangles[iFace].idx[iVert]].sgn;
-  //      sgn = fSign;
-  //    };
-
-  //    SMikkTSpaceContext context;
-  //    context.m_pInterface = &input;
-  //    context.m_pUserData = &data;
-
-  //    BLAST_ASSERT(1 == genTangSpaceDefault(&context));
-  //  }
-
-  //  {
-  //    auto atlas = xatlas::Create();
-
-  //    for (uint32_t i = 0; i < uint32_t(instances_array.size()); ++i)
-  //    {
-  //      const auto& vertices = vertices_arrays[i];
-  //      const auto vertex_data = reinterpret_cast<const uint8_t*>(vertices.data());
-  //      const auto vertex_count = uint32_t(vertices.size());
-  //      const auto vertex_stride = uint32_t(sizeof(Vertex));
-
-  //      const auto& triangles = triangles_arrays[i];
-  //      const auto index_data = reinterpret_cast<const uint8_t*>(triangles.data());
-  //      const auto index_count = uint32_t(triangles.size()) * 3;
-  //      const auto index_format = xatlas::IndexFormat::UInt32;
-
-  //      xatlas::MeshDecl mesh_decl;
-  //      mesh_decl.vertexCount = vertex_count;
-  //      mesh_decl.vertexPositionData = vertex_data + 0;
-  //      mesh_decl.vertexPositionStride = vertex_stride;
-  //      mesh_decl.vertexNormalData = vertex_data + 16;
-  //      mesh_decl.vertexNormalStride = vertex_stride;
-  //      mesh_decl.vertexUvData = vertex_data + 48;
-  //      mesh_decl.vertexUvStride = vertex_stride;
-  //      mesh_decl.indexCount = index_count;
-  //      mesh_decl.indexData = index_data;
-  //      mesh_decl.indexFormat = index_format;
-  //      BLAST_ASSERT(xatlas::AddMeshError::Success == xatlas::AddMesh(atlas, mesh_decl));
-
-  //      //xatlas::UvMeshDecl uv_mesh_decl;
-  //      //uv_mesh_decl.vertexCount = vertex_count;
-  //      //uv_mesh_decl.vertexStride = vertex_stride;
-  //      //uv_mesh_decl.vertexUvData = vertex_data + 48;
-  //      //uv_mesh_decl.indexCount = index_count;
-  //      //uv_mesh_decl.indexData = index_data;
-  //      //uv_mesh_decl.indexFormat = index_format;
-  //      //uv_mesh_decl.indexOffset = 0;
-  //      //BLAST_ASSERT(xatlas::AddMeshError::Success == xatlas::AddUvMesh(atlas, uv_mesh_decl));
-  //    }
-
-  //    xatlas::ChartOptions chartOptions;
-  //    chartOptions.useInputMeshUvs = true;
-  //    xatlas::ComputeCharts(atlas, chartOptions);
-
-  //    xatlas::PackOptions packOptions;
-  //    packOptions.resolution = 2048;
-  //    packOptions.texelsPerUnit = 200.0;
-  //    xatlas::PackCharts(atlas, packOptions);
-
-  //    BLAST_ASSERT(atlas->meshCount == uint32_t(instances_array.size()));
-
-  //    for (uint32_t i = 0; i < atlas->meshCount; i++)
-  //    {
-  //      const auto& triangles = triangles_arrays[i];
-  //      const auto& mesh = atlas->meshes[i];
-  //      BLAST_ASSERT(mesh.indexCount == 3 * uint32_t(triangles.size()))
-
-  //        const auto& vertices = vertices_arrays[i];
-
-  //      std::vector<Vertex> temp_vertices(mesh.vertexCount);
-  //      for (uint32_t j = 0; j < mesh.vertexCount; j++)
-  //      {
-  //        const auto& vertex = mesh.vertexArray[j];
-
-  //        temp_vertices[j] = vertices[vertex.xref];
-  //        temp_vertices[j].msk = vertex.atlasIndex;
-  //        temp_vertices[j].tc1 = { vertex.uv[0] / atlas->width, vertex.uv[1] / atlas->height };
-  //      }
-
-  //      std::vector<Triangle> temp_triangles(mesh.indexCount / 3);
-  //      for (uint32_t j = 0; j < mesh.indexCount / 3; j++)
-  //      {
-  //        temp_triangles[j].idx[0] = mesh.indexArray[j * 3 + 0];
-  //        temp_triangles[j].idx[1] = mesh.indexArray[j * 3 + 1];
-  //        temp_triangles[j].idx[2] = mesh.indexArray[j * 3 + 2];
-  //      }
-
-  //      std::swap(vertices_arrays[i], temp_vertices);
-  //      std::swap(triangles_arrays[i], temp_triangles);
-
-  //      instances_array[i].vert_count = uint32_t(vertices_arrays[i].size());
-  //      instances_array[i].vert_offset = i > 0 ? instances_array[i - 1].vert_offset + instances_array[i - 1].vert_count : 0;
-  //      instances_array[i].prim_count = uint32_t(triangles_arrays[i].size());
-  //      instances_array[i].prim_offset = i > 0 ? instances_array[i - 1].prim_offset + instances_array[i - 1].prim_count : 0;
-  //    }
-
-  //    if (atlas->width > 0 && atlas->height > 0)
-  //    {
-  //      const auto white = glm::u8vec4(255, 255, 255, 255);
-
-  //      const auto triangle_raster_fn = [](glm::u8vec4* pixels, uint32_t size_x, uint32_t size_y, const float* v0, const float* v1, const float* v2, const glm::u8vec4& color)
-  //      {
-  //        const auto tc0 = glm::f32vec2(v0[0], v0[1]);
-  //        const auto tc1 = glm::f32vec2(v1[0], v1[1]);
-  //        const auto tc2 = glm::f32vec2(v2[0], v2[1]);
-
-  //        const auto min = glm::min(glm::min(tc0, tc1), tc2);
-  //        const auto max = glm::max(glm::max(tc0, tc1), tc2);
-
-  //        const auto denom = glm::determinant(glm::f32mat2x2(tc1 - tc0, tc2 - tc0));
-
-  //        for (uint32_t i = 0; i < size_y; ++i)
-  //        {
-  //          if (i < min.y || i > max.y) continue;
-
-  //          for (uint32_t j = 0; j < size_x; ++j)
-  //          {
-  //            if (j < min.x || j > max.x) continue;
-
-  //            const auto pnt = glm::f32vec2(j + 0.0f, i + 0.0f);
-
-  //            const auto v = glm::determinant(glm::f32mat2x2(pnt - tc0, tc2 - tc0)) / denom;
-  //            if (v < 0.0f || v > 1.0f) continue;
-
-  //            const auto w = glm::determinant(glm::f32mat2x2(tc1 - tc0, pnt - tc0)) / denom;
-  //            if (w < 0.0f || w > 1.0f) continue;
-
-  //            const auto u = 1.0f - v - w;
-  //            if (u < 0.0f || u > 1.0f) continue;
-
-  //            pixels[(size_x * i + j)] = color;
-
-  //            const auto pattern = glm::floor(pnt / 16.0f);
-  //            const auto fading = 0.5f * glm::fract(0.5f * (pattern.x + pattern.y)) + 0.5f;
-
-  //            pixels[(size_x * i + j)].x *= fading;
-  //            pixels[(size_x * i + j)].y *= fading;
-  //            pixels[(size_x * i + j)].z *= fading;
-  //          }
-  //        }
-  //      };
-
-  //      textures_4.resize(atlas->atlasCount);
-
-  //      for (uint32_t z = 0; z < atlas->atlasCount; ++z)
-  //      {
-  //        //std::vector<uint8_t> image(atlas->width* atlas->height * 3);
-
-  //        Texture texture;
-  //        texture.texels.resize(atlas->width * atlas->height);
-  //        texture.extent_x = atlas->width;
-  //        texture.extent_y = atlas->height;
-
-  //        for (uint32_t i = 0; i < atlas->meshCount; ++i)
-  //        {
-  //          const auto& mesh = atlas->meshes[i];
-
-  //          for (uint32_t j = 0; j < mesh.chartCount; ++j)
-  //          {
-  //            const auto& chart = mesh.chartArray[j];
-  //            if (chart.atlasIndex != z) continue;
-
-  //            BLAST_ASSERT(chart.atlasIndex != -1);
-
-  //            const auto color = glm::u8vec4(uint8_t((rand() % 255 + 192) * 0.5f), uint8_t((rand() % 255 + 192) * 0.5f), uint8_t((rand() % 255 + 192) * 0.5f), 255);
-
-  //            for (uint32_t k = 0; k < chart.faceCount; ++k)
-  //            {
-  //              const auto face = chart.faceArray[k];
-
-  //              const auto& vtx0 = mesh.vertexArray[mesh.indexArray[3 * face + 0]];
-  //              const auto& vtx1 = mesh.vertexArray[mesh.indexArray[3 * face + 1]];
-  //              const auto& vtx2 = mesh.vertexArray[mesh.indexArray[3 * face + 2]];
-
-
-  //              const int v0[2] = { int(vtx0.uv[0]), int(vtx0.uv[1]) };
-  //              const int v1[2] = { int(vtx1.uv[0]), int(vtx1.uv[1]) };
-  //              const int v2[2] = { int(vtx2.uv[0]), int(vtx2.uv[1]) };
-
-  //              triangle_raster_fn(texture.texels.data(), texture.extent_x, texture.extent_y, vtx0.uv, vtx1.uv, vtx2.uv, color);
-  //            }
-  //          }
-  //        }
-
-  //        //char filename[256];
-  //        //snprintf(filename, sizeof(filename), "example_tris%02u.png", z);
-  //        //printf("Writing '%s'...\n", filename);
-  //        //stbi_write_png(filename, texture.extent_x, texture.extent_y, 4, texture.texels.data(), 4 * texture.extent_x);
-
-  //        textures_4[z] = std::move(texture);
-  //      }
-  //    }
-
-  //    xatlas::Destroy(atlas);
-  //  }
-
-  //  const auto tex_prepare_fn = [&gltf_model](uint32_t texture_index)
-  //  {
-  //    const auto image_index = gltf_model.textures[texture_index].source;
-
-  //    const auto tex_x = gltf_model.images[image_index].width;
-  //    const auto tex_y = gltf_model.images[image_index].height;
-  //    const auto tex_n = gltf_model.images[image_index].component;
-  //    const auto tex_data = gltf_model.images[image_index].image.data();
-
-  //    Texture texture;
-  //    texture.texels.resize(tex_x * tex_y);
-
-  //    for (uint32_t i = 0; i < tex_x * tex_y; ++i)
-  //    {
-  //      const uint8_t r = tex_n > 0 ? tex_data[i * tex_n + 0] : 0; //0xFF;
-  //      const uint8_t g = tex_n > 1 ? tex_data[i * tex_n + 1] : r; //0xFF;
-  //      const uint8_t b = tex_n > 2 ? tex_data[i * tex_n + 2] : r; //0xFF;
-  //      const uint8_t a = tex_n > 3 ? tex_data[i * tex_n + 3] : r; //0xFF;
-  //      texture.texels[i] = glm::u8vec4(r, g, b, a);
-
-  //    }
-  //    texture.extent_x = tex_x;
-  //    texture.extent_y = tex_y;
-
-  //    return texture;
-  //  };
-
-  //  textures_0.resize(texture_0_indices.size());
-  //  for (uint32_t i = 0; i < uint32_t(texture_0_indices.size()); ++i)
-  //  {
-  //    const auto texture_0_index = texture_0_indices[i];
-  //    textures_0[i] = std::move(tex_prepare_fn(texture_0_index));
-  //  }
-
-  //  textures_1.resize(texture_1_indices.size());
-  //  for (uint32_t i = 0; i < uint32_t(texture_1_indices.size()); ++i)
-  //  {
-  //    const auto texture_1_index = texture_1_indices[i];
-  //    textures_1[i] = std::move(tex_prepare_fn(texture_1_index));
-  //  }
-
-  //  textures_2.resize(texture_2_indices.size());
-  //  for (uint32_t i = 0; i < uint32_t(texture_2_indices.size()); ++i)
-  //  {
-  //    const auto texture_2_index = texture_2_indices[i];
-  //    textures_2[i] = std::move(tex_prepare_fn(texture_2_index));
-  //  }
-
-  //  textures_3.resize(texture_3_indices.size());
-  //  for (uint32_t i = 0; i < uint32_t(texture_3_indices.size()); ++i)
-  //  {
-  //    const auto texture_3_index = texture_3_indices[i];
-  //    textures_3[i] = std::move(tex_prepare_fn(texture_3_index));
-  //  }
-
-  //}
-
-
-
-
-  //void ConvertSceneOBJ(const tinyobj::attrib_t& obj_attrib, const std::vector<tinyobj::shape_t>& obj_shapes, const std::vector<tinyobj::material_t>& obj_materials,
-  //  std::vector<std::vector<Vertex>>& vertices_arrays, std::vector<std::vector<Triangle>>& triangles_arrays, std::vector<Instance>& instances_array,
-  //  bool coordinate_flip, float position_scale, const std::string& path,
-  //  std::vector<Texture>& textures_0, std::vector<Texture>& textures_1, std::vector<Texture>& textures_2, std::vector<Texture>& textures_3, std::vector<Texture>& textures_4)
-  //{
-
-  //  const auto& obj_vertices = obj_attrib.vertices;
-  //  const auto& obj_normals = obj_attrib.normals;
-  //  const auto& obj_texcoords = obj_attrib.texcoords;
-
-  //  const auto create_vertex_fn = [&obj_vertices, &obj_normals, &obj_texcoords](const tinyobj::index_t& obj_index, bool flip, float scale)
-  //  {
-  //    Vertex vertex;
-
-
-  //    if (obj_index.vertex_index != -1)
-  //    {
-  //      const auto pos_x = obj_vertices[3 * obj_index.vertex_index + 0];
-  //      const auto pos_y = obj_vertices[3 * obj_index.vertex_index + 1];
-  //      const auto pos_z = obj_vertices[3 * obj_index.vertex_index + 2];
-  //      vertex.pos = scale * (flip ? glm::fvec3{ pos_x,-pos_z, pos_y } : glm::fvec3{ pos_x, pos_y,-pos_z });
-  //    }
-
-  //    if (obj_index.normal_index != -1)
-  //    {
-  //      const auto nrm_x = obj_normals[3 * obj_index.normal_index + 0];
-  //      const auto nrm_y = obj_normals[3 * obj_index.normal_index + 1];
-  //      const auto nrm_z = obj_normals[3 * obj_index.normal_index + 2];
-  //      vertex.nrm = glm::normalize(flip ? glm::fvec3{ nrm_x,-nrm_z, nrm_y } : glm::fvec3{ nrm_x, nrm_y,-nrm_z });
-  //    }
-
-  //    if (obj_index.texcoord_index != -1)
-  //    {
-  //      const auto tc0_x = obj_texcoords[2 * obj_index.texcoord_index + 0];
-  //      const auto tc0_y = obj_texcoords[2 * obj_index.texcoord_index + 1];
-  //      vertex.tc0 = glm::f32vec2(tc0_x, -tc0_y);
-  //    }
-
-  //    return vertex;
-  //  };
-
-  //  vertices_arrays.clear();
-  //  triangles_arrays.clear();
-  //  instances_array.clear();
-
-
-  //  const auto tex_reindex_fn = [](std::vector<std::string>& tex_names, const std::string& tex_name)
-  //  {
-  //    if (tex_name.empty())
-  //    {
-  //      return -1;
-  //    }
-
-  //    const auto tex_iter = std::find_if(tex_names.cbegin(), tex_names.cend(), [&tex_name](const auto& name) { return tex_name == name; });
-  //    const auto tex_index = tex_iter == tex_names.cend() ? int32_t(tex_names.size()) : int32_t(tex_iter - tex_names.cbegin());
-  //    if (tex_index == tex_names.size())
-  //    {
-  //      tex_names.push_back(tex_name);
-  //    }
-  //    return tex_index;
-  //  };
-
-  //  std::vector<std::string> textures_0_names;
-  //  std::vector<std::string> textures_1_names;
-  //  std::vector<std::string> textures_2_names;
-  //  std::vector<std::string> textures_3_names;
-
-  //  textures_0.clear();  // diffuse
-  //  textures_1.clear();  // normal
-  //  textures_2.clear();  // alpha
-  //  textures_3.clear();  // specular
-
-
-  //  auto vertices_offset = 0u;
-  //  auto triangles_offset = 0u;
-
-  //  for (uint32_t i = 0; i < uint32_t(obj_shapes.size()); ++i)
-  //  {
-  //    const auto& obj_mesh = obj_shapes[i].mesh;
-
-  //    std::unordered_map<int, int> material_indices;
-  //    for (uint32_t j = 0; j < uint32_t(obj_mesh.material_ids.size()); ++j)
-  //    {
-  //      const auto index = obj_mesh.material_ids[j];
-  //      material_indices[index] = material_indices.find(index) == material_indices.end() ? 1 : material_indices[index] + 1;
-  //    }
-
-  //    for (const auto& material_index : material_indices)
-  //    {
-  //      std::vector<Vertex> vertices;
-  //      std::vector<Triangle> triangles;
-
-  //      //std::vector<uint32_t> material_refs;
-
-  //      auto hash_vertex_fn = [](const Vertex& vertex)
-  //      {
-  //        const auto uref = reinterpret_cast<const glm::u32vec4*>(&vertex);
-
-  //        auto hash = 0u;
-  //        hash ^= std::hash<glm::u32vec4>()(uref[0]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-  //        hash ^= std::hash<glm::u32vec4>()(uref[1]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-  //        hash ^= std::hash<glm::u32vec4>()(uref[2]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-  //        hash ^= std::hash<glm::u32vec4>()(uref[3]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-
-  //        return hash;
-  //      };
-  //      auto compare_vertex_fn = [](const Vertex& l, const Vertex& r)
-  //      {
-  //        return (memcmp(&l, &r, sizeof(Vertex)) == 0);
-  //      };
-  //      std::unordered_map<Vertex, uint32_t, decltype(hash_vertex_fn), decltype(compare_vertex_fn)> vertex_map(8, hash_vertex_fn, compare_vertex_fn);
-
-  //      auto remap_vertex_fn = [&vertex_map, &vertices](const Vertex& vertex)
-  //      {
-  //        const auto result = vertex_map.emplace(vertex, uint32_t(vertices.size()));
-  //        if (result.second)
-  //        {
-  //          vertices.push_back(vertex);
-  //        }
-  //        return result.first->second;
-  //      };
-
-
-  //      auto degenerated_geom_prim_count = 0;
-  //      auto degenerated_wrap_prim_count = 0;
-
-  //      for (uint32_t j = 0; j < uint32_t(obj_mesh.material_ids.size()); ++j)
-  //      {
-  //        if (obj_mesh.material_ids[j] != material_index.first)
-  //        {
-  //          continue;
-  //        }
-
-  //        const auto vtx0 = create_vertex_fn(obj_mesh.indices[3 * j + 0], coordinate_flip, position_scale);
-  //        const auto vtx1 = create_vertex_fn(obj_mesh.indices[3 * j + 2], coordinate_flip, position_scale);
-  //        const auto vtx2 = create_vertex_fn(obj_mesh.indices[3 * j + 1], coordinate_flip, position_scale);
-
-  //        const auto dp_10 = vtx1.pos - vtx0.pos;
-  //        const auto dp_20 = vtx2.pos - vtx0.pos;
-  //        const auto ng = glm::cross(dp_10, dp_20);
-  //        if (glm::length(ng) == 0.0f)
-  //        {
-  //          ++degenerated_geom_prim_count;
-  //          continue;
-  //        }
-
-  //        auto has_textures = false;
-  //        has_textures = obj_materials[obj_mesh.material_ids[j]].diffuse_texname.empty() ? has_textures : true;
-  //        has_textures = obj_materials[obj_mesh.material_ids[j]].alpha_texname.empty() ? has_textures : true;
-  //        has_textures = obj_materials[obj_mesh.material_ids[j]].specular_texname.empty() ? has_textures : true;
-  //        has_textures = obj_materials[obj_mesh.material_ids[j]].bump_texname.empty() ? has_textures : true;
-
-  //        if (has_textures)
-  //        {
-  //          const auto duv_10 = vtx1.tc0 - vtx0.tc0;
-  //          const auto duv_20 = vtx2.tc0 - vtx0.tc0;
-  //          const auto det = glm::determinant(glm::fmat2x2(duv_10, duv_20));
-  //          if (det == 0.0f)
-  //          {
-  //            ++degenerated_wrap_prim_count;
-  //            continue;
-  //          }
-  //        }
-
-  //        const auto idx0 = remap_vertex_fn(vtx0);
-  //        const auto idx1 = remap_vertex_fn(vtx1);
-  //        const auto idx2 = remap_vertex_fn(vtx2);
-
-  //        triangles.push_back({ glm::uvec3(idx0, idx1, idx2) });
-  //      }
-
-  //      if (vertices.empty() || triangles.empty()) continue;
-
-  //      BLAST_LOG("Instance %d [%s]: Added vert/prim: %d/%d", i, obj_shapes[i].name.c_str(), vertices.size(), triangles.size());
-
-  //      Instance instance;
-  //      instance.transform;
-
-
-  //      const auto& obj_material = obj_materials[material_index.first];
-
-  //      const auto debug = false;
-  //      if (debug)
-  //      {
-  //        instance.emission = glm::vec3(0.0f, 0.0f, 0.0f);
-  //        instance.intensity = 0.0f;
-  //        //material.ambient = glm::vec3(obj_material.ambient[0], obj_material.ambient[1], obj_material.ambient[2]);
-  //        //material.dissolve = obj_material.dissolve;
-  //        instance.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-  //        instance.shininess = 1.0f;
-  //        instance.specular = glm::vec3(0.0f, 0.0f, 0.0f);
-  //        instance.alpha = 1.0f;
-  //        //instance.transmittance = glm::vec3(0.0f, 0.0f, 0.0f) * (1.0f - obj_material.dissolve);
-  //        //instance.ior = 1.0f;
-  //      }
-  //      else
-  //      {
-
-  //        instance.emission = glm::vec3(obj_material.emission[0], obj_material.emission[1], obj_material.emission[2]);
-  //        instance.intensity = 10.0f;
-  //        //material.ambient = glm::vec3(obj_material.ambient[0], obj_material.ambient[1], obj_material.ambient[2]);
-  //        //material.dissolve = obj_material.dissolve;
-  //        instance.diffuse = glm::vec3(obj_material.diffuse[0], obj_material.diffuse[1], obj_material.diffuse[2]);
-  //        instance.shininess = obj_material.shininess;
-  //        instance.specular = glm::vec3(obj_material.specular[0], obj_material.specular[1], obj_material.specular[2]);
-  //        instance.alpha = 1.0f; // -obj_material.dissolve;
-  //        //instance.transmittance = glm::vec3(obj_material.transmittance[0], obj_material.transmittance[1], obj_material.transmittance[2]) * (1.0f - obj_material.dissolve);
-  //        //instance.ior = obj_material.ior;
-
-  //        const auto& texture_0_name = obj_material.diffuse_texname;
-  //        instance.texture0_idx = texture_0_name.empty() ? uint32_t(-1) : tex_reindex_fn(textures_0_names, texture_0_name);
-  //        const auto& texture_1_name = obj_material.alpha_texname;
-  //        instance.texture1_idx = texture_1_name.empty() ? uint32_t(-1) : tex_reindex_fn(textures_1_names, texture_1_name);
-  //        const auto& texture_2_name = obj_material.specular_texname;
-  //        instance.texture2_idx = texture_2_name.empty() ? uint32_t(-1) : tex_reindex_fn(textures_2_names, texture_2_name);
-  //        const auto& texture_3_name = obj_material.bump_texname;
-  //        instance.texture3_idx = texture_3_name.empty() ? uint32_t(-1) : tex_reindex_fn(textures_3_names, texture_3_name);
-
-
-
-  //        switch (obj_material.illum)
-  //        {
-  //        case 3: // mirror
-  //          instance.diffuse = glm::vec3(0.0f, 0.0f, 0.0f);
-  //          instance.specular = glm::vec3(1.0f, 1.0f, 1.0f);
-  //          instance.shininess = float(1 << 16);
-  //          break;
-  //        case 7: // glass
-  //          instance.diffuse = glm::vec3(0.0f, 0.0f, 0.0f);
-  //          instance.specular = glm::vec3(0.0f, 0.0f, 0.0f);
-  //          instance.alpha = 1.5f;
-  //          break;
-  //        }
-  //      }
-
-  //      instance.geometry_idx = uint32_t(instances_array.size());
-  //      //instance.debug_color{ 0.0f, 0.0f, 0.0f };
-
-  //      instance.vert_count = uint32_t(vertices.size());
-  //      instance.vert_offset = uint32_t(vertices_offset);
-  //      instance.prim_count = uint32_t(triangles.size());
-  //      instance.prim_offset = uint32_t(triangles_offset);
-
-
-  //      vertices_arrays.push_back(vertices);
-  //      triangles_arrays.push_back(triangles);
-  //      instances_array.push_back(instance);
-
-  //      vertices_offset += uint32_t(vertices.size());
-  //      triangles_offset += uint32_t(triangles.size());
-
-  //    }
-  //  }
-
-
-  //  for (uint32_t i = 0; i < uint32_t(instances_array.size()); ++i)
-  //  {
-  //    struct SMikkTSpaceUserData
-  //    {
-  //      std::vector<Triangle>& triangles;
-  //      std::vector<Vertex>& vertices;
-  //    };
-  //    SMikkTSpaceUserData data{ triangles_arrays[i], vertices_arrays[i] };
-
-  //    SMikkTSpaceInterface input = { 0 };
-  //    input.m_getNumFaces = [](const SMikkTSpaceContext* ctx)
-  //    {
-  //      const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-  //      return int32_t(data->triangles.size());
-  //    };
-
-  //    input.m_getNumVerticesOfFace = [](const SMikkTSpaceContext* ctx, const int iFace)
-  //    {
-  //      const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-  //      return 3;
-  //    };
-
-  //    //input.m_getPosition = &GetPositionCb;
-  //    //input.m_getNormal = &GetNormalCb;
-  //    //input.m_getTexCoord = &GetTexCoordCb;
-  //    //input.m_setTSpaceBasic = &SetTspaceBasicCb;
-  //    //input.m_setTSpace = NULL;
-
-
-  //    input.m_getPosition = [](const SMikkTSpaceContext* ctx, float fvPosOut[], int iFace, int iVert)
-  //    {
-  //      const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-  //      const auto& pos = data->vertices[data->triangles[iFace].idx[iVert]].pos;
-  //      fvPosOut[0] = pos.x;
-  //      fvPosOut[1] = pos.y;
-  //      fvPosOut[2] = pos.z;
-  //    };
-
-  //    input.m_getNormal = [](const SMikkTSpaceContext* ctx, float fvNormOut[], int iFace, int iVert)
-  //    {
-  //      const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-  //      const auto& nrm = data->vertices[data->triangles[iFace].idx[iVert]].nrm;
-  //      fvNormOut[0] = nrm.x;
-  //      fvNormOut[1] = nrm.y;
-  //      fvNormOut[2] = nrm.z;
-  //    };
-
-  //    input.m_getTexCoord = [](const SMikkTSpaceContext* ctx, float fvTexcOut[], int iFace, int iVert)
-  //    {
-  //      const auto data = reinterpret_cast<const SMikkTSpaceUserData*>(ctx->m_pUserData);
-  //      const auto& tc0 = data->vertices[data->triangles[iFace].idx[iVert]].tc0;
-  //      fvTexcOut[0] = tc0.x;
-  //      fvTexcOut[1] = tc0.y;
-  //    };
-
-  //    input.m_setTSpaceBasic = [](const SMikkTSpaceContext* ctx, const float fvTangent[], float fSign, int iFace, int iVert)
-  //    {
-  //      auto data = reinterpret_cast<SMikkTSpaceUserData*>(ctx->m_pUserData);
-  //      auto& tng = data->vertices[data->triangles[iFace].idx[iVert]].tng;
-  //      tng.x = fvTangent[0];
-  //      tng.y = fvTangent[1];
-  //      tng.z = fvTangent[2];
-  //      auto& sgn = data->vertices[data->triangles[iFace].idx[iVert]].sgn;
-  //      sgn = fSign;
-  //    };
-
-  //    SMikkTSpaceContext context;
-  //    context.m_pInterface = &input;
-  //    context.m_pUserData = &data;
-
-  //    BLAST_ASSERT(1 == genTangSpaceDefault(&context));
-  //  }
-
-  //  {
-  //    auto atlas = xatlas::Create();
-
-  //    for (uint32_t i = 0; i < uint32_t(instances_array.size()); ++i)
-  //    {
-  //      const auto& vertices = vertices_arrays[i];
-  //      const auto vertex_data = reinterpret_cast<const uint8_t*>(vertices.data());
-  //      const auto vertex_count = uint32_t(vertices.size());
-  //      const auto vertex_stride = uint32_t(sizeof(Vertex));
-
-  //      const auto& triangles = triangles_arrays[i];
-  //      const auto index_data = reinterpret_cast<const uint8_t*>(triangles.data());
-  //      const auto index_count = uint32_t(triangles.size()) * 3;
-  //      const auto index_format = xatlas::IndexFormat::UInt32;
-
-  //      xatlas::MeshDecl mesh_decl;
-  //      mesh_decl.vertexCount = vertex_count;
-  //      mesh_decl.vertexPositionData = vertex_data + 0;
-  //      mesh_decl.vertexPositionStride = vertex_stride;
-  //      mesh_decl.vertexNormalData = vertex_data + 16;
-  //      mesh_decl.vertexNormalStride = vertex_stride;
-  //      mesh_decl.vertexUvData = vertex_data + 48;
-  //      mesh_decl.vertexUvStride = vertex_stride;
-  //      mesh_decl.indexCount = index_count;
-  //      mesh_decl.indexData = index_data;
-  //      mesh_decl.indexFormat = index_format;
-  //      BLAST_ASSERT(xatlas::AddMeshError::Success == xatlas::AddMesh(atlas, mesh_decl));
-
-  //      //xatlas::UvMeshDecl uv_mesh_decl;
-  //      //uv_mesh_decl.vertexCount = vertex_count;
-  //      //uv_mesh_decl.vertexStride = vertex_stride;
-  //      //uv_mesh_decl.vertexUvData = vertex_data + 48;
-  //      //uv_mesh_decl.indexCount = index_count;
-  //      //uv_mesh_decl.indexData = index_data;
-  //      //uv_mesh_decl.indexFormat = index_format;
-  //      //uv_mesh_decl.indexOffset = 0;
-  //      //BLAST_ASSERT(xatlas::AddMeshError::Success == xatlas::AddUvMesh(atlas, uv_mesh_decl));
-  //    }
-
-  //    xatlas::ChartOptions chartOptions;
-  //    chartOptions.useInputMeshUvs = true;
-  //    xatlas::ComputeCharts(atlas, chartOptions);
-
-  //    xatlas::PackOptions packOptions;
-  //    packOptions.resolution = 2048;
-  //    packOptions.texelsPerUnit = 200.0;
-  //    xatlas::PackCharts(atlas, packOptions);
-
-  //    BLAST_ASSERT(atlas->meshCount == uint32_t(instances_array.size()));
-
-  //    for (uint32_t i = 0; i < atlas->meshCount; i++)
-  //    {
-  //      const auto& triangles = triangles_arrays[i];
-  //      const auto& mesh = atlas->meshes[i];
-  //      BLAST_ASSERT(mesh.indexCount == 3 * uint32_t(triangles.size()))
-
-  //        const auto& vertices = vertices_arrays[i];
-
-  //      std::vector<Vertex> temp_vertices(mesh.vertexCount);
-  //      for (uint32_t j = 0; j < mesh.vertexCount; j++)
-  //      {
-  //        const auto& vertex = mesh.vertexArray[j];
-
-  //        temp_vertices[j] = vertices[vertex.xref];
-  //        temp_vertices[j].msk = vertex.atlasIndex;
-  //        temp_vertices[j].tc1 = { vertex.uv[0] / atlas->width, vertex.uv[1] / atlas->height };
-  //      }
-
-  //      std::vector<Triangle> temp_triangles(mesh.indexCount / 3);
-  //      for (uint32_t j = 0; j < mesh.indexCount / 3; j++)
-  //      {
-  //        temp_triangles[j].idx[0] = mesh.indexArray[j * 3 + 0];
-  //        temp_triangles[j].idx[1] = mesh.indexArray[j * 3 + 1];
-  //        temp_triangles[j].idx[2] = mesh.indexArray[j * 3 + 2];
-  //      }
-
-  //      std::swap(vertices_arrays[i], temp_vertices);
-  //      std::swap(triangles_arrays[i], temp_triangles);
-
-  //      instances_array[i].vert_count = uint32_t(vertices_arrays[i].size());
-  //      instances_array[i].vert_offset = i > 0 ? instances_array[i - 1].vert_offset + instances_array[i - 1].vert_count : 0;
-  //      instances_array[i].prim_count = uint32_t(triangles_arrays[i].size());
-  //      instances_array[i].prim_offset = i > 0 ? instances_array[i - 1].prim_offset + instances_array[i - 1].prim_count : 0;
-  //    }
-
-  //    if (atlas->width > 0 && atlas->height > 0)
-  //    {
-  //      const auto white = glm::u8vec4(255, 255, 255, 255);
-
-  //      const auto triangle_raster_fn = [](glm::u8vec4* pixels, uint32_t size_x, uint32_t size_y, const float* v0, const float* v1, const float* v2, const glm::u8vec4& color)
-  //      {
-  //        const auto tc0 = glm::f32vec2(v0[0], v0[1]);
-  //        const auto tc1 = glm::f32vec2(v1[0], v1[1]);
-  //        const auto tc2 = glm::f32vec2(v2[0], v2[1]);
-
-  //        const auto min = glm::min(glm::min(tc0, tc1), tc2);
-  //        const auto max = glm::max(glm::max(tc0, tc1), tc2);
-
-  //        const auto denom = glm::determinant(glm::f32mat2x2(tc1 - tc0, tc2 - tc0));
-
-  //        for (uint32_t i = 0; i < size_y; ++i)
-  //        {
-  //          if (i < min.y || i > max.y) continue;
-
-  //          for (uint32_t j = 0; j < size_x; ++j)
-  //          {
-  //            if (j < min.x || j > max.x) continue;
-
-  //            const auto pnt = glm::f32vec2(j + 0.0f, i + 0.0f);
-
-  //            const auto v = glm::determinant(glm::f32mat2x2(pnt - tc0, tc2 - tc0)) / denom;
-  //            if (v < 0.0f || v > 1.0f) continue;
-
-  //            const auto w = glm::determinant(glm::f32mat2x2(tc1 - tc0, pnt - tc0)) / denom;
-  //            if (w < 0.0f || w > 1.0f) continue;
-
-  //            const auto u = 1.0f - v - w;
-  //            if (u < 0.0f || u > 1.0f) continue;
-
-  //            pixels[(size_x * i + j)] = color;
-
-  //            const auto pattern = glm::floor(pnt / 16.0f);
-  //            const auto fading = 0.5f * glm::fract(0.5f * (pattern.x + pattern.y)) + 0.5f;
-
-  //            pixels[(size_x * i + j)].x *= fading;
-  //            pixels[(size_x * i + j)].y *= fading;
-  //            pixels[(size_x * i + j)].z *= fading;
-  //          }
-  //        }
-  //      };
-
-  //      textures_4.resize(atlas->atlasCount);
-
-  //      for (uint32_t z = 0; z < atlas->atlasCount; ++z)
-  //      {
-  //        //std::vector<uint8_t> image(atlas->width* atlas->height * 3);
-
-  //        Texture texture;
-  //        texture.texels.resize(atlas->width * atlas->height);
-  //        texture.extent_x = atlas->width;
-  //        texture.extent_y = atlas->height;
-
-  //        for (uint32_t i = 0; i < atlas->meshCount; ++i)
-  //        {
-  //          const auto& mesh = atlas->meshes[i];
-
-  //          for (uint32_t j = 0; j < mesh.chartCount; ++j)
-  //          {
-  //            const auto& chart = mesh.chartArray[j];
-  //            if (chart.atlasIndex != z) continue;
-
-  //            BLAST_ASSERT(chart.atlasIndex != -1);
-
-  //            const auto color = glm::u8vec4(uint8_t((rand() % 255 + 192) * 0.5f), uint8_t((rand() % 255 + 192) * 0.5f), uint8_t((rand() % 255 + 192) * 0.5f), 255);
-
-  //            for (uint32_t k = 0; k < chart.faceCount; ++k)
-  //            {
-  //              const auto face = chart.faceArray[k];
-
-  //              const auto& vtx0 = mesh.vertexArray[mesh.indexArray[3 * face + 0]];
-  //              const auto& vtx1 = mesh.vertexArray[mesh.indexArray[3 * face + 1]];
-  //              const auto& vtx2 = mesh.vertexArray[mesh.indexArray[3 * face + 2]];
-
-
-  //              const int v0[2] = { int(vtx0.uv[0]), int(vtx0.uv[1]) };
-  //              const int v1[2] = { int(vtx1.uv[0]), int(vtx1.uv[1]) };
-  //              const int v2[2] = { int(vtx2.uv[0]), int(vtx2.uv[1]) };
-
-  //              triangle_raster_fn(texture.texels.data(), texture.extent_x, texture.extent_y, vtx0.uv, vtx1.uv, vtx2.uv, color);
-  //            }
-  //          }
-  //        }
-
-  //        //char filename[256];
-  //        //snprintf(filename, sizeof(filename), "example_tris%02u.png", z);
-  //        //printf("Writing '%s'...\n", filename);
-  //        //stbi_write_png(filename, texture.extent_x, texture.extent_y, 4, texture.texels.data(), 4 * texture.extent_x);
-
-  //        textures_4[z] = std::move(texture);
-  //      }
-  //    }
-
-  //    xatlas::Destroy(atlas);
-  //  }
-
-
-
-
-
-  //  const auto load_texture_fn = [&path](const std::string& name)
-  //  {
-  //    int32_t tex_x = 0;
-  //    int32_t tex_y = 0;
-  //    int32_t tex_n = 0;
-  //    unsigned char* tex_data = stbi_load((path + name).c_str(), &tex_x, &tex_y, &tex_n, STBI_default);
-
-  //    Texture texture;
-  //    texture.texels.resize(tex_x * tex_y);
-
-  //    for (uint32_t i = 0; i < tex_x * tex_y; ++i)
-  //    {
-  //      const uint8_t r = tex_n > 0 ? tex_data[i * tex_n + 0] : 0; //0xFF;
-  //      const uint8_t g = tex_n > 1 ? tex_data[i * tex_n + 1] : r; //0xFF;
-  //      const uint8_t b = tex_n > 2 ? tex_data[i * tex_n + 2] : r; //0xFF;
-  //      const uint8_t a = tex_n > 3 ? tex_data[i * tex_n + 3] : r; //0xFF;
-  //      texture.texels[i] = glm::u8vec4(r, g, b, a);
-
-  //    }
-  //    stbi_image_free(tex_data);
-
-  //    texture.extent_x = tex_x;
-  //    texture.extent_y = tex_y;
-
-  //    return texture;
-  //  };
-
-  //  if (!textures_0_names.empty())
-  //  {
-  //    textures_0.resize(textures_0_names.size());
-  //    for (uint32_t i = 0; i < uint32_t(textures_0_names.size()); ++i)
-  //    {
-  //      textures_0[i] = std::move(load_texture_fn(textures_0_names[i]));
-  //    }
-
-  //    //    instance.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-  //  }
-
-  //  if (!textures_1_names.empty())
-  //  {
-  //    textures_1.resize(textures_1_names.size());
-  //    for (uint32_t i = 0; i < uint32_t(textures_1_names.size()); ++i)
-  //    {
-  //      textures_1[i] = std::move(load_texture_fn(textures_1_names[i]));
-  //    }
-  //  }
-
-  //  if (!textures_2_names.empty())
-  //  {
-  //    textures_2.resize(textures_2_names.size());
-  //    for (uint32_t i = 0; i < uint32_t(textures_2_names.size()); ++i)
-  //    {
-  //      textures_2[i] = std::move(load_texture_fn(textures_2_names[i]));
-  //    }
-
-  //    // instance.specular = glm::vec3(1.0f, 1.0f, 1.0f);
-  //  }
-
-  //  if (!textures_3_names.empty())
-  //  {
-  //    textures_3.resize(textures_3_names.size());
-  //    for (uint32_t i = 0; i < uint32_t(textures_3_names.size()); ++i)
-  //    {
-  //      textures_3[i] = std::move(load_texture_fn(textures_3_names[i]));
-  //    }
-  //  }
-  //}
+  std::shared_ptr<Property> CreateTextureProperty(const std::pair<const void*, uint32_t>& texels,
+    uint32_t extent_x, uint32_t extent_y, uint32_t extent_z, Format format, uint32_t mipmap)
+  {
+    const auto root_property = std::shared_ptr<Property>(new Property(Property::TYPE_OBJECT));
+
+    const auto extent_x_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
+    extent_x_property->SetUint(extent_x);
+    root_property->SetObjectItem("extent_x", extent_x_property);
+
+    const auto extent_y_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
+    extent_y_property->SetUint(extent_y);
+    root_property->SetObjectItem("extent_y", extent_y_property);
+
+    const auto extent_z_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
+    extent_z_property->SetUint(extent_z);
+    root_property->SetObjectItem("extent_z", extent_z_property);
+
+    const auto format_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
+    format_property->SetUint(format);
+    root_property->SetObjectItem("format", format_property);
+
+    const auto mipmap_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
+    mipmap_property->SetUint(mipmap);
+    root_property->SetObjectItem("mipmap", mipmap_property);
+
+    const auto texels_property = std::shared_ptr<Property>(new Property(Property::TYPE_RAW));
+    texels_property->RawAllocate(texels.second);
+    texels_property->SetRawBytes(texels, 0);
+    texels_property->SetObjectItem("texels", texels_property);
+
+    return root_property;
+  }
 
 
   std::shared_ptr<Property> CreateInstanceProperty(std::vector<Instance>& scene_instances)
@@ -1888,190 +664,6 @@ namespace RayGene3D
     return root_property;
   }
 
-
-  //std::shared_ptr<Property> ImportOBJ(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps)
-  //{
-  //  tinyobj::attrib_t obj_attrib;
-  //  std::vector<tinyobj::shape_t> obj_shapes;
-  //  std::vector<tinyobj::material_t> obj_materials;
-
-  //  std::string warnings;
-  //  std::string errors;
-  //  BLAST_ASSERT(true == tinyobj::LoadObj(&obj_attrib, &obj_shapes, &obj_materials, &warnings, &errors, (path + name).c_str(), path.c_str(), true));
-
-
-  //  std::vector<Vertex> scene_vertices;
-  //  std::vector<Triangle> scene_triangles;
-  //  std::vector<Instance> scene_instances;
-
-  //  std::vector<Texture> textures_0;
-  //  std::vector<Texture> textures_1;
-  //  std::vector<Texture> textures_2;
-  //  std::vector<Texture> textures_3;
-  //  std::vector<Texture> textures_4;
-
-  //  std::vector<std::vector<Vertex>> temp_vertices;
-  //  std::vector<std::vector<Triangle>> temp_triangles;
-
-  //  ConvertSceneOBJ(obj_attrib, obj_shapes, obj_materials,
-  //    temp_vertices, temp_triangles, scene_instances, flip, scale, path,
-  //    textures_0, textures_1, textures_2, textures_3, textures_4);
-
-  //  for (uint32_t i = 0; i < uint32_t(scene_instances.size()); ++i)
-  //  {
-  //    scene_vertices.insert(scene_vertices.end(), temp_vertices[i].data(), temp_vertices[i].data() + temp_vertices[i].size());
-  //    scene_triangles.insert(scene_triangles.end(), temp_triangles[i].data(), temp_triangles[i].data() + temp_triangles[i].size());
-  //  }
-  //  temp_vertices.clear();
-  //  temp_triangles.clear();
-
-  //  auto scene_vertices0 = std::vector<Vertex0>(scene_vertices.size());
-  //  auto scene_vertices1 = std::vector<Vertex1>(scene_vertices.size());
-  //  auto scene_vertices2 = std::vector<Vertex2>(scene_vertices.size());
-  //  auto scene_vertices3 = std::vector<Vertex3>(scene_vertices.size());
-
-  //  for (uint32_t i = 0; i < uint32_t(scene_vertices.size()); ++i)
-  //  {
-  //    scene_vertices0[i].pos = scene_vertices[i].pos;
-  //    scene_vertices0[i].col = scene_vertices[i].col;
-
-  //    scene_vertices1[i].nrm = scene_vertices[i].nrm;
-  //    scene_vertices1[i].msk = scene_vertices[i].msk;
-
-  //    scene_vertices2[i].tng = scene_vertices[i].tng;
-  //    scene_vertices2[i].sgn = scene_vertices[i].sgn;
-
-  //    scene_vertices3[i].tc0 = scene_vertices[i].tc0;
-  //    scene_vertices3[i].tc1 = scene_vertices[i].tc1;
-  //  }
-
-  //  auto root = std::shared_ptr<Property>(new Property(Property::TYPE_OBJECT));
-  //  //root->SetValue(Property::object());
-
-  //  //const auto vertices_property = CreateBufferProperty(scene_vertices.data(), uint32_t(sizeof(Vertex)), uint32_t(scene_vertices.size()));
-  //  //root->SetObjectItem("vertices", vertices_property);
-
-  //  const auto instances_property = CreateBufferProperty(scene_instances.data(), uint32_t(sizeof(Instance)), uint32_t(scene_instances.size()));
-  //  root->SetObjectItem("instances", instances_property);
-
-  //  const auto triangles_property = CreateBufferProperty(scene_triangles.data(), uint32_t(sizeof(Triangle)), uint32_t(scene_triangles.size()));
-  //  root->SetObjectItem("triangles", triangles_property);
-
-  //  const auto vertices0_property = CreateBufferProperty(scene_vertices0.data(), uint32_t(sizeof(Vertex0)), uint32_t(scene_vertices0.size()));
-  //  root->SetObjectItem("vertices0", vertices0_property);
-  //  const auto vertices1_property = CreateBufferProperty(scene_vertices1.data(), uint32_t(sizeof(Vertex1)), uint32_t(scene_vertices1.size()));
-  //  root->SetObjectItem("vertices1", vertices1_property);
-  //  const auto vertices2_property = CreateBufferProperty(scene_vertices2.data(), uint32_t(sizeof(Vertex2)), uint32_t(scene_vertices2.size()));
-  //  root->SetObjectItem("vertices2", vertices2_property);
-  //  const auto vertices3_property = CreateBufferProperty(scene_vertices3.data(), uint32_t(sizeof(Vertex3)), uint32_t(scene_vertices3.size()));
-  //  root->SetObjectItem("vertices3", vertices3_property);
-
-  //  const auto textures0_property = CreatePropertyFromTextures(textures_0, mipmaps);
-  //  root->SetObjectItem("textures0", textures0_property);
-  //  const auto textures1_property = CreatePropertyFromTextures(textures_1, mipmaps);
-  //  root->SetObjectItem("textures1", textures1_property);
-  //  const auto textures2_property = CreatePropertyFromTextures(textures_2, mipmaps);
-  //  root->SetObjectItem("textures2", textures2_property);
-  //  const auto textures3_property = CreatePropertyFromTextures(textures_3, mipmaps);
-  //  root->SetObjectItem("textures3", textures3_property);
-
-  //  const auto textures4_property = CreatePropertyFromTextures(textures_4, mipmaps);
-  //  root->SetObjectItem("textures4", textures4_property);
-
-  //  return root;
-  //}
-
-
-  //std::shared_ptr<Property> ImportGLTF(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps)
-  //{
-  //  tinygltf::Model model;
-  //  tinygltf::TinyGLTF gltf_ctx;
-  //  //tinygltf::LoadImageDataFunction loader;
-  //  //tinygltf::LoadImageDataOption option;
-  //  ////gltf_ctx.SetImageLoader()
-  //  std::string err;
-  //  std::string warn;
-  //  BLAST_ASSERT(gltf_ctx.LoadASCIIFromFile(&model, &err, &warn, (path + name).c_str()));
-
-  //  std::vector<Vertex> scene_vertices;
-  //  std::vector<Triangle> scene_triangles;
-  //  std::vector<Instance> scene_instances;
-
-  //  std::vector<Texture> textures_0;
-  //  std::vector<Texture> textures_1;
-  //  std::vector<Texture> textures_2;
-  //  std::vector<Texture> textures_3;
-  //  std::vector<Texture> textures_4;
-
-  //  std::vector<std::vector<Vertex>> temp_vertices;
-  //  std::vector<std::vector<Triangle>> temp_triangles;
-
-  //  ConvertSceneGLTF(model, temp_vertices, temp_triangles, scene_instances, flip, scale,
-  //    textures_0, textures_1, textures_2, textures_3, textures_4);
-
-  //  for (uint32_t i = 0; i < uint32_t(scene_instances.size()); ++i)
-  //  {
-  //    scene_vertices.insert(scene_vertices.end(), temp_vertices[i].data(), temp_vertices[i].data() + temp_vertices[i].size());
-  //    scene_triangles.insert(scene_triangles.end(), temp_triangles[i].data(), temp_triangles[i].data() + temp_triangles[i].size());
-  //  }
-  //  temp_vertices.clear();
-  //  temp_triangles.clear();
-
-  //  auto scene_vertices0 = std::vector<Vertex0>(scene_vertices.size());
-  //  auto scene_vertices1 = std::vector<Vertex1>(scene_vertices.size());
-  //  auto scene_vertices2 = std::vector<Vertex2>(scene_vertices.size());
-  //  auto scene_vertices3 = std::vector<Vertex3>(scene_vertices.size());
-
-  //  for (uint32_t i = 0; i < uint32_t(scene_vertices.size()); ++i)
-  //  {
-  //    scene_vertices0[i].pos = scene_vertices[i].pos;
-  //    scene_vertices0[i].col = scene_vertices[i].col;
-
-  //    scene_vertices1[i].nrm = scene_vertices[i].nrm;
-  //    scene_vertices1[i].msk = scene_vertices[i].msk;
-
-  //    scene_vertices2[i].tng = scene_vertices[i].tng;
-  //    scene_vertices2[i].sgn = scene_vertices[i].sgn;
-
-  //    scene_vertices3[i].tc0 = scene_vertices[i].tc0;
-  //    scene_vertices3[i].tc1 = scene_vertices[i].tc1;
-  //  }
-
-  //  auto root = std::shared_ptr<Property>(new Property(Property::TYPE_OBJECT));
-  //  //root->SetValue(Property::object());
-
-  //  //const auto vertices_property = CreateBufferProperty(scene_vertices.data(), uint32_t(sizeof(Vertex)), uint32_t(scene_vertices.size()));
-  //  //root->SetObjectItem("vertices", vertices_property);
-
-  //  const auto instances_property = CreateBufferProperty(scene_instances.data(), uint32_t(sizeof(Instance)), uint32_t(scene_instances.size()));
-  //  root->SetObjectItem("instances", instances_property);
-
-  //  const auto triangles_property = CreateBufferProperty(scene_triangles.data(), uint32_t(sizeof(Triangle)), uint32_t(scene_triangles.size()));
-  //  root->SetObjectItem("triangles", triangles_property);
-
-  //  const auto vertices0_property = CreateBufferProperty(scene_vertices0.data(), uint32_t(sizeof(Vertex0)), uint32_t(scene_vertices0.size()));
-  //  root->SetObjectItem("vertices0", vertices0_property);
-  //  const auto vertices1_property = CreateBufferProperty(scene_vertices1.data(), uint32_t(sizeof(Vertex1)), uint32_t(scene_vertices1.size()));
-  //  root->SetObjectItem("vertices1", vertices1_property);
-  //  const auto vertices2_property = CreateBufferProperty(scene_vertices2.data(), uint32_t(sizeof(Vertex2)), uint32_t(scene_vertices2.size()));
-  //  root->SetObjectItem("vertices2", vertices2_property);
-  //  const auto vertices3_property = CreateBufferProperty(scene_vertices3.data(), uint32_t(sizeof(Vertex3)), uint32_t(scene_vertices3.size()));
-  //  root->SetObjectItem("vertices3", vertices3_property);
-
-  //  const auto textures0_property = CreatePropertyFromTextures(textures_0, mipmaps);
-  //  root->SetObjectItem("textures0", textures0_property);
-  //  const auto textures1_property = CreatePropertyFromTextures(textures_1, mipmaps);
-  //  root->SetObjectItem("textures1", textures1_property);
-  //  const auto textures2_property = CreatePropertyFromTextures(textures_2, mipmaps);
-  //  root->SetObjectItem("textures2", textures2_property);
-  //  const auto textures3_property = CreatePropertyFromTextures(textures_3, mipmaps);
-  //  root->SetObjectItem("textures3", textures3_property);
-
-  //  const auto textures4_property = CreatePropertyFromTextures(textures_4, mipmaps);
-  //  root->SetObjectItem("textures4", textures4_property);
-
-  //  return root;
-  //}
 
   //std::shared_ptr<Property> ImportEXR(const std::string& path, const std::string& name, float exposure, uint32_t mipmaps)
   //{
@@ -2232,6 +824,92 @@ namespace RayGene3D
 
     return root;
   }
+
+  void ExportTexture(const std::string& path, const std::shared_ptr<Property>& root)
+  {}
+
+  std::shared_ptr<Property> ImportTexture(const std::string& path, uint32_t mipmap)
+  {
+    int32_t src_extent_x = 0;
+    int32_t src_extent_y = 0;
+    int32_t src_stride = 0;
+    uint8_t* src_data = stbi_load(path.c_str(), &src_extent_x, &src_extent_y, &src_stride, STBI_default);
+
+    int32_t dst_extent_x = src_extent_x;
+    int32_t dst_extent_y = src_extent_y;
+    int32_t dst_stride = 4;
+    uint8_t* dst_data = new uint8_t[dst_extent_x * dst_extent_y * dst_stride];
+
+    for (int32_t i = 0; i < src_extent_x * src_extent_y; ++i)
+    {
+      const uint8_t r = src_stride > 0 ? src_data[i * src_stride + 0] : 0; //0xFF;
+      const uint8_t g = src_stride > 1 ? src_data[i * src_stride + 1] : r; //0xFF;
+      const uint8_t b = src_stride > 2 ? src_data[i * src_stride + 2] : r; //0xFF;
+      const uint8_t a = src_stride > 3 ? src_data[i * src_stride + 3] : r; //0xFF;
+      dst_data[i * dst_stride + 0] = r;
+      dst_data[i * dst_stride + 1] = g;
+      dst_data[i * dst_stride + 2] = b;
+      dst_data[i * dst_stride + 3] = a;
+    }
+    stbi_image_free(src_data);
+
+    src_extent_x = dst_extent_x;
+    src_extent_y = dst_extent_y;
+    src_stride = dst_stride;
+    src_data = dst_data;
+
+    const auto mipmap_count_fn = [](int32_t value)
+    { 
+      int32_t power = 0;
+      while ((value >> power) > 0) ++power;
+      return power;
+    };
+
+    const auto mipmap_x = mipmap_count_fn(src_extent_x);
+    const auto mipmap_y = mipmap_count_fn(src_extent_y);
+    const auto extent_x = 1 << (mipmap_x > mipmap_y ? int32_t(mipmap) : std::max(0, int32_t(mipmap) - std::abs(mipmap_x - mipmap_y)));
+    const auto extent_y = 1 << (mipmap_y > mipmap_x ? int32_t(mipmap) : std::max(0, int32_t(mipmap) - std::abs(mipmap_x - mipmap_y)));
+    const auto stride = 4;
+    const auto size = (extent_x * extent_y - 1) / 3 * stride;
+    const auto data = new uint8_t[size];
+
+    dst_extent_x = extent_x;
+    dst_extent_y = extent_y;
+    dst_stride = stride;
+    dst_data = data;
+
+    stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, dst_stride);
+    delete[] src_data;
+
+    src_extent_x = dst_extent_x;
+    src_extent_y = dst_extent_y;
+    src_stride = dst_stride;
+    src_data = dst_data;
+
+    for (uint32_t i = 1; i < mipmap; ++i)
+    {
+      dst_extent_x = std::min(1, src_extent_x / 2);
+      dst_extent_y = std::min(1, src_extent_y / 2);
+      dst_stride = src_stride;
+      dst_data += src_extent_x * src_extent_y * src_stride;
+      stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, dst_stride);
+
+      src_extent_x = dst_extent_x;
+      src_extent_y = dst_extent_y;
+      src_stride = dst_stride;
+      src_data = dst_data;
+    }
+
+    const auto root = CreateTextureProperty({ data, size }, extent_x, extent_y, 1, FORMAT_R8G8_UNORM, mipmap);
+
+    return root;
+  }
+
+  void ExportBuffer(const std::string& path, const std::shared_ptr<Property>& root)
+  {}
+
+  std::shared_ptr<Property> ImportBuffer(const std::string& path, uint32_t stride)
+  {}
 
 
   //void SaveToPNG(const std::string& file_path, std::pair<const void*, uint32_t> bytes, uint32_t width, uint32_t height)
