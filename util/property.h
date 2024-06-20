@@ -261,7 +261,7 @@ namespace RayGene3D
     uint32_t extent_x, uint32_t extent_y, uint32_t extent_z, Format format, uint32_t mipmap);
 
   void ExportTexture(const std::string& path, const std::shared_ptr<Property>& root);
-  std::shared_ptr<Property> ImportTexture(const std::string& path, uint32_t mipmaps);
+  std::shared_ptr<Property> ImportTexture(const std::string& path, uint32_t mipmap);
 
   void ExportBuffer(const std::string& path, const std::shared_ptr<Property>& root);
   std::shared_ptr<Property> ImportBuffer(const std::string& path, uint32_t stride);

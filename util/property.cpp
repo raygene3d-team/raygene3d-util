@@ -826,7 +826,25 @@ namespace RayGene3D
   }
 
   void ExportTexture(const std::string& path, const std::shared_ptr<Property>& root)
-  {}
+  {
+    const auto extent_x = root->GetObjectItem("extent_x")->GetUint();
+    const auto extent_y = root->GetObjectItem("extent_y")->GetUint();
+    const auto extent_z = root->GetObjectItem("extent_x")->GetUint();
+    const auto format = root->GetObjectItem("format")->GetUint();
+    const auto mipmap = root->GetObjectItem("mipmap")->GetUint();
+    const auto texels = root->GetObjectItem("texels")->GetRawBytes(0);
+
+    const auto extension = ExtractExtension(path);
+
+    if (std::strcmp(extension.c_str(), "png") == 0)
+    {
+      BLAST_ASSERT(0 != stbi_write_png(path.c_str(), extent_x, extent_y, 3, texels.first, 4 * extent_x));
+    }
+    else if (std::strcmp(extension.c_str(), "jpg") == 0)
+    {
+      BLAST_ASSERT(0 != stbi_write_jpg(path.c_str(), extent_x, extent_y, 3, texels.first, 80));
+    }
+  }
 
   std::shared_ptr<Property> ImportTexture(const std::string& path, uint32_t mipmap)
   {
@@ -865,10 +883,14 @@ namespace RayGene3D
       return power;
     };
 
-    const auto mipmap_x = mipmap_count_fn(src_extent_x);
-    const auto mipmap_y = mipmap_count_fn(src_extent_y);
-    const auto extent_x = 1 << (mipmap_x > mipmap_y ? int32_t(mipmap) : std::max(0, int32_t(mipmap) - std::abs(mipmap_x - mipmap_y)));
-    const auto extent_y = 1 << (mipmap_y > mipmap_x ? int32_t(mipmap) : std::max(0, int32_t(mipmap) - std::abs(mipmap_x - mipmap_y)));
+    //const auto mipmap_x = mipmap_count_fn(src_extent_x);
+    //const auto mipmap_y = mipmap_count_fn(src_extent_y);
+    //const auto extent_x = 1 << (mipmap_x > mipmap_y ? int32_t(mipmap) : std::max(0, int32_t(mipmap) - std::abs(mipmap_x - mipmap_y)));
+    //const auto extent_y = 1 << (mipmap_y > mipmap_x ? int32_t(mipmap) : std::max(0, int32_t(mipmap) - std::abs(mipmap_x - mipmap_y)));
+    const auto mipmap_x = mipmap;
+    const auto mipmap_y = mipmap;
+    const auto extent_x = 1 << mipmap_x;
+    const auto extent_y = 1 << mipmap_y;
     const auto stride = 4;
     const auto size = (extent_x * extent_y - 1) / 3 * stride;
     const auto data = new uint8_t[size];
@@ -900,16 +922,18 @@ namespace RayGene3D
       src_data = dst_data;
     }
 
-    const auto root = CreateTextureProperty({ data, size }, extent_x, extent_y, 1, FORMAT_R8G8_UNORM, mipmap);
+    const auto root = CreateTextureProperty({ data, size }, extent_x, extent_y, 1, FORMAT_R8G8B8A8_UNORM, mipmap);
+    
+    delete[] data;
 
     return root;
   }
 
-  void ExportBuffer(const std::string& path, const std::shared_ptr<Property>& root)
-  {}
+  //void ExportBuffer(const std::string& path, const std::shared_ptr<Property>& root)
+  //{}
 
-  std::shared_ptr<Property> ImportBuffer(const std::string& path, uint32_t stride)
-  {}
+  //std::shared_ptr<Property> ImportBuffer(const std::string& path, uint32_t stride)
+  //{}
 
 
   //void SaveToPNG(const std::string& file_path, std::pair<const void*, uint32_t> bytes, uint32_t width, uint32_t height)
