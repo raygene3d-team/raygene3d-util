@@ -27,8 +27,8 @@ THE SOFTWARE.
 ================================================================================*/
 
 
-//#pragma once
-//#include "object.h"
+#pragma once
+#include "types.h"
 
 //void Property::Initialize()
 //{
@@ -40,3 +40,19 @@ THE SOFTWARE.
 //{
 //
 //}
+
+namespace RayGene3D
+{
+  //template<typename T>
+  //Buffer<T>::Buffer(uint32_t count)
+  //  : count(count)
+  //{
+  //  bytes.Allocate(count * sizeof(T));
+  //}
+
+  //template<typename T>
+  //Buffer<T>::~Buffer()
+  //{
+  //  bytes.Free();
+  //}
+}

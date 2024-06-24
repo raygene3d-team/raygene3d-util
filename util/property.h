@@ -260,8 +260,11 @@ namespace RayGene3D
   std::shared_ptr<Property> CreateTextureProperty(const std::pair<const void*, uint32_t>& texels,
     uint32_t extent_x, uint32_t extent_y, uint32_t extent_z, Format format, uint32_t mipmap);
 
-  void ExportTexture(const std::string& path, const std::shared_ptr<Property>& root);
-  std::shared_ptr<Property> ImportTexture(const std::string& path, uint32_t mipmap);
+  void ExportTextureLDR(const std::string& path, const std::shared_ptr<Property>& root);
+  std::shared_ptr<Property> ImportTextureLDR(const std::string& path, uint32_t mipmap);
+
+  void ExportTextureHDR(const std::string& path, const std::shared_ptr<Property>& root);
+  std::shared_ptr<Property> ImportTextureHDR(const std::string& path, uint32_t mipmap);
 
   void ExportBuffer(const std::string& path, const std::shared_ptr<Property>& root);
   std::shared_ptr<Property> ImportBuffer(const std::string& path, uint32_t stride);

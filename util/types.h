@@ -164,6 +164,10 @@ namespace RayGene3D
 
 
 
+
+
+
+
   struct ReflectionProbeLevel
   {
     uint32_t level{ 0 };
@@ -199,7 +203,7 @@ namespace RayGene3D
       _bytes = { nullptr, 0 };
     }
 
-    void SetBytes(std::pair<const void*, uint32_t> bytes, uint32_t offset)
+    void SetBytes(std::pair<const void*, uint32_t> bytes, uint32_t offset) const
     {
       if (offset > _bytes.second)
       {
@@ -222,9 +226,92 @@ namespace RayGene3D
       return { _bytes.first + offset, _bytes.second - offset };
     }
 
+    std::pair<void*, uint32_t> AccessBytes() const
+    {
+      return _bytes;
+    }
+
   public:
     Raw() {}
     ~Raw() { Free(); }
+  };
+
+
+
+  template<typename T>
+  class Buffer
+  {
+  private:
+    uint32_t count;
+
+  private:
+    Raw bytes;
+
+  public:
+    const Raw& GetBytes() const { return bytes; }
+
+  public:
+    Buffer(uint32_t count)
+      : count(count)
+    {
+      bytes.Allocate(count * sizeof(T));
+    }
+    ~Buffer()
+    {
+      bytes.Free();
+    }
+  };
+
+  template<typename T>
+  class Image
+  {
+  private:
+    uint32_t extent_x;
+    uint32_t extent_y;
+
+  private:
+    Raw raw;
+
+  public:
+    uint32_t GetExtentX() const { return extent_x; }
+    uint32_t GetExtentY() const { return extent_y; }
+    std::pair<T*, uint32_t> AccessTexels() const { return raw.AccessBytes(); }
+
+    //std::pair<const T*, uint32_t> GetTexels(uint32_t offset) const 
+    //{
+    //  const auto& texels = raw.GetBytes(offset * uint32_t(sizeof(T)));
+    //  return { texels.first, texels.second / uint32_t(sizeof(T)) };
+    //}
+
+    //void SetTexels(std::pair<const T*, uint32_t> texels, uint32_t offset) const
+    //{ 
+    //  const auto& texels = { texels.first, texels.second * uint32_t(sizeof(T)) };
+    //  raw.SetBytes(texels, offset * uint32_t(sizeof(T);
+    //}
+
+    const T& GetTexel(uint32_t x, uint32_t y) const
+    {
+      const auto offset = (y * extent_x + x) * uint32_t(sizeof(T)));
+      return &reinterpret_cast<T*>(raw.GetBytes(offset).first);
+    }
+
+    void SetTexel(uint32_t x, uint32_t y, const T& t) const
+    { 
+      const auto offset = (y * extent_x + x) * uint32_t(sizeof(T)));
+      raw.SetBytes({ t, sizeof(T) }, offset);
+    }
+
+  public:
+    Image(uint32_t extent_x, uint32_t extent_y)
+      : extent_x(extent_x)
+      , extent_y(extent_y)
+    { 
+      raw.Allocate(extent_x * extent_y * sizeof(T));
+    }
+    ~Image()
+    { 
+      raw.Free();
+    }
   };
 }
 
