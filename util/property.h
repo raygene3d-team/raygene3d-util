@@ -136,14 +136,12 @@ namespace RayGene3D
     void RawFree() { std::get<raw_t>(_value).Free(); }
     void SetRawBytes(std::pair<const void*, uint32_t> bytes, uint32_t offset) { std::get<raw_t>(_value).SetBytes(bytes, offset); }
     std::pair<const void*, uint32_t> GetRawBytes(uint32_t offset) const { return std::get<raw_t>(_value).GetBytes(offset); }
-    template<typename T> void SetTypedBytes(std::pair<const T*, uint32_t> bytes, uint32_t offset)
-    {
-      SetRawBytes({ bytes.first, uint32_t(bytes.second * sizeof(T)) }, uint32_t(offset * sizeof(T)));
-    }
-    template<typename T> std::pair<const T*, uint32_t> GetTypedBytes(uint32_t offset)
-    {
-      const auto bytes = GetRawBytes(uint32_t(offset * sizeof(T))); return { reinterpret_cast<const T*>(bytes.first), uint32_t(bytes.second / sizeof(T)) };
-    }
+    template<typename T> void SetTypedBytes(std::pair<const T*, uint32_t> bytes, uint32_t offset) { std::get<raw_t>(_value).SetElements<T>(bytes, offset); }
+    template<typename T> std::pair<const T*, uint32_t> GetTypedBytes(uint32_t offset) { return std::get<raw_t>(_value).GetElements<T>(offset); }
+
+    void SetRaw(Raw&& raw) { std::get<raw_t>(_value) = std::move(raw); }
+    Raw&& GetRaw() { return std::move(std::get<raw_t>(_value)); }
+    const Raw&& GetRaw() const { return std::move(std::get<raw_t>(_value)); }
 
 
 
@@ -255,30 +253,27 @@ namespace RayGene3D
   std::shared_ptr<Property> CreateUVec2Property();
   std::shared_ptr<Property> CreateUIntProperty();
 
-  std::shared_ptr<Property> CreateBufferProperty(const std::pair<const void*, uint32_t>& bytes,
-    uint32_t stride, uint32_t count);
-  std::shared_ptr<Property> CreateTextureProperty(const std::pair<const void*, uint32_t>& texels,
-    uint32_t extent_x, uint32_t extent_y, uint32_t extent_z, Format format, uint32_t mipmap);
+  std::shared_ptr<Property> CreateBufferProperty(const std::vector<Raw>& raws, uint32_t stride, uint32_t count);
+  std::shared_ptr<Property> CreateTextureProperty(const std::vector<Raw>& raws, uint32_t extent_x, uint32_t extent_y, 
+    Format format, uint32_t mipmap, uint32_t layers);
 
-  void ExportTextureLDR(const std::string& path, const std::shared_ptr<Property>& root);
-  std::shared_ptr<Property> ImportTextureLDR(const std::string& path, uint32_t mipmap);
+  void ExportTextureLDR(const std::shared_ptr<Property>& root, const std::string& path, uint32_t layer = 0u);
+  std::shared_ptr<Property> ImportTextureLDR(const std::vector<std::string>& path, uint32_t mipmap, bool symmetric, bool srgb);
 
-  void ExportTextureHDR(const std::string& path, const std::shared_ptr<Property>& root);
-  std::shared_ptr<Property> ImportTextureHDR(const std::string& path, uint32_t mipmap);
+  void ExportTextureHDR(const std::shared_ptr<Property>& root, const std::string& path, uint32_t layer = 0u);
+  std::shared_ptr<Property> ImportTextureHDR(const std::vector<std::string>& path, uint32_t mipmap, bool symmetric, bool cube);
 
-  void ExportBuffer(const std::string& path, const std::shared_ptr<Property>& root);
-  std::shared_ptr<Property> ImportBuffer(const std::string& path, uint32_t stride);
-
-  //std::shared_ptr<Property> ImportOBJ(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps);
-  //std::shared_ptr<Property> ImportGLTF(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps);
-
-  //std::shared_ptr<Property> ImportAsPanoEXR(const std::string& path, const std::string& name, float exposure, uint32_t mipmaps);
-  //std::shared_ptr<Property> ImportAsCubeMapEXR(const std::string& path, const std::string& name, float exposure, uint32_t mipmaps);
-
-  //std::shared_ptr<Property> CreatePropertyFromTextures(const std::vector<Texture>& textures, uint32_t mipmaps);
+  void ExportBuffer(const std::shared_ptr<Property>& root, const std::string& path, uint32_t index = 0u);
+  std::shared_ptr<Property> ImportBuffer(const std::vector<std::string>& path, uint32_t stride);
 
   void SaveProperty(const std::string& directory, const std::string& name, const std::shared_ptr<Property>& root);
   std::shared_ptr<Property> LoadProperty(const std::string& directory, const std::string& name);
+
+  std::tuple<Raw, uint32_t, uint32_t> LoadTexture(const std::string& path, bool symmetric, bool srgb);
+  void SaveTexture(const std::string& path, const Raw& raw, uint32_t extent_x, uint32_t extent_y);
+
+  Raw LoadBuffer(const std::string& path);
+  void SaveBuffer(const std::string& path, const Raw& raw);
 }
 
 

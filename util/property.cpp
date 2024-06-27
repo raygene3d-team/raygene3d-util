@@ -594,8 +594,7 @@ namespace RayGene3D
   }
 
 
-  std::shared_ptr<Property> CreateTextureProperty(const std::pair<const void*, uint32_t>& texels,
-    uint32_t extent_x, uint32_t extent_y, uint32_t extent_z, Format format, uint32_t mipmap)
+  std::shared_ptr<Property> CreateTextureProperty(Raw&& raw, uint32_t extent_x, uint32_t extent_y)
   {
     const auto root_property = std::shared_ptr<Property>(new Property(Property::TYPE_OBJECT));
 
@@ -607,21 +606,8 @@ namespace RayGene3D
     extent_y_property->SetUint(extent_y);
     root_property->SetObjectItem("extent_y", extent_y_property);
 
-    const auto extent_z_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
-    extent_z_property->SetUint(extent_z);
-    root_property->SetObjectItem("extent_z", extent_z_property);
-
-    const auto format_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
-    format_property->SetUint(format);
-    root_property->SetObjectItem("format", format_property);
-
-    const auto mipmap_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
-    mipmap_property->SetUint(mipmap);
-    root_property->SetObjectItem("mipmap", mipmap_property);
-
     const auto texels_property = std::shared_ptr<Property>(new Property(Property::TYPE_RAW));
-    texels_property->RawAllocate(texels.second);
-    texels_property->SetRawBytes(texels, 0);
+    texels_property->SetRaw(std::move(raw));
     texels_property->SetObjectItem("texels", texels_property);
 
     return root_property;
@@ -851,101 +837,102 @@ namespace RayGene3D
     }
   }
 
-  Image<glm::u8vec4> LoadImageLDR(const std::string& path)
-  {
-    auto extent_x = 0;
-    auto extent_y = 0;
-    auto channels = 0;
-    auto data = stbi_load(path.c_str(), &extent_x, &extent_y, &channels, STBI_default);
+  //std::tuple<Raw, uint32_t, uint32_t> LoadImageLDR(const std::string& path)
+  //{
+  //  auto extent_x = 0;
+  //  auto extent_y = 0;
+  //  auto channels = 0;
+  //  const auto data = stbi_load(path.c_str(), &extent_x, &extent_y, &channels, STBI_default);
 
-    auto result = Image<glm::u8vec4>(extent_x, extent_y);
-    for (int32_t i = 0; i < extent_y; ++i)
+  //  const auto count = (extent_x * extent_y - 1) / 3;
+  //  const auto stride = uint32_t(sizeof(glm::u8vec4));
+
+  //  auto raw = Raw(stride * count);
+  //  for (auto i = 0u; i < uint32_t(extent_x * extent_y); ++i)
+  //  {
+  //    const auto r = channels > 0 ? data[i * channels + 0] : 0; //0xFF;
+  //    const auto g = channels > 1 ? data[i * channels + 1] : r; //0xFF;
+  //    const auto b = channels > 2 ? data[i * channels + 2] : r; //0xFF;
+  //    const auto a = channels > 3 ? data[i * channels + 3] : r; //0xFF;
+  //    const auto element = glm::u8vec4{ r, g, b, a };
+  //    raw.SetElements<glm::u8vec4>({ &element, 1 }, i);
+  //  }
+  //  stbi_image_free(data);
+
+  //  return { raw, extent_x, extent_y };
+  //}
+
+  //Image<glm::u8vec4> ResizeImageLDR(const Image<glm::u8vec4>& src_image, uint32_t dst_extent_x, uint32_t dst_extent_y)
+  //{
+  //  const auto dst_channels = 4;
+  //  auto raw = Raw(dst_extent_x * dst_extent_y * uint32_t(sizeof(glm::u8vec4)));
+  //  auto dst_image = Image<glm::u8vec4>(dst_extent_x, dst_extent_y);
+  //  auto dst_data = reinterpret_cast<uint8_t*>(dst_image.GetRaw().AccessBytes().first);
+
+  //  const auto src_extent_x = src_image.GetExtentX();
+  //  const auto src_extent_y = src_image.GetExtentY();
+  //  const auto src_data = reinterpret_cast<const uint8_t*>(src_image.GetRaw().AccessBytes().first);
+
+  //  stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, dst_channels);
+
+  //  return dst_image;
+  //}
+
+  std::shared_ptr<Property> ImportTextureLDR(const std::string& path, uint32_t mipmap, bool symmetric, bool srgb)
+  {
+    auto src_extent_x = 0;
+    auto src_extent_y = 0;
+    auto src_channels = 0;
+    const auto texels = stbi_load(path.c_str(), &src_extent_x, &src_extent_y, &src_channels, STBI_default);
+
+    auto src_data = new uint8_t[src_extent_x * src_extent_y * 4];
+    for (auto i = 0u; i < uint32_t(src_extent_x * src_extent_y); ++i)
     {
-      for (int32_t j = 0; j < extent_x; ++j)
-      {
-        const auto idx = i * extent_x + j;
-        const auto r = channels > 0 ? data[idx * channels + 0] : 0; //0xFF;
-        const auto g = channels > 1 ? data[idx * channels + 1] : r; //0xFF;
-        const auto b = channels > 2 ? data[idx * channels + 2] : r; //0xFF;
-        const auto a = channels > 3 ? data[idx * channels + 3] : r; //0xFF;
-        result.SetTexel(i, j, glm::u8vec4{ r, g, b, a });
-      }
+      const auto r = src_channels > 0 ? texels[i * src_channels + 0] : 0; //0xFF;
+      const auto g = src_channels > 1 ? texels[i * src_channels + 1] : r; //0xFF;
+      const auto b = src_channels > 2 ? texels[i * src_channels + 2] : r; //0xFF;
+      const auto a = src_channels > 3 ? texels[i * src_channels + 3] : r; //0xFF;
+      src_data[i * 4 + 0] = r;
+      src_data[i * 4 + 1] = g;
+      src_data[i * 4 + 2] = b;
+      src_data[i * 4 + 3] = a;
     }
-    stbi_image_free(data);
-
-    return result;
-  }
-
-  Image<glm::u8vec4> ResizeImageLDR(const Image<glm::u8vec4>& src_image, uint32_t dst_extent_x, uint32_t dst_extent_y)
-  {
-    const auto dst_channels = 4;
-    const auto dst_image = Image<glm::u8vec4>(dst_extent_x, dst_extent_y);
-    auto dst_data = reinterpret_cast<uint8_t*>(dst_image.AccessTexels().first);
-
-    const auto src_extent_x = src_image.GetExtentX();
-    const auto src_extent_y = src_image.GetExtentY();
-    const auto src_data = reinterpret_cast<const uint8_t*>(src_image.AccessTexels().first);
-
-    stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, dst_channels);
-
-    return dst_image;
-  }
-
-  std::shared_ptr<Property> ImportTextureLDR(const std::string& path, uint32_t mipmap)
-  {
-    const auto src_image = LoadImageLDR(path);
-
-    //src_extent_x = dst_extent_x;
-    //src_extent_y = dst_extent_y;
-    //src_channels = dst_channels;
-    //src_data = dst_data;
+    stbi_image_free(texels);
 
     const auto mipmap_count_fn = [](int32_t value)
-    { 
+    {
       int32_t power = 0;
       while ((value >> power) > 0) ++power;
       return power;
     };
 
-    const auto mipmap_x = mipmap_count_fn(src_image.GetExtentX());
-    const auto mipmap_y = mipmap_count_fn(src_image.GetExtentY());
-    const auto extent_x = 1 << (int32_t(mipmap) - (mipmap_x > mipmap_y ? 0 : mipmap_y - mipmap_x));
-    const auto extent_y = 1 << (int32_t(mipmap) - (mipmap_y > mipmap_x ? 0 : mipmap_x - mipmap_y));
+    const auto mipmap_x = mipmap_count_fn(src_extent_x);
+    const auto mipmap_y = mipmap_count_fn(src_extent_y);
+    const auto extent_x = symmetric ? mipmap : 1 << (int32_t(mipmap) - (mipmap_x > mipmap_y ? 0 : mipmap_y - mipmap_x));
+    const auto extent_y = symmetric ? mipmap : 1 << (int32_t(mipmap) - (mipmap_y > mipmap_x ? 0 : mipmap_x - mipmap_y));
+    auto raw = Raw(uint32_t(sizeof(glm::u8vec4)) * (extent_x * extent_y - 1) / 3);
+    
+    auto dst_extent_x = extent_x;
+    auto dst_extent_y = extent_y;
+    auto dst_data = reinterpret_cast<uint8_t*>(raw.AccessBytes().first);
 
-    const auto channels = 4;
-    const auto size = (extent_x * extent_y - 1) / 3 * channels;
-    const auto data = new uint8_t[size];
-
-    dst_extent_x = extent_x;
-    dst_extent_y = extent_y;
-    dst_channels = channels;
-    dst_data = data;
-
-    stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, dst_channels);
+    stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
     delete[] src_data;
 
-    src_extent_x = dst_extent_x;
-    src_extent_y = dst_extent_y;
-    src_channels = dst_channels;
-    src_data = dst_data;
-
-    for (uint32_t i = 1; i < mipmap; ++i)
+    for (auto i = 1u; i < mipmap; ++i)
     {
-      dst_extent_x = std::min(1, src_extent_x / 2);
-      dst_extent_y = std::min(1, src_extent_y / 2);
-      dst_channels = src_channels;
-      dst_data += src_extent_x * src_extent_y * src_channels;
-      stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, dst_channels);
-
       src_extent_x = dst_extent_x;
       src_extent_y = dst_extent_y;
-      src_channels = dst_channels;
       src_data = dst_data;
+
+      dst_extent_x = std::min(1u, extent_x >> i);
+      dst_extent_y = std::min(1u, extent_y >> i);
+      dst_data = src_data + src_extent_x * src_extent_y * 4;
+
+      stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
     }
 
-    const auto root = CreateTextureProperty({ data, size }, extent_x, extent_y, 1, FORMAT_R8G8B8A8_UNORM, mipmap);
-    
-    delete[] data;
+    const auto root = CreateTextureProperty(std::move(raw), extent_x, extent_y);
 
     return root;
   }
@@ -1030,7 +1017,7 @@ namespace RayGene3D
       src_data = dst_data;
     }
 
-    const auto root = CreateTextureProperty({ data, size }, extent_x, extent_y, 1, FORMAT_R32G32B32A32_FLOAT, mipmap);
+    const auto root = std::shared_ptr<Property>(new Property(Property::TYPE_RAW)); // = CreateTextureProperty({ data, size }, extent_x, extent_y, 1, FORMAT_R32G32B32A32_FLOAT, mipmap);
 
     delete[] data;
 
