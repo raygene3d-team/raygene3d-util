@@ -252,6 +252,7 @@ namespace RayGene3D
 
   public:
     Raw(uint32_t size = 0) { Allocate(size); }
+    Raw(std::pair<const void*, uint32_t> bytes) { Allocate(bytes.second); SetBytes(bytes); }
     ~Raw() { Free(); }
     Raw(const Raw& raw) = delete;
     Raw& operator=(const Raw& raw) = delete;

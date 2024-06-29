@@ -594,7 +594,8 @@ namespace RayGene3D
   }
 
 
-  std::shared_ptr<Property> CreateTextureProperty(Raw&& raw, uint32_t extent_x, uint32_t extent_y)
+  std::shared_ptr<Property> CreateTextureProperty(std::vector<Raw>&& raws,
+    uint32_t extent_x, uint32_t extent_y, Format format, uint32_t mipmap)
   {
     const auto root_property = std::shared_ptr<Property>(new Property(Property::TYPE_OBJECT));
 
@@ -606,9 +607,51 @@ namespace RayGene3D
     extent_y_property->SetUint(extent_y);
     root_property->SetObjectItem("extent_y", extent_y_property);
 
-    const auto texels_property = std::shared_ptr<Property>(new Property(Property::TYPE_RAW));
-    texels_property->SetRaw(std::move(raw));
-    texels_property->SetObjectItem("texels", texels_property);
+    const auto format_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
+    format_property->SetUint(format);
+    root_property->SetObjectItem("format", format_property);
+
+    const auto mipmap_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
+    mipmap_property->SetUint(mipmap);
+    root_property->SetObjectItem("mipmap", mipmap_property);
+
+    const auto layers_property = std::shared_ptr<Property>(new Property(Property::TYPE_ARRAY));
+    layers_property->SetArraySize(uint32_t(raws.size()));
+    layers_property->SetObjectItem("layers", layers_property);
+
+    for (auto i = 0u; i < uint32_t(raws.size()); ++i)
+    {
+      const auto texels_property = std::shared_ptr<Property>(new Property(Property::TYPE_RAW));
+      texels_property->SetRaw(std::move(raws[i]));
+      layers_property->SetArrayItem(i, texels_property);
+    }
+
+    return root_property;
+  }
+
+  std::shared_ptr<Property> CreateBufferProperty(std::vector<Raw>&& raws,
+    uint32_t stride, uint32_t count)
+  {
+    const auto root_property = std::shared_ptr<Property>(new Property(Property::TYPE_OBJECT));
+
+    const auto stride_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
+    stride_property->SetUint(stride);
+    root_property->SetObjectItem("stride", stride_property);
+
+    const auto count_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
+    count_property->SetUint(count);
+    root_property->SetObjectItem("count", count_property);
+
+    const auto items_property = std::shared_ptr<Property>(new Property(Property::TYPE_ARRAY));
+    items_property->SetArraySize(uint32_t(raws.size()));
+    items_property->SetObjectItem("layers", items_property);
+
+    for (auto i = 0u; i < uint32_t(raws.size()); ++i)
+    {
+      const auto bytes_property = std::shared_ptr<Property>(new Property(Property::TYPE_RAW));
+      bytes_property->SetRaw(std::move(raws[i]));
+      items_property->SetArrayItem(i, bytes_property);
+    }
 
     return root_property;
   }
@@ -878,68 +921,68 @@ namespace RayGene3D
   //  return dst_image;
   //}
 
-  std::shared_ptr<Property> ImportTextureLDR(const std::string& path, uint32_t mipmap, bool symmetric, bool srgb)
-  {
-    auto src_extent_x = 0;
-    auto src_extent_y = 0;
-    auto src_channels = 0;
-    const auto texels = stbi_load(path.c_str(), &src_extent_x, &src_extent_y, &src_channels, STBI_default);
+  //std::shared_ptr<Property> ImportTextureLDR(const std::string& path, uint32_t mipmap, bool symmetric, bool srgb)
+  //{
+  //  auto src_extent_x = 0;
+  //  auto src_extent_y = 0;
+  //  auto src_channels = 0;
+  //  const auto texels = stbi_load(path.c_str(), &src_extent_x, &src_extent_y, &src_channels, STBI_default);
 
-    auto src_data = new uint8_t[src_extent_x * src_extent_y * 4];
-    for (auto i = 0u; i < uint32_t(src_extent_x * src_extent_y); ++i)
-    {
-      const auto r = src_channels > 0 ? texels[i * src_channels + 0] : 0; //0xFF;
-      const auto g = src_channels > 1 ? texels[i * src_channels + 1] : r; //0xFF;
-      const auto b = src_channels > 2 ? texels[i * src_channels + 2] : r; //0xFF;
-      const auto a = src_channels > 3 ? texels[i * src_channels + 3] : r; //0xFF;
-      src_data[i * 4 + 0] = r;
-      src_data[i * 4 + 1] = g;
-      src_data[i * 4 + 2] = b;
-      src_data[i * 4 + 3] = a;
-    }
-    stbi_image_free(texels);
+  //  auto src_data = new uint8_t[src_extent_x * src_extent_y * 4];
+  //  for (auto i = 0u; i < uint32_t(src_extent_x * src_extent_y); ++i)
+  //  {
+  //    const auto r = src_channels > 0 ? texels[i * src_channels + 0] : 0; //0xFF;
+  //    const auto g = src_channels > 1 ? texels[i * src_channels + 1] : r; //0xFF;
+  //    const auto b = src_channels > 2 ? texels[i * src_channels + 2] : r; //0xFF;
+  //    const auto a = src_channels > 3 ? texels[i * src_channels + 3] : r; //0xFF;
+  //    src_data[i * 4 + 0] = r;
+  //    src_data[i * 4 + 1] = g;
+  //    src_data[i * 4 + 2] = b;
+  //    src_data[i * 4 + 3] = a;
+  //  }
+  //  stbi_image_free(texels);
 
-    const auto mipmap_count_fn = [](int32_t value)
-    {
-      int32_t power = 0;
-      while ((value >> power) > 0) ++power;
-      return power;
-    };
+  //  const auto mipmap_count_fn = [](int32_t value)
+  //  {
+  //    int32_t power = 0;
+  //    while ((value >> power) > 0) ++power;
+  //    return power;
+  //  };
 
-    const auto mipmap_x = mipmap_count_fn(src_extent_x);
-    const auto mipmap_y = mipmap_count_fn(src_extent_y);
-    const auto extent_x = symmetric ? mipmap : 1 << (int32_t(mipmap) - (mipmap_x > mipmap_y ? 0 : mipmap_y - mipmap_x));
-    const auto extent_y = symmetric ? mipmap : 1 << (int32_t(mipmap) - (mipmap_y > mipmap_x ? 0 : mipmap_x - mipmap_y));
-    auto raw = Raw(uint32_t(sizeof(glm::u8vec4)) * (extent_x * extent_y - 1) / 3);
-    
-    auto dst_extent_x = extent_x;
-    auto dst_extent_y = extent_y;
-    auto dst_data = reinterpret_cast<uint8_t*>(raw.AccessBytes().first);
+  //  const auto mipmap_x = mipmap_count_fn(src_extent_x);
+  //  const auto mipmap_y = mipmap_count_fn(src_extent_y);
+  //  const auto extent_x = symmetric ? mipmap : 1 << (int32_t(mipmap) - (mipmap_x > mipmap_y ? 0 : mipmap_y - mipmap_x));
+  //  const auto extent_y = symmetric ? mipmap : 1 << (int32_t(mipmap) - (mipmap_y > mipmap_x ? 0 : mipmap_x - mipmap_y));
+  //  auto raw = Raw(uint32_t(sizeof(glm::u8vec4)) * (extent_x * extent_y - 1) / 3);
+  //  
+  //  auto dst_extent_x = extent_x;
+  //  auto dst_extent_y = extent_y;
+  //  auto dst_data = reinterpret_cast<uint8_t*>(raw.AccessBytes().first);
 
-    stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
-    delete[] src_data;
+  //  stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
+  //  delete[] src_data;
 
-    for (auto i = 1u; i < mipmap; ++i)
-    {
-      src_extent_x = dst_extent_x;
-      src_extent_y = dst_extent_y;
-      src_data = dst_data;
+  //  for (auto i = 1u; i < mipmap; ++i)
+  //  {
+  //    src_extent_x = dst_extent_x;
+  //    src_extent_y = dst_extent_y;
+  //    src_data = dst_data;
 
-      dst_extent_x = std::min(1u, extent_x >> i);
-      dst_extent_y = std::min(1u, extent_y >> i);
-      dst_data = src_data + src_extent_x * src_extent_y * 4;
+  //    dst_extent_x = std::min(1u, extent_x >> i);
+  //    dst_extent_y = std::min(1u, extent_y >> i);
+  //    dst_data = src_data + src_extent_x * src_extent_y * 4;
 
-      stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
-    }
+  //    stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
+  //  }
 
-    const auto root = CreateTextureProperty(std::move(raw), extent_x, extent_y);
+  //  const auto root = CreateTextureProperty(std::move(raw), extent_x, extent_y);
 
-    return root;
-  }
+  //  return root;
+  //}
 
 
-  void ExportTextureHDR(const std::string& path, const std::shared_ptr<Property>& root)
-  {}
+  //void ExportTextureHDR(const std::string& path, const std::shared_ptr<Property>& root)
+  //{}
 
   std::shared_ptr<Property> ImportTextureHDR(const std::string& path, uint32_t mipmap)
   {
@@ -1023,6 +1066,133 @@ namespace RayGene3D
 
     return root;
   }
+
+
+  std::tuple<Raw, uint32_t, uint32_t> LoadTextureLDR(const std::string& path, uint32_t mipmap, bool symmetric, bool srgb)
+  {
+    auto src_extent_x = 0;
+    auto src_extent_y = 0;
+    auto src_channels = 0;
+    const auto texels = stbi_load(path.c_str(), &src_extent_x, &src_extent_y, &src_channels, STBI_default);
+
+    auto src_data = new uint8_t[src_extent_x * src_extent_y * 4];
+    for (auto i = 0u; i < uint32_t(src_extent_x * src_extent_y); ++i)
+    {
+      const auto r = src_channels > 0 ? texels[i * src_channels + 0] : 0; //0xFF;
+      const auto g = src_channels > 1 ? texels[i * src_channels + 1] : r; //0xFF;
+      const auto b = src_channels > 2 ? texels[i * src_channels + 2] : r; //0xFF;
+      const auto a = src_channels > 3 ? texels[i * src_channels + 3] : r; //0xFF;
+      src_data[i * 4 + 0] = r;
+      src_data[i * 4 + 1] = g;
+      src_data[i * 4 + 2] = b;
+      src_data[i * 4 + 3] = a;
+    }
+    stbi_image_free(texels);
+
+    const auto mipmap_count_fn = [](int32_t value)
+      {
+        int32_t power = 0;
+        while ((value >> power) > 0) ++power;
+        return power;
+      };
+
+    const auto mipmap_x = mipmap_count_fn(src_extent_x);
+    const auto mipmap_y = mipmap_count_fn(src_extent_y);
+    const auto extent_x = symmetric ? mipmap : 1 << (int32_t(mipmap) - (mipmap_x > mipmap_y ? 0 : mipmap_y - mipmap_x));
+    const auto extent_y = symmetric ? mipmap : 1 << (int32_t(mipmap) - (mipmap_y > mipmap_x ? 0 : mipmap_x - mipmap_y));
+    auto raw = Raw(uint32_t(sizeof(glm::u8vec4)) * (extent_x * extent_y - 1) / 3);
+
+    auto dst_extent_x = extent_x;
+    auto dst_extent_y = extent_y;
+    auto dst_data = reinterpret_cast<uint8_t*>(raw.AccessBytes().first);
+
+    stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
+    delete[] src_data;
+
+    for (auto i = 1u; i < mipmap; ++i)
+    {
+      src_extent_x = dst_extent_x;
+      src_extent_y = dst_extent_y;
+      src_data = dst_data;
+
+      dst_extent_x = std::min(1u, extent_x >> i);
+      dst_extent_y = std::min(1u, extent_y >> i);
+      dst_data = src_data + src_extent_x * src_extent_y * 4;
+
+      stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
+    }
+
+    return std::make_tuple(raw, extent_x, extent_y);
+  }
+
+  void SaveTextureLDR(const std::string& path, const Raw& raw, uint32_t extent_x, uint32_t extent_y)
+  {}
+
+  std::tuple<Raw, uint32_t, uint32_t> LoadTextureHDR(const std::string& path, uint32_t mipmap, bool symmetric, bool srgb)
+  {
+    auto src_extent_x = 0;
+    auto src_extent_y = 0;
+    auto src_channels = 0;
+    const auto texels = stbi_loadf(path.c_str(), &src_extent_x, &src_extent_y, &src_channels, STBI_default);
+
+    auto src_data = new float[src_extent_x * src_extent_y * 4];
+    for (auto i = 0u; i < uint32_t(src_extent_x * src_extent_y); ++i)
+    {
+      const auto r = src_channels > 0 ? texels[i * src_channels + 0] : 0; //0xFF;
+      const auto g = src_channels > 1 ? texels[i * src_channels + 1] : r; //0xFF;
+      const auto b = src_channels > 2 ? texels[i * src_channels + 2] : r; //0xFF;
+      const auto a = src_channels > 3 ? texels[i * src_channels + 3] : r; //0xFF;
+      src_data[i * 4 + 0] = r;
+      src_data[i * 4 + 1] = g;
+      src_data[i * 4 + 2] = b;
+      src_data[i * 4 + 3] = a;
+    }
+    stbi_image_free(texels);
+
+    const auto mipmap_count_fn = [](int32_t value)
+      {
+        int32_t power = 0;
+        while ((value >> power) > 0) ++power;
+        return power;
+      };
+
+    const auto mipmap_x = mipmap_count_fn(src_extent_x);
+    const auto mipmap_y = mipmap_count_fn(src_extent_y);
+    const auto extent_x = symmetric ? mipmap : 1 << (int32_t(mipmap) - (mipmap_x > mipmap_y ? 0 : mipmap_y - mipmap_x));
+    const auto extent_y = symmetric ? mipmap : 1 << (int32_t(mipmap) - (mipmap_y > mipmap_x ? 0 : mipmap_x - mipmap_y));
+    auto raw = Raw(uint32_t(sizeof(glm::f32vec4)) * (extent_x * extent_y - 1) / 3);
+
+    auto dst_extent_x = extent_x;
+    auto dst_extent_y = extent_y;
+    auto dst_data = reinterpret_cast<float*>(raw.AccessBytes().first);
+
+    stbir_resize_float(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
+    delete[] src_data;
+
+    for (auto i = 1u; i < mipmap; ++i)
+    {
+      src_extent_x = dst_extent_x;
+      src_extent_y = dst_extent_y;
+      src_data = dst_data;
+
+      dst_extent_x = std::min(1u, extent_x >> i);
+      dst_extent_y = std::min(1u, extent_y >> i);
+      dst_data = src_data + src_extent_x * src_extent_y * 4;
+
+      stbir_resize_float(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
+    }
+
+    return std::make_tuple(raw, extent_x, extent_y);
+  }
+
+  void SaveTextureHDR(const std::string& path, const Raw& raw, uint32_t extent_x, uint32_t extent_y)
+  {}
+
+  Raw LoadBuffer(const std::string& path)
+  {}
+
+  void SaveBuffer(const std::string& path, const Raw& raw)
+  {}
 
   //void ExportBuffer(const std::string& path, const std::shared_ptr<Property>& root)
   //{}
