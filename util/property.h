@@ -141,7 +141,7 @@ namespace RayGene3D
 
     void SetRaw(Raw&& raw) { std::get<raw_t>(_value) = std::move(raw); }
     Raw&& GetRaw() { return std::move(std::get<raw_t>(_value)); }
-    const Raw&& GetRaw() const { return std::move(std::get<raw_t>(_value)); }
+    //const Raw&& GetRaw() const { return std::get<raw_t>(_value); }
 
 
 
@@ -253,9 +253,10 @@ namespace RayGene3D
   std::shared_ptr<Property> CreateUVec2Property();
   std::shared_ptr<Property> CreateUIntProperty();
 
-  std::shared_ptr<Property> CreateBufferProperty(std::vector<Raw>&& raws,
+  std::shared_ptr<Property> CreateBufferProperty(std::pair<Raw*, uint32_t> raws,
     uint32_t stride, uint32_t count);
-  std::shared_ptr<Property> CreateTextureProperty(std::vector<Raw>&& raws, 
+
+  std::shared_ptr<Property> CreateTextureProperty(std::pair<Raw*, uint32_t> raws,
     uint32_t extent_x, uint32_t extent_y, Format format, uint32_t mipmap);
 
   //void ExportTextureLDR(const std::shared_ptr<Property>& root, const std::string& path, uint32_t layer = 0u);
@@ -267,16 +268,19 @@ namespace RayGene3D
   //void ExportBuffer(const std::shared_ptr<Property>& root, const std::string& path, uint32_t index = 0u);
   //std::shared_ptr<Property> ImportBuffer(const std::vector<std::string>& path, uint32_t stride);
 
-  //void SaveProperty(const std::string& directory, const std::string& name, const std::shared_ptr<Property>& root);
-  //std::shared_ptr<Property> LoadProperty(const std::string& directory, const std::string& name);
+  void SaveProperty(const std::string& directory, const std::string& name, const std::shared_ptr<Property>& root);
+  std::shared_ptr<Property> LoadProperty(const std::string& directory, const std::string& name);
 
-  std::tuple<Raw, uint32_t, uint32_t> LoadTextureLDR(const std::string& path, uint32_t mipmap, bool symmetric, bool srgb);
+  std::tuple<Raw, uint32_t, uint32_t> LoadTextureLDR(const std::string& path);
+  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureLDR(const Raw& raw, uint32_t extent_x, uint32_t extent_y, uint32_t mipmap, bool symmetric);
   void SaveTextureLDR(const std::string& path, const Raw& raw, uint32_t extent_x, uint32_t extent_y);
 
-  std::tuple<Raw, uint32_t, uint32_t> LoadTextureHDR(const std::string& path, uint32_t mipmap, bool symmetric, bool cube);
+  std::tuple<Raw, uint32_t, uint32_t> LoadTextureHDR(const std::string& path);
+  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureHDR(const Raw& raw, uint32_t extent_x, uint32_t extent_y, uint32_t mipmap, bool symmetric);
   void SaveTextureHDR(const std::string& path, const Raw& raw, uint32_t extent_x, uint32_t extent_y);
 
   Raw LoadBuffer(const std::string& path);
+  Raw CompactBuffer(std::vector<Raw>& raws);
   void SaveBuffer(const std::string& path, const Raw& raw);
 }
 

@@ -178,12 +178,12 @@ namespace RayGene3D
   class Raw
   {
   protected:
-    std::pair<uint8_t*, uint32_t> _bytes{ nullptr, 0 };
+    std::pair<void*, uint32_t> _bytes{ nullptr, 0 };
 
   public:
     void Allocate(uint32_t size)
     {
-      if (_bytes.first == nullptr && _bytes.second == 0)
+      if (_bytes.first == nullptr && _bytes.second == 0 && size != 0u)
       {
         _bytes.first = new uint8_t[size];
         _bytes.second = size;
@@ -208,10 +208,10 @@ namespace RayGene3D
 
       if (bytes.first != nullptr && bytes.second + offset <= _bytes.second)
       {
-        std::memcpy(_bytes.first + offset, bytes.first, bytes.second);
+        std::memcpy(reinterpret_cast<uint8_t*>(_bytes.first) + offset, bytes.first, bytes.second);
       }
     }
-
+ 
     std::pair<const void*, uint32_t> GetBytes(uint32_t offset = 0u) const
     {
       if (offset > _bytes.second)
@@ -219,7 +219,7 @@ namespace RayGene3D
         throw std::runtime_error("get bytes failed");
       }
 
-      return { _bytes.first + offset, _bytes.second - offset };
+      return { reinterpret_cast<uint8_t*>(_bytes.first) + offset, _bytes.second - offset };
     }
 
     template<typename T> void SetElements(std::pair<const T*, uint32_t> elements, uint32_t offset = 0u)
@@ -229,7 +229,10 @@ namespace RayGene3D
         throw std::runtime_error("set elements failed");
       }
 
-      std::memcpy(_bytes.first + offset * uint32_t(sizeof(T)), elements.first, elements.second * uint32_t(sizeof(T)));
+      const auto element_data = reinterpret_cast<T*>(_bytes.first);
+      const auto element_size = elements.second * uint32_t(sizeof(T));
+
+      std::memcpy(element_data + offset, elements.first, element_size);
     }
 
     template<typename T> std::pair<const T*, uint32_t> GetElements(uint32_t offset = 0u)
@@ -239,7 +242,50 @@ namespace RayGene3D
         throw std::runtime_error("get elements failed");
       }
 
-      return { reinterpret_cast<const T*>(bytes.first + uint32_t(sizeof(T)) * offset), (_bytes.second  - uint32_t(sizeof(T)) * offset) / uint32_t(sizeof(T)) };
+      const auto element_data = reinterpret_cast<const T*>(_bytes.first);
+      const auto element_size = _bytes.second - uint32_t(sizeof(T)) * offset;
+
+      return { element_data + offset, element_size / uint32_t(sizeof(T)) };
+    }
+
+    template<typename T> void SetElement(const T& element, uint32_t index)
+    {
+      if (index * uint32_t(sizeof(T)) > _bytes.second)
+      {
+        throw std::runtime_error("set element failed");
+      }
+
+      reinterpret_cast<T*>(_bytes.first)[index] = element;
+    }
+
+    template<typename T> const T& GetElement(uint32_t index)
+    {
+      if (index * uint32_t(sizeof(T)) > _bytes.second)
+      {
+        throw std::runtime_error("get element failed");
+      }
+
+      return reinterpret_cast<T*>(_bytes.first)[index];
+    }
+
+    template<typename T> void SetElement(T&& element, uint32_t index)
+    {
+      if (index * uint32_t(sizeof(T)) > _bytes.second)
+      {
+        throw std::runtime_error("set element failed");
+      }
+
+      reinterpret_cast<T*>(_bytes.first)[index] = element;
+    }
+
+    template<typename T> T&& GetElement(uint32_t index)
+    {
+      if (index * uint32_t(sizeof(T)) > _bytes.second)
+      {
+        throw std::runtime_error("get element failed");
+      }
+
+      return reinterpret_cast<T*>(_bytes.first)[index];
     }
 
     std::pair<void*, uint32_t> AccessBytes() const
@@ -252,134 +298,20 @@ namespace RayGene3D
 
   public:
     Raw(uint32_t size = 0) { Allocate(size); }
-    Raw(std::pair<const void*, uint32_t> bytes) { Allocate(bytes.second); SetBytes(bytes); }
+    Raw(const std::pair<const void*, uint32_t>& bytes) { Allocate(bytes.second); SetBytes(bytes); }
+    //Raw(std::pair<void*, uint32_t>&& bytes) noexcept { std::swap(bytes, _bytes); }
     ~Raw() { Free(); }
     Raw(const Raw& raw) = delete;
     Raw& operator=(const Raw& raw) = delete;
-    Raw(Raw&& raw) = default;
-    //{ 
-    //  std::swap(raw._bytes, _bytes);
-    //}
-    Raw& operator=(Raw&& raw) = default;
-    //{ 
-    //  std::swap(raw._bytes, _bytes); 
-    //  return *this;
-    //}
-  };
-
-
-
-  template<typename T>
-  class Buffer
-  {
-  private:
-    uint32_t count;
-
-  private:
-    Raw raw;
-
-  public:
-    std::pair<T*, uint32_t> AccessElements() const
-    {
-      auto bytes = raw.AccessBytes();
-      return { reinterpret_cast<T*>(bytes.first), bytes.second / uint32_t(sizeof(T)) };
-    }
-
-    const T& GetElement(uint32_t index) const
-    {
-      const auto offset = index * uint32_t(sizeof(T));
-      return &reinterpret_cast<T*>(raw.GetBytes(offset).first);
-    }
-
-    void SetElement(uint32_t index, const T& t) const
-    {
-      const auto offset = index * uint32_t(sizeof(T));
-      raw.SetBytes({ &t, uint32_t(sizeof(T)) }, offset);
-    }
-
-  public:
-    Buffer(uint32_t count)
-      : count(count)
-    {
-      raw.Allocate(count * sizeof(T));
-    }
-    ~Buffer()
-    {
-      raw.Free();
-    }
-    Buffer(const Buffer&) = delete;
-    Buffer& operator=(const Buffer&) = delete;
-    Buffer(Buffer&& buffer) noexcept 
+    Raw(Raw&& raw) noexcept
     { 
-      std::exchange(*this, buffer);
+      std::swap(raw._bytes, _bytes);
     }
-    Buffer& operator=(Buffer&& buffer) noexcept 
+    Raw& operator=(Raw&& raw) noexcept
     { 
-      return std::exchange(*this, buffer);
+      std::swap(raw._bytes, _bytes); 
+      return *this;
     }
-  };
-
-  template<typename T>
-  class Image
-  {
-  private:
-    uint32_t extent_x;
-    uint32_t extent_y;
-
-  private:
-    Raw raw;
-
-  public:
-    uint32_t GetExtentX() const { return extent_x; }
-    uint32_t GetExtentY() const { return extent_y; }
-    //std::pair<T*, uint32_t> AccessTexels() const 
-    //{ 
-    //  auto bytes = texels.AccessBytes();
-    //  return { reinterpret_cast<T*>(bytes.first), bytes.second / uint32_t(sizeof(T)) };
-    //}
-
-    void SetRaw(Raw&& raw) { this->raw = raw; }
-    Raw&& GetRaw() { return std::move(this->raw); }
-    const Raw&& GetRaw() const { return std::move(this->raw); }
-
-    const T& GetTexel(uint32_t x, uint32_t y) const
-    {
-      const auto offset = (y * extent_x + x) * uint32_t(sizeof(T));
-      return &reinterpret_cast<T*>(raw.GetBytes(offset).first);
-    }
-
-    void SetTexel(uint32_t x, uint32_t y, const T& t) const
-    { 
-      const auto offset = (y * extent_x + x) * uint32_t(sizeof(T));
-      raw.SetBytes({ &t, uint32_t(sizeof(T)) }, offset);
-    }
-
-  public:
-    Image(uint32_t extent_x, uint32_t extent_y)
-      : extent_x(extent_x)
-      , extent_y(extent_y)
-    { 
-      raw.Allocate(extent_x * extent_y * sizeof(T));
-    }
-    ~Image()
-    {
-      raw.Free();
-    }
-    Image(const Image&) = delete;
-    Image& operator=(const Image&) = delete;
-    Image(Image&& image) = default;
-    //{ 
-    //  std::swap(extent_x, image.extent_x);
-    //  std::swap(extent_y, image.extent_y);
-    //  std::swap(texels, image.texels);
-    //}
-    Image& operator=(Image&& image) = default;
-    //{ 
-    //  std::swap(extent_x, image.extent_x);
-    //  std::swap(extent_y, image.extent_y);
-    //  std::swap(texels, image.texels);
-    //  return *this;
-    //}
   };
 }
 
