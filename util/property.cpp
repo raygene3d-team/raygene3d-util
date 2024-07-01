@@ -1109,8 +1109,22 @@ namespace RayGene3D
     auto mipmap_y = mipmap_count_fn(extent_y);
     extent_x = 1u << (symmetric ? int32_t(mipmap) - 1 : mipmap_x > mipmap_y ? int32_t(mipmap) - 1 : std::max(0, int32_t(mipmap) - 1 - (mipmap_y - mipmap_x)));
     extent_y = 1u << (symmetric ? int32_t(mipmap) - 1 : mipmap_y > mipmap_x ? int32_t(mipmap) - 1 : std::max(0, int32_t(mipmap) - 1 - (mipmap_x - mipmap_y)));
-    const auto stride = uint32_t(sizeof(glm::f32vec4));
-    const auto count = uint32_t((int32_t(extent_x * 2) * int32_t(extent_y * 2) - 1) / 3);
+    
+    const auto texel_count_fn = [](uint32_t extent_x, uint32_t extent_y)
+    {
+      auto count = 1u;
+      while (extent_x > 1u || extent_y > 1u)
+      {
+        count += extent_x * extent_y;
+        extent_x = std::max(1u, extent_x >> 1u);
+        extent_y = std::max(1u, extent_y >> 1u);
+      }
+
+      return count;
+    };
+
+    const auto stride = uint32_t(sizeof(glm::u8vec4));
+    const auto count = texel_count_fn(extent_x, extent_y);
     auto raw = Raw(stride * count);
 
     auto dst_extent_x = extent_x;
