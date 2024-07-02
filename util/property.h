@@ -272,12 +272,12 @@ namespace RayGene3D
   std::shared_ptr<Property> LoadProperty(const std::string& directory, const std::string& name);
 
   std::tuple<Raw, uint32_t, uint32_t> LoadTextureLDR(const std::string& path);
-  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureLDR(const Raw& raw, uint32_t extent_x, uint32_t extent_y, uint32_t mipmap, bool symmetric);
-  void SaveTextureLDR(const std::string& path, const Raw& raw, uint32_t extent_x, uint32_t extent_y);
+  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureLDR(const std::tuple<Raw, uint32_t, uint32_t>& texture, uint32_t mipmap, bool symmetric);
+  void SaveTextureLDR(const std::string& path, const std::tuple<Raw, uint32_t, uint32_t>& texture);
 
   std::tuple<Raw, uint32_t, uint32_t> LoadTextureHDR(const std::string& path);
-  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureHDR(const Raw& raw, uint32_t extent_x, uint32_t extent_y, uint32_t mipmap, bool symmetric);
-  void SaveTextureHDR(const std::string& path, const Raw& raw, uint32_t extent_x, uint32_t extent_y);
+  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureHDR(const std::tuple<Raw, uint32_t, uint32_t>& texture, uint32_t mipmap, bool symmetric);
+  void SaveTextureHDR(const std::string& path, const std::tuple<Raw, uint32_t, uint32_t>& texture);
 
   Raw LoadBuffer(const std::string& path);
   Raw CompactBuffer(std::vector<Raw>& raws);

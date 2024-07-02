@@ -1092,7 +1092,7 @@ namespace RayGene3D
     return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
   }
 
-  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureLDR(const Raw& texels, uint32_t extent_x, uint32_t extent_y, uint32_t mipmap, bool symmetric)
+  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureLDR(const std::tuple<Raw, uint32_t, uint32_t>& texture, uint32_t mipmap, bool symmetric)
   {
     const auto mipmap_count_fn = [](int32_t value)
     {
@@ -1100,6 +1100,10 @@ namespace RayGene3D
       while ((value >> power) > 0) ++power;
       return power;
     };
+
+    auto& texels = std::get<0>(texture);
+    auto extent_x = std::get<1>(texture);
+    auto extent_y = std::get<2>(texture);
 
     auto src_extent_x = extent_x;
     auto src_extent_y = extent_y;
@@ -1149,7 +1153,7 @@ namespace RayGene3D
     return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
   }
 
-  void SaveTextureLDR(const std::string& path, const Raw& raw, uint32_t extent_x, uint32_t extent_y)
+  void SaveTextureLDR(const std::string& path, const std::tuple<Raw, uint32_t, uint32_t>& texture)
   {}
 
   std::tuple<Raw, uint32_t, uint32_t> LoadTextureHDR(const std::string& path)
@@ -1178,7 +1182,7 @@ namespace RayGene3D
     return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
   }
 
-  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureHDR(const Raw& texels, uint32_t extent_x, uint32_t extent_y, uint32_t mipmap, bool symmetric)
+  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureHDR(const std::tuple<Raw, uint32_t, uint32_t>& texture, uint32_t mipmap, bool symmetric)
   {
     const auto mipmap_count_fn = [](int32_t value)
       {
@@ -1186,6 +1190,10 @@ namespace RayGene3D
         while ((value >> power) > 0) ++power;
         return power;
       };
+
+    auto& texels = std::get<0>(texture);
+    auto extent_x = std::get<1>(texture);
+    auto extent_y = std::get<2>(texture);
 
     auto src_extent_x = extent_x;
     auto src_extent_y = extent_y;
@@ -1235,7 +1243,7 @@ namespace RayGene3D
     return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
   }
 
-  void SaveTextureHDR(const std::string& path, const Raw& raw, uint32_t extent_x, uint32_t extent_y)
+  void SaveTextureHDR(const std::string& path, const std::tuple<Raw, uint32_t, uint32_t>& texture)
   {}
 
   //Raw LoadBuffer(const std::string& path)
