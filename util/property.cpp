@@ -1160,7 +1160,7 @@ namespace RayGene3D
   {
     auto extent_x = 0;
     auto extent_y = 0;
-    auto channels = 0;
+    auto channels = 4;
     float* texels = nullptr; // stbi_loadf(path.c_str(), &extent_x, &extent_y, &channels, STBI_default);
 
     LoadEXR(&texels, &extent_x, &extent_y, path.c_str(), nullptr);
