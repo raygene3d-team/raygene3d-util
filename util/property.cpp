@@ -595,7 +595,7 @@ namespace RayGene3D
 
 
   std::shared_ptr<Property> CreateTextureProperty(std::pair<Raw*, uint32_t> raws,
-    uint32_t extent_x, uint32_t extent_y, Format format, uint32_t mipmap)
+    uint32_t extent_x, uint32_t extent_y, uint32_t mipmap, uint32_t layers)
   {
     const auto root_property = std::shared_ptr<Property>(new Property(Property::TYPE_OBJECT));
 
@@ -607,23 +607,23 @@ namespace RayGene3D
     extent_y_property->SetUint(extent_y);
     root_property->SetObjectItem("extent_y", extent_y_property);
 
-    const auto format_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
-    format_property->SetUint(format);
-    root_property->SetObjectItem("format", format_property);
-
     const auto mipmap_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
     mipmap_property->SetUint(mipmap);
     root_property->SetObjectItem("mipmap", mipmap_property);
 
-    const auto layers_property = std::shared_ptr<Property>(new Property(Property::TYPE_ARRAY));
-    layers_property->SetArraySize(raws.second);
+    const auto layers_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
+    layers_property->SetUint(layers);
     root_property->SetObjectItem("layers", layers_property);
+
+    const auto raws_property = std::shared_ptr<Property>(new Property(Property::TYPE_ARRAY));
+    raws_property->SetArraySize(raws.second);
+    root_property->SetObjectItem("raws", raws_property);
 
     for (auto i = 0u; i < raws.second; ++i)
     {
-      const auto texels_property = std::shared_ptr<Property>(new Property(Property::TYPE_RAW));
-      texels_property->SetRaw(std::move(raws.first[i]));
-      layers_property->SetArrayItem(i, texels_property);
+      const auto raw_property = std::shared_ptr<Property>(new Property(Property::TYPE_RAW));
+      raw_property->SetRaw(std::move(raws.first[i]));
+      raws_property->SetArrayItem(i, raw_property);
     }
 
     return root_property;
@@ -644,7 +644,7 @@ namespace RayGene3D
 
     const auto chunks_property = std::shared_ptr<Property>(new Property(Property::TYPE_ARRAY));
     chunks_property->SetArraySize(raws.second);
-    root_property->SetObjectItem("chunks", chunks_property);
+    root_property->SetObjectItem("raws", chunks_property);
 
     for (auto i = 0u; i < raws.second; ++i)
     {
@@ -698,107 +698,6 @@ namespace RayGene3D
     return root_property;
   }
 
-
-  //std::shared_ptr<Property> ImportEXR(const std::string& path, const std::string& name, float exposure, uint32_t mipmaps)
-  //{
-  //  int32_t src_tex_x = 0;
-  //  int32_t src_tex_y = 0;
-  //  int32_t src_tex_n = 4;
-  //  float* src_tex_data = nullptr;
-  //  BLAST_ASSERT(0 == LoadEXR(&src_tex_data, &src_tex_x, &src_tex_y, (name).c_str(), nullptr));
-
-  //  int32_t dst_tex_x = src_tex_x;
-  //  int32_t dst_tex_y = src_tex_y;
-  //  int32_t dst_tex_n = 4;
-  //  float* dst_tex_data = new float[dst_tex_x * dst_tex_y * dst_tex_n];
-  //  for (uint32_t j = 0; j < src_tex_x * src_tex_y; ++j)
-  //  {
-  //    const auto r = src_tex_n > 0 ? src_tex_data[j * src_tex_n + 0] : 0; //0xFF;
-  //    const auto g = src_tex_n > 1 ? src_tex_data[j * src_tex_n + 1] : r; //0xFF;
-  //    const auto b = src_tex_n > 2 ? src_tex_data[j * src_tex_n + 2] : r; //0xFF;
-  //    const auto a = src_tex_n > 3 ? src_tex_data[j * src_tex_n + 3] : r; //0xFF;
-  //    dst_tex_data[j * dst_tex_n + 0] = r * exposure;
-  //    dst_tex_data[j * dst_tex_n + 1] = g * exposure;
-  //    dst_tex_data[j * dst_tex_n + 2] = b * exposure;
-  //    dst_tex_data[j * dst_tex_n + 3] = a * exposure;
-  //  }
-  //  delete[] src_tex_data;
-
-  //  src_tex_data = dst_tex_data;
-  //  src_tex_x = dst_tex_x;
-  //  src_tex_y = dst_tex_y;
-  //  src_tex_n = dst_tex_n;
-
-  //  const auto get_pot_fn = [](int32_t value)
-  //  {
-  //    int32_t power = 0;
-  //    while ((1 << power) < value) ++power;
-  //    return power;
-  //  };
-
-  //  const auto pow_tex_x = get_pot_fn(src_tex_x);
-  //  const auto pow_tex_y = get_pot_fn(src_tex_y);
-  //  const auto pow_delta = std::abs(pow_tex_x - pow_tex_y);
-
-  //  //const uint32_t tex_x = (1 << (pow_tex_x > pow_tex_y ? mipmap_count + pow_delta : mipmap_count)) - 1;
-  //  //const uint32_t tex_y = (1 << (pow_tex_y > pow_tex_x ? mipmap_count + pow_delta : mipmap_count)) - 1;
-  //  //const uint32_t tex_n = 4;
-
-  //  const auto texel_pow_x = pow_tex_x > pow_tex_y ? mipmaps + pow_delta : mipmaps;
-  //  const auto texel_pow_y = pow_tex_y > pow_tex_x ? mipmaps + pow_delta : mipmaps;
-  //  const auto texel_count = uint32_t(((1 << texel_pow_x) * (1 << texel_pow_y) - 1) / 3);
-  //  const auto texel_stride = uint32_t(sizeof(glm::f32vec4));
-  //  float* texel_data = new float[texel_count * 4];
-
-  //  dst_tex_x = 1 << (texel_pow_x - 1);
-  //  dst_tex_y = 1 << (texel_pow_y - 1);
-  //  dst_tex_n = src_tex_n;
-  //  dst_tex_data = texel_data;
-  //  stbir_resize_float(src_tex_data, src_tex_x, src_tex_y, 0, dst_tex_data, dst_tex_x, dst_tex_y, 0, dst_tex_n);
-  //  delete[] src_tex_data;
-
-  //  //const auto size_x_property = std::shared_ptr<Property>(new Property());
-  //  //size_x_property->SetValue(uint32_t(dst_tex_x));
-
-  //  //const auto size_y_property = std::shared_ptr<Property>(new Property());
-  //  //size_y_property->SetValue(uint32_t(dst_tex_y));
-
-  //  //const auto mipmaps_property = std::shared_ptr<Property>(new Property());
-  //  //mipmaps_property->SetValue(uint32_t(mipmaps));
-
-  //  src_tex_data = dst_tex_data;
-  //  src_tex_x = dst_tex_x;
-  //  src_tex_y = dst_tex_y;
-  //  src_tex_n = dst_tex_n;
-
-  //  for (uint32_t i = 1; i < mipmaps; ++i)
-  //  {
-  //    dst_tex_x = src_tex_x >> 1;
-  //    dst_tex_y = src_tex_y >> 1;
-  //    dst_tex_n = src_tex_n;
-  //    dst_tex_data += src_tex_x * src_tex_y * src_tex_n;
-  //    stbir_resize_float(src_tex_data, src_tex_x, src_tex_y, 0, dst_tex_data, dst_tex_x, dst_tex_y, 0, dst_tex_n);
-
-  //    src_tex_data = dst_tex_data;
-  //    src_tex_x = dst_tex_x;
-  //    src_tex_y = dst_tex_y;
-  //    src_tex_n = dst_tex_n;
-  //  }
-
-  //  const auto texels_property = std::shared_ptr<Property>(new Property(Property::TYPE_RAW));
-  //  {
-  //    texels_property->RawAllocate(texel_count * texel_stride);
-  //    texels_property->SetRawBytes({ texel_data, texel_count * texel_stride }, 0);
-  //  }
-  //  delete[] texel_data;
-
-  //  const auto texture_property = std::shared_ptr<Property>(new Property(Property::TYPE_ARRAY));
-  //  //texture_property->SetValue(Property::array());
-  //  texture_property->SetArraySize(1);
-  //  texture_property->SetArrayItem(0, texels_property);
-
-  //  return texture_property;
-  //}
 
 
   void SaveProperty(const std::string& directory, const std::string& name, const std::shared_ptr<Property>& root)
@@ -859,214 +758,6 @@ namespace RayGene3D
     return root;
   }
 
-  //void ExportTextureLDR(const std::string& path, const std::shared_ptr<Property>& root)
-  //{
-  //  const auto extent_x = root->GetObjectItem("extent_x")->GetUint();
-  //  const auto extent_y = root->GetObjectItem("extent_y")->GetUint();
-  //  const auto extent_z = root->GetObjectItem("extent_z")->GetUint();
-  //  const auto format = root->GetObjectItem("format")->GetUint();
-  //  const auto mipmap = root->GetObjectItem("mipmap")->GetUint();
-  //  const auto texels = root->GetObjectItem("texels")->GetRawBytes(0);
-
-  //  const auto extension = ExtractExtension(path);
-
-  //  if (std::strcmp(extension.c_str(), "png") == 0)
-  //  {
-  //    BLAST_ASSERT(0 != stbi_write_png(path.c_str(), extent_x, extent_y, 3, texels.first, 4 * extent_x));
-  //  }
-  //  else if (std::strcmp(extension.c_str(), "jpg") == 0)
-  //  {
-  //    BLAST_ASSERT(0 != stbi_write_jpg(path.c_str(), extent_x, extent_y, 3, texels.first, 80));
-  //  }
-  //}
-
-  //std::tuple<Raw, uint32_t, uint32_t> LoadImageLDR(const std::string& path)
-  //{
-  //  auto extent_x = 0;
-  //  auto extent_y = 0;
-  //  auto channels = 0;
-  //  const auto data = stbi_load(path.c_str(), &extent_x, &extent_y, &channels, STBI_default);
-
-  //  const auto count = (extent_x * extent_y - 1) / 3;
-  //  const auto stride = uint32_t(sizeof(glm::u8vec4));
-
-  //  auto raw = Raw(stride * count);
-  //  for (auto i = 0u; i < uint32_t(extent_x * extent_y); ++i)
-  //  {
-  //    const auto r = channels > 0 ? data[i * channels + 0] : 0; //0xFF;
-  //    const auto g = channels > 1 ? data[i * channels + 1] : r; //0xFF;
-  //    const auto b = channels > 2 ? data[i * channels + 2] : r; //0xFF;
-  //    const auto a = channels > 3 ? data[i * channels + 3] : r; //0xFF;
-  //    const auto element = glm::u8vec4{ r, g, b, a };
-  //    raw.SetElements<glm::u8vec4>({ &element, 1 }, i);
-  //  }
-  //  stbi_image_free(data);
-
-  //  return { raw, extent_x, extent_y };
-  //}
-
-  //Image<glm::u8vec4> ResizeImageLDR(const Image<glm::u8vec4>& src_image, uint32_t dst_extent_x, uint32_t dst_extent_y)
-  //{
-  //  const auto dst_channels = 4;
-  //  auto raw = Raw(dst_extent_x * dst_extent_y * uint32_t(sizeof(glm::u8vec4)));
-  //  auto dst_image = Image<glm::u8vec4>(dst_extent_x, dst_extent_y);
-  //  auto dst_data = reinterpret_cast<uint8_t*>(dst_image.GetRaw().AccessBytes().first);
-
-  //  const auto src_extent_x = src_image.GetExtentX();
-  //  const auto src_extent_y = src_image.GetExtentY();
-  //  const auto src_data = reinterpret_cast<const uint8_t*>(src_image.GetRaw().AccessBytes().first);
-
-  //  stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, dst_channels);
-
-  //  return dst_image;
-  //}
-
-  //std::shared_ptr<Property> ImportTextureLDR(const std::string& path, uint32_t mipmap, bool symmetric, bool srgb)
-  //{
-  //  auto src_extent_x = 0;
-  //  auto src_extent_y = 0;
-  //  auto src_channels = 0;
-  //  const auto texels = stbi_load(path.c_str(), &src_extent_x, &src_extent_y, &src_channels, STBI_default);
-
-  //  auto src_data = new uint8_t[src_extent_x * src_extent_y * 4];
-  //  for (auto i = 0u; i < uint32_t(src_extent_x * src_extent_y); ++i)
-  //  {
-  //    const auto r = src_channels > 0 ? texels[i * src_channels + 0] : 0; //0xFF;
-  //    const auto g = src_channels > 1 ? texels[i * src_channels + 1] : r; //0xFF;
-  //    const auto b = src_channels > 2 ? texels[i * src_channels + 2] : r; //0xFF;
-  //    const auto a = src_channels > 3 ? texels[i * src_channels + 3] : r; //0xFF;
-  //    src_data[i * 4 + 0] = r;
-  //    src_data[i * 4 + 1] = g;
-  //    src_data[i * 4 + 2] = b;
-  //    src_data[i * 4 + 3] = a;
-  //  }
-  //  stbi_image_free(texels);
-
-  //  const auto mipmap_count_fn = [](int32_t value)
-  //  {
-  //    int32_t power = 0;
-  //    while ((value >> power) > 0) ++power;
-  //    return power;
-  //  };
-
-  //  const auto mipmap_x = mipmap_count_fn(src_extent_x);
-  //  const auto mipmap_y = mipmap_count_fn(src_extent_y);
-  //  const auto extent_x = symmetric ? mipmap : 1 << (int32_t(mipmap) - (mipmap_x > mipmap_y ? 0 : mipmap_y - mipmap_x));
-  //  const auto extent_y = symmetric ? mipmap : 1 << (int32_t(mipmap) - (mipmap_y > mipmap_x ? 0 : mipmap_x - mipmap_y));
-  //  auto raw = Raw(uint32_t(sizeof(glm::u8vec4)) * (extent_x * extent_y - 1) / 3);
-  //  
-  //  auto dst_extent_x = extent_x;
-  //  auto dst_extent_y = extent_y;
-  //  auto dst_data = reinterpret_cast<uint8_t*>(raw.AccessBytes().first);
-
-  //  stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
-  //  delete[] src_data;
-
-  //  for (auto i = 1u; i < mipmap; ++i)
-  //  {
-  //    src_extent_x = dst_extent_x;
-  //    src_extent_y = dst_extent_y;
-  //    src_data = dst_data;
-
-  //    dst_extent_x = std::min(1u, extent_x >> i);
-  //    dst_extent_y = std::min(1u, extent_y >> i);
-  //    dst_data = src_data + src_extent_x * src_extent_y * 4;
-
-  //    stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
-  //  }
-
-  //  const auto root = CreateTextureProperty(std::move(raw), extent_x, extent_y);
-
-  //  return root;
-  //}
-
-
-  //void ExportTextureHDR(const std::string& path, const std::shared_ptr<Property>& root)
-  //{}
-
-  //std::shared_ptr<Property> ImportTextureHDR(const std::string& path, uint32_t mipmap)
-  //{
-  //  int32_t src_extent_x = 0;
-  //  int32_t src_extent_y = 0;
-  //  int32_t src_channels = 0;
-  //  float* src_data = stbi_loadf(path.c_str(), &src_extent_x, &src_extent_y, &src_channels, STBI_default);
-
-  //  int32_t dst_extent_x = src_extent_x;
-  //  int32_t dst_extent_y = src_extent_y;
-  //  int32_t dst_channels = 4;
-  //  float* dst_data = new float[dst_extent_x * dst_extent_y * dst_channels];
-
-  //  for (int32_t i = 0; i < src_extent_x * src_extent_y; ++i)
-  //  {
-  //    const float r = src_channels > 0 ? src_data[i * src_channels + 0] : 0;
-  //    const float g = src_channels > 1 ? src_data[i * src_channels + 1] : r;
-  //    const float b = src_channels > 2 ? src_data[i * src_channels + 2] : r;
-  //    const float a = src_channels > 3 ? src_data[i * src_channels + 3] : r;
-  //    dst_data[i * src_channels + 0] = r;
-  //    dst_data[i * src_channels + 1] = g;
-  //    dst_data[i * src_channels + 2] = b;
-  //    dst_data[i * src_channels + 3] = a;
-  //  }
-  //  stbi_image_free(src_data);
-
-  //  src_extent_x = dst_extent_x;
-  //  src_extent_y = dst_extent_y;
-  //  src_channels = dst_channels;
-  //  src_data = dst_data;
-
-  //  const auto mipmap_count_fn = [](int32_t value)
-  //    {
-  //      int32_t power = 0;
-  //      while ((value >> power) > 0) ++power;
-  //      return power;
-  //    };
-
-  //  const auto mipmap_x = mipmap_count_fn(src_extent_x);
-  //  const auto mipmap_y = mipmap_count_fn(src_extent_y);
-  //  const auto extent_x = 1 << (int32_t(mipmap) - (mipmap_x > mipmap_y ? 0 : mipmap_y - mipmap_x));
-  //  const auto extent_y = 1 << (int32_t(mipmap) - (mipmap_y > mipmap_x ? 0 : mipmap_x - mipmap_y));
-  //  //const auto mipmap_x = mipmap;
-  //  //const auto mipmap_y = mipmap;
-  //  //const auto extent_x = 1 << mipmap_x;
-  //  //const auto extent_y = 1 << mipmap_y;
-  //  const auto channels = 4;
-  //  const auto size = (extent_x * extent_y - 1) / 3 * channels;
-  //  const auto data = new float[size];
-
-  //  dst_extent_x = extent_x;
-  //  dst_extent_y = extent_y;
-  //  dst_channels = channels;
-  //  dst_data = data;
-
-  //  stbir_resize_float(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, dst_channels);
-  //  delete[] src_data;
-
-  //  src_extent_x = dst_extent_x;
-  //  src_extent_y = dst_extent_y;
-  //  src_channels = dst_channels;
-  //  src_data = dst_data;
-
-  //  for (uint32_t i = 1; i < mipmap; ++i)
-  //  {
-  //    dst_extent_x = std::min(1, src_extent_x / 2);
-  //    dst_extent_y = std::min(1, src_extent_y / 2);
-  //    dst_channels = src_channels;
-  //    dst_data += src_extent_x * src_extent_y * dst_channels;
-  //    stbir_resize_float(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, dst_channels);
-
-  //    src_extent_x = dst_extent_x;
-  //    src_extent_y = dst_extent_y;
-  //    src_channels = dst_channels;
-  //    src_data = dst_data;
-  //  }
-
-  //  const auto root = std::shared_ptr<Property>(new Property(Property::TYPE_RAW)); // = CreateTextureProperty({ data, size }, extent_x, extent_y, 1, FORMAT_R32G32B32A32_FLOAT, mipmap);
-
-  //  delete[] data;
-
-  //  return root;
-  //}
-
 
   std::tuple<Raw, uint32_t, uint32_t> LoadTextureLDR(const std::string& path)
   {
@@ -1092,49 +783,59 @@ namespace RayGene3D
     return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
   }
 
-  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureLDR(const std::tuple<Raw, uint32_t, uint32_t>& texture, uint32_t mipmap, bool symmetric)
+  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureLDR(uint32_t extent_x, uint32_t extent_y,
+    const std::tuple<Raw, uint32_t, uint32_t>& texture)
   {
-    const auto mipmap_count_fn = [](int32_t value)
-    {
-      int32_t power = 0;
-      while ((value >> power) > 0) ++power;
-      return power;
-    };
+    auto src_extent_x = std::get<1>(texture);
+    auto src_extent_y = std::get<2>(texture);
+    auto src_data = reinterpret_cast<uint8_t*>(std::get<0>(texture).AccessBytes().first);
 
-    auto& texels = std::get<0>(texture);
-    auto extent_x = std::get<1>(texture);
-    auto extent_y = std::get<2>(texture);
-
-    auto src_extent_x = extent_x;
-    auto src_extent_y = extent_y;
-    auto src_data = reinterpret_cast<uint8_t*>(texels.AccessBytes().first);
-
-    auto mipmap_x = mipmap_count_fn(extent_x);
-    auto mipmap_y = mipmap_count_fn(extent_y);
-    extent_x = 1u << (symmetric ? int32_t(mipmap) - 1 : mipmap_x > mipmap_y ? int32_t(mipmap) - 1 : std::max(0, int32_t(mipmap) - 1 - (mipmap_y - mipmap_x)));
-    extent_y = 1u << (symmetric ? int32_t(mipmap) - 1 : mipmap_y > mipmap_x ? int32_t(mipmap) - 1 : std::max(0, int32_t(mipmap) - 1 - (mipmap_x - mipmap_y)));
-    
-    const auto texel_count_fn = [](uint32_t extent_x, uint32_t extent_y)
-    {
-      auto count = 1u;
-      while (extent_x > 1u || extent_y > 1u)
-      {
-        count += extent_x * extent_y;
-        extent_x = std::max(1u, extent_x >> 1u);
-        extent_y = std::max(1u, extent_y >> 1u);
-      }
-
-      return count;
-    };
-
-    const auto stride = uint32_t(sizeof(glm::u8vec4));
-    const auto count = texel_count_fn(extent_x, extent_y);
-    auto raw = Raw(stride * count);
+    auto raw = Raw(uint32_t(sizeof(glm::u8vec4)) * extent_x * extent_y);
 
     auto dst_extent_x = extent_x;
     auto dst_extent_y = extent_y;
     auto dst_data = reinterpret_cast<uint8_t*>(raw.AccessBytes().first);
 
+    stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
+
+    return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
+  }
+
+  std::tuple<std::vector<Raw>, uint32_t, uint32_t> MipmapTextureLDR(uint32_t mipmap, const std::tuple<Raw, uint32_t, uint32_t>& texture)
+  {
+    auto& raw = std::get<0>(texture);
+    auto extent_x = std::get<1>(texture);
+    auto extent_y = std::get<2>(texture);
+
+    auto src_extent_x = extent_x;
+    auto src_extent_y = extent_y;
+    auto src_data = reinterpret_cast<uint8_t*>(raw.AccessBytes().first);
+
+    const auto mipmap_count_fn = [](uint32_t value)
+    {
+      uint32_t power = 0;
+      while ((value >> power) > 0) ++power;
+      return power;
+    };
+
+    const auto mipmap_x = mipmap_count_fn(extent_x);
+    const auto mipmap_y = mipmap_count_fn(extent_y);
+    extent_x = 1u << int32_t(mipmap_x) - 1;
+    extent_y = 1u << int32_t(mipmap_y) - 1;
+    mipmap = std::min(std::max(mipmap_x, mipmap_y), mipmap);
+    
+    auto raws = std::vector<Raw>(mipmap);
+    for (auto i = 0; i < mipmap; ++i)
+    {
+      const auto x = std::max(1u, extent_x >> i);
+      const auto y = std::max(1u, extent_y >> i);
+      raws[i] = Raw(x * y * uint32_t(sizeof(glm::u8vec4)));
+    }
+    
+    auto dst_extent_x = extent_x;
+    auto dst_extent_y = extent_y;
+    auto dst_data = reinterpret_cast<uint8_t*>(raws[0].AccessBytes().first);
+    
     stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
 
     for (auto i = 1; i < mipmap; ++i)
@@ -1145,12 +846,12 @@ namespace RayGene3D
 
       dst_extent_x = std::max(1u, extent_x >> i);
       dst_extent_y = std::max(1u, extent_y >> i);
-      dst_data = src_data + src_extent_x * src_extent_y * 4;
+      dst_data = reinterpret_cast<uint8_t*>(raws[i].AccessBytes().first);
 
       stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
     }
 
-    return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
+    return std::make_tuple(std::move(raws), extent_x, extent_y);
   }
 
   void SaveTextureLDR(const std::string& path, const std::tuple<Raw, uint32_t, uint32_t>& texture)
@@ -1182,14 +883,86 @@ namespace RayGene3D
     return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
   }
 
-  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureHDR(const std::tuple<Raw, uint32_t, uint32_t>& texture, uint32_t mipmap, bool symmetric)
+  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureHDR(uint32_t extent_x, uint32_t extent_y,
+    const std::tuple<Raw, uint32_t, uint32_t>& texture)
   {
-    const auto mipmap_count_fn = [](int32_t value)
+    auto src_extent_x = std::get<1>(texture);
+    auto src_extent_y = std::get<2>(texture);
+    auto src_data = reinterpret_cast<float*>(std::get<0>(texture).AccessBytes().first);
+
+    auto raw = Raw(uint32_t(sizeof(glm::f32vec4)) * extent_x * extent_y);
+
+    auto dst_extent_x = extent_x;
+    auto dst_extent_y = extent_y;
+    auto dst_data = reinterpret_cast<float*>(raw.AccessBytes().first);
+
+    stbir_resize_float(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
+
+    return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
+  }
+
+  std::tuple<std::vector<Raw>, uint32_t, uint32_t> MipmapTextureHDR(uint32_t mipmap,
+    const std::tuple<Raw, uint32_t, uint32_t>& texture)
+  {
+    auto& raw = std::get<0>(texture);
+    auto extent_x = std::get<1>(texture);
+    auto extent_y = std::get<2>(texture);
+
+    auto src_extent_x = extent_x;
+    auto src_extent_y = extent_y;
+    auto src_data = reinterpret_cast<float*>(raw.AccessBytes().first);
+
+    const auto mipmap_count_fn = [](uint32_t value)
       {
-        int32_t power = 0;
+        uint32_t power = 0;
         while ((value >> power) > 0) ++power;
         return power;
       };
+
+    const auto mipmap_x = mipmap_count_fn(extent_x);
+    const auto mipmap_y = mipmap_count_fn(extent_y);
+    extent_x = 1u << int32_t(mipmap_x) - 1;
+    extent_y = 1u << int32_t(mipmap_y) - 1;
+    mipmap = std::min(std::max(mipmap_x, mipmap_y), mipmap);
+
+    auto raws = std::vector<Raw>(mipmap);
+    for (auto i = 0; i < mipmap; ++i)
+    {
+      const auto x = std::max(1u, extent_x >> i);
+      const auto y = std::max(1u, extent_y >> i);
+      raws[i] = Raw(x * y * uint32_t(sizeof(glm::f32vec4)));
+    }
+
+    auto dst_extent_x = extent_x;
+    auto dst_extent_y = extent_y;
+    auto dst_data = reinterpret_cast<float*>(raws[0].AccessBytes().first);
+
+    stbir_resize_float(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
+
+    for (auto i = 1; i < mipmap; ++i)
+    {
+      src_extent_x = dst_extent_x;
+      src_extent_y = dst_extent_y;
+      src_data = dst_data;
+
+      dst_extent_x = std::max(1u, extent_x >> i);
+      dst_extent_y = std::max(1u, extent_y >> i);
+      dst_data = reinterpret_cast<float*>(raws[i].AccessBytes().first);
+
+      stbir_resize_float(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
+    }
+
+    return std::make_tuple(std::move(raws), extent_x, extent_y);
+  }
+
+  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureHDR(const std::tuple<Raw, uint32_t, uint32_t>& texture, uint32_t mipmap, bool symmetric)
+  {
+    const auto mipmap_count_fn = [](int32_t value)
+    {
+      int32_t power = 0;
+      while ((value >> power) > 0) ++power;
+      return power;
+    };
 
     auto& texels = std::get<0>(texture);
     auto extent_x = std::get<1>(texture);
@@ -1257,152 +1030,4 @@ namespace RayGene3D
 
   //std::shared_ptr<Property> ImportBuffer(const std::string& path, uint32_t stride)
   //{}
-
-
-  //void SaveToPNG(const std::string& file_path, std::pair<const void*, uint32_t> bytes, uint32_t width, uint32_t height)
-  //{
-  //  const auto src_tex_data = stbi_write_png(file_path.c_str(), width, height, 3, bytes.first, 4 * width);
-  //}
-
-
-  //std::tuple<std::pair<const void*, uint32_t>, int32_t, int32_t> LoadTextureFromFile(const std::string& path_name, bool gamma)
-  //{
-  //  int32_t src_tex_x = 0;
-  //  int32_t src_tex_y = 0;
-  //  int32_t src_tex_n = 0;
-  //  unsigned char* src_tex_data = stbi_load(path_name.c_str(), &src_tex_x, &src_tex_y, &src_tex_n, STBI_default);
-
-  //  if (gamma)
-  //  {
-  //    const auto gamma_value = 2.2f;
-  //    for (uint32_t i = 0; i < src_tex_x * src_tex_y; ++i)
-  //    {
-  //      if (src_tex_n > 0) src_tex_data[i * src_tex_n + 0] = uint8_t(255.0f * std::pow(src_tex_data[i * src_tex_n + 0] / 255.0f, gamma_value));
-  //      if (src_tex_n > 1) src_tex_data[i * src_tex_n + 1] = uint8_t(255.0f * std::pow(src_tex_data[i * src_tex_n + 1] / 255.0f, gamma_value));
-  //      if (src_tex_n > 2) src_tex_data[i * src_tex_n + 2] = uint8_t(255.0f * std::pow(src_tex_data[i * src_tex_n + 2] / 255.0f, gamma_value));
-  //    }
-  //  }
-
-  //  int32_t dst_tex_x = src_tex_x;
-  //  int32_t dst_tex_y = src_tex_y;
-  //  int32_t dst_tex_n = 4;
-
-  //  const auto dst_tex_size = dst_tex_x * dst_tex_y * dst_tex_n;
-  //  auto* dst_tex_data = new unsigned char[dst_tex_size];
-  //  for (uint32_t j = 0; j < src_tex_x * src_tex_y; ++j)
-  //  {
-  //    const uint8_t r = src_tex_n > 0 ? src_tex_data[j * src_tex_n + 0] : 0; //0xFF;
-  //    const uint8_t g = src_tex_n > 1 ? src_tex_data[j * src_tex_n + 1] : r; //0xFF;
-  //    const uint8_t b = src_tex_n > 2 ? src_tex_data[j * src_tex_n + 2] : r; //0xFF;
-  //    const uint8_t a = src_tex_n > 3 ? src_tex_data[j * src_tex_n + 3] : r; //0xFF;
-  //    dst_tex_data[j * dst_tex_n + 0] = r;
-  //    dst_tex_data[j * dst_tex_n + 1] = g;
-  //    dst_tex_data[j * dst_tex_n + 2] = b;
-  //    dst_tex_data[j * dst_tex_n + 3] = a;
-
-  //  }
-  //  stbi_image_free(src_tex_data);
-
-  //  src_tex_data = dst_tex_data;
-  //  src_tex_x = dst_tex_x;
-  //  src_tex_y = dst_tex_y;
-  //  src_tex_n = dst_tex_n;
-
-  //  const auto tex_x = src_tex_x;
-  //  const auto tex_y = src_tex_y;
-
-  //  return { { dst_tex_data, dst_tex_size }, tex_x, tex_y };
-  //}
-
-  //std::shared_ptr<Property> CreatePropertyFromTexture(std::pair<const void*, uint32_t> bytes, int32_t tex_x, int32_t tex_y, uint32_t mipmaps)
-  //{
-  //  const auto mipmap_count_fn = [](uint32_t value)
-  //  {
-  //    uint32_t power = 0;
-  //    while ((value >> power) > 0) ++power;
-  //    return power;
-  //  };
-  //  mipmaps = mipmaps > 0 ? mipmaps : std::min(mipmap_count_fn(tex_x), mipmap_count_fn(tex_y));
-
-  //  //const uint32_t tex_x = (1 << mipmaps) - 1;
-  //  //const uint32_t tex_y = (1 << mipmaps) - 1;
-  //  //const uint32_t tex_n = 4;
-
-  //  const auto texel_count = uint32_t(((1 << mipmaps) * (1 << mipmaps) - 1) / 3);
-  //  const auto texel_stride = uint32_t(sizeof(glm::u8vec4));
-  //  unsigned char* texel_data = new unsigned char[texel_count * 4];
-
-  //  auto dst_tex_x = 1 << (mipmaps - 1);
-  //  auto dst_tex_y = 1 << (mipmaps - 1);
-  //  auto dst_tex_n = 4;
-  //  auto dst_tex_data = texel_data;
-
-  //  stbir_resize_uint8(reinterpret_cast<const unsigned char*>(bytes.first), tex_x, tex_y, 0, dst_tex_data, dst_tex_x, dst_tex_y, 0, 4);
-
-  //  auto src_tex_x = dst_tex_x;
-  //  auto src_tex_y = dst_tex_y;
-  //  auto src_tex_n = dst_tex_n;
-  //  auto src_tex_data = dst_tex_data;
-
-  //  for (uint32_t i = 1; i < mipmaps; ++i)
-  //  {
-  //    dst_tex_x = 1 << (mipmaps - 1 - i);
-  //    dst_tex_y = 1 << (mipmaps - 1 - i);
-  //    dst_tex_n = src_tex_n;
-  //    dst_tex_data += src_tex_x * src_tex_y * src_tex_n;
-  //    stbir_resize_uint8(src_tex_data, src_tex_x, src_tex_y, 0, dst_tex_data, dst_tex_x, dst_tex_y, 0, dst_tex_n);
-
-  //    src_tex_data = dst_tex_data;
-  //    src_tex_x = dst_tex_x;
-  //    src_tex_y = dst_tex_y;
-  //    src_tex_n = dst_tex_n;
-  //  }
-
-
-  //  const auto texels_property = std::shared_ptr<Property>(new Property(Property::TYPE_RAW));
-  //  {
-  //    texels_property->RawAllocate(texel_count * texel_stride);
-  //    texels_property->SetRawBytes({ texel_data, texel_count * texel_stride }, 0);
-  //  }
-  //  delete[] texel_data;
-
-  //  return texels_property;
-  //}
-
-
-  //std::shared_ptr<Property> CreatePropertyFromTextures(const std::vector<Texture>& textures, uint32_t mipmaps)
-  //{
-  //  auto textures_property = std::shared_ptr<Property>(new Property(Property::TYPE_ARRAY));
-
-  //  if (textures.empty())
-  //  {
-  //    textures_property->SetArraySize(uint32_t(1));
-
-  //    const auto texel_value = glm::u8vec4(255, 255, 255, 255);
-  //    const auto texel_size = uint32_t(sizeof(texel_value));
-
-  //    const auto texels_property = std::shared_ptr<Property>(new Property(Property::TYPE_RAW));
-  //    texels_property->RawAllocate(texel_size);
-  //    texels_property->SetRawBytes({ &texel_value, texel_size }, 0);
-  //    textures_property->SetArrayItem(0, texels_property);
-  //  }
-  //  else
-  //  {
-  //    textures_property->SetArraySize(uint32_t(textures.size()));
-  //    for (uint32_t i = 0; i < textures_property->GetArraySize(); ++i)
-  //    {
-  //      const Texture& texture = textures[i];
-
-  //      const auto tex_x = int32_t(texture.extent_x);
-  //      const auto tex_y = int32_t(texture.extent_y);
-  //      const auto tex_data = reinterpret_cast<const void*>(texture.texels.data());
-  //      const auto tex_size = uint32_t(texture.texels.size() * sizeof(glm::u8vec4));
-
-  //      const auto mipmaps_property = CreatePropertyFromTexture(std::pair(tex_data, tex_size), tex_x, tex_y, mipmaps);
-
-  //      textures_property->SetArrayItem(i, mipmaps_property);
-  //    }
-  //  }
-  //  return textures_property;
-  //}
 }
