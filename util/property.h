@@ -138,10 +138,10 @@ namespace RayGene3D
 
     void RawAllocate(uint32_t size) { std::get<raw_t>(_value).Allocate(size); }
     void RawFree() { std::get<raw_t>(_value).Free(); }
-    void SetRawBytes(std::pair<const void*, uint32_t> bytes, uint32_t offset) { std::get<raw_t>(_value).SetBytes(bytes, offset); }
-    std::pair<const void*, uint32_t> GetRawBytes(uint32_t offset) const { return std::get<raw_t>(_value).GetBytes(offset); }
-    template<typename T> void SetTypedBytes(std::pair<const T*, uint32_t> bytes, uint32_t offset) { std::get<raw_t>(_value).SetElements<T>(bytes, offset); }
-    template<typename T> std::pair<const T*, uint32_t> GetTypedBytes(uint32_t offset) { return std::get<raw_t>(_value).GetElements<T>(offset); }
+    void SetRawBytes(std::pair<const void*, uint32_t> bytes, uint32_t offset = 0u) { std::get<raw_t>(_value).SetBytes(bytes, offset); }
+    std::pair<const void*, uint32_t> GetRawBytes(uint32_t offset = 0u) const { return std::get<raw_t>(_value).GetBytes(offset); }
+    template<typename T> void SetTypedBytes(std::pair<const T*, uint32_t> bytes, uint32_t offset = 0u) { std::get<raw_t>(_value).SetElements<T>(bytes, offset); }
+    template<typename T> std::pair<const T*, uint32_t> GetTypedBytes(uint32_t offset = 0u) { return std::get<raw_t>(_value).GetElements<T>(offset); }
 
     void SetRaw(Raw&& raw) noexcept { std::get<raw_t>(_value) = std::move(raw); }
     Raw&& GetRaw() noexcept { return std::move(std::get<raw_t>(_value)); }
@@ -283,8 +283,11 @@ namespace RayGene3D
     const std::tuple<Raw, uint32_t, uint32_t>& texture);
 
   Raw LoadBuffer(const std::string& path);
-  Raw CompactBuffer(std::vector<Raw>& raws);
   void SaveBuffer(const std::string& path, const Raw& raw);
+  Raw CombineBuffer(std::vector<Raw>&& raws);
+  std::vector<Raw> DivideBuffer(Raw&& raw, std::pair<const uint32_t*, uint32_t> counts);
+
+
 }
 
 

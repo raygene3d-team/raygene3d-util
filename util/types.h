@@ -310,18 +310,18 @@ namespace RayGene3D
   };
 
 
-  struct Texture
-  {
-    Raw texels;
-    uint32_t extent_x{ 0 };
-    uint32_t extent_y{ 0 };
-  };
+  //struct Texture
+  //{
+  //  Raw texels;
+  //  uint32_t extent_x{ 0 };
+  //  uint32_t extent_y{ 0 };
+  //};
 
-  struct Buffer
-  {
-    Raw bytes;
-    uint32_t stride{ 0 };
-    uint32_t offset{ 0 };
-  };
+  //struct Buffer
+  //{
+  //  Raw bytes;
+  //  uint32_t stride{ 0 };
+  //  uint32_t offset{ 0 };
+  //};
 }
 
