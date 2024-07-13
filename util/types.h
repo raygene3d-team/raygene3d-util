@@ -36,6 +36,8 @@ THE SOFTWARE.
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/round.hpp>
+#include <glm/gtc/packing.hpp>
 #include <glm/gtx/component_wise.hpp>
 #include <glm/gtx/hash.hpp>
 #include <glm/gtx/norm.hpp>
@@ -43,7 +45,7 @@ THE SOFTWARE.
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/polar_coordinates.hpp>
-#include <glm/gtc/round.hpp>
+
 
 namespace RayGene3D
 {

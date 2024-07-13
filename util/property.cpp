@@ -572,26 +572,26 @@ namespace RayGene3D
     return property;
   }
 
-  std::shared_ptr<Property> CreateBufferProperty(const std::pair<const void*, uint32_t>& bytes,
-    uint32_t stride, uint32_t count)
-  {
-    const auto root_property = std::shared_ptr<Property>(new Property(Property::TYPE_OBJECT));
+  //std::shared_ptr<Property> CreateBufferProperty(const std::pair<const void*, uint32_t>& bytes,
+  //  uint32_t stride, uint32_t count)
+  //{
+  //  const auto root_property = std::shared_ptr<Property>(new Property(Property::TYPE_OBJECT));
 
-    const auto stride_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
-    stride_property->SetUint(stride);
-    root_property->SetObjectItem("stride", stride_property);
+  //  const auto stride_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
+  //  stride_property->SetUint(stride);
+  //  root_property->SetObjectItem("stride", stride_property);
 
-    const auto count_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
-    count_property->SetUint(count);
-    root_property->SetObjectItem("count", count_property);
+  //  const auto count_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
+  //  count_property->SetUint(count);
+  //  root_property->SetObjectItem("count", count_property);
 
-    const auto bytes_property = std::shared_ptr<Property>(new Property(Property::TYPE_RAW));
-    bytes_property->RawAllocate(bytes.second);
-    bytes_property->SetRawBytes(bytes, 0);
-    root_property->SetObjectItem("bytes", bytes_property);
+  //  const auto bytes_property = std::shared_ptr<Property>(new Property(Property::TYPE_RAW));
+  //  bytes_property->RawAllocate(bytes.second);
+  //  bytes_property->SetRawBytes(bytes, 0);
+  //  root_property->SetObjectItem("bytes", bytes_property);
 
-    return root_property;
-  }
+  //  return root_property;
+  //}
 
 
   std::shared_ptr<Property> CreateTextureProperty(std::pair<Raw*, uint32_t> raws,
