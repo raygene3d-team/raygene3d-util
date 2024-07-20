@@ -232,7 +232,7 @@ namespace RayGene3D
       std::memcpy(element_data + offset, elements.first, element_size);
     }
 
-    template<typename T> std::pair<const T*, uint32_t> GetElements(uint32_t offset = 0u)
+    template<typename T> std::pair<const T*, uint32_t> GetElements(uint32_t offset = 0u) const
     {
       if (offset * uint32_t(sizeof(T)) > _bytes.second)
       {
@@ -255,7 +255,7 @@ namespace RayGene3D
       reinterpret_cast<T*>(_bytes.first)[index] = element;
     }
 
-    template<typename T> const T& GetElement(uint32_t index)
+    template<typename T> const T& GetElement(uint32_t index) const
     {
       if (index * uint32_t(sizeof(T)) > _bytes.second)
       {
