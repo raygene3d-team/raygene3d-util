@@ -1017,7 +1017,13 @@ namespace RayGene3D
   }
 
   void SaveTextureHDR(const std::string& path, const std::tuple<Raw, uint32_t, uint32_t>& texture)
-  {}
+  {
+    const auto bytes = std::get<0>(texture).GetBytes();
+    const auto extent_x = std::get<1>(texture);
+    const auto extent_y = std::get<2>(texture);
+    
+    SaveEXR(reinterpret_cast<const float*>(bytes.first), extent_x, extent_y, 4, false, path.c_str(), nullptr);
+  }
 
   //Raw LoadBuffer(const std::string& path)
   //{}
