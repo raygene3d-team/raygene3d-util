@@ -191,7 +191,7 @@ namespace RayGene3D
     {
       if (_bytes.first != nullptr && _bytes.second != 0)
       {
-        delete[] _bytes.first;
+        delete[] reinterpret_cast<uint8_t*>(_bytes.first);
         _bytes = { nullptr, 0 };
       }
     }

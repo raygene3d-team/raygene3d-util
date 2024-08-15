@@ -25,34 +25,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ================================================================================*/
-
-
-#pragma once
-#include "types.h"
-
-//void Property::Initialize()
-//{
-//
-//}
-//
-//
-//void Property::Discard()
-//{
-//
-//}
-
-namespace RayGene3D
-{
-  //template<typename T>
-  //Buffer<T>::Buffer(uint32_t count)
-  //  : count(count)
-  //{
-  //  bytes.Allocate(count * sizeof(T));
-  //}
-
-  //template<typename T>
-  //Buffer<T>::~Buffer()
-  //{
-  //  bytes.Free();
-  //}
-}
