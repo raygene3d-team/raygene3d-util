@@ -122,6 +122,8 @@ namespace RayGene3D
 
     const std::shared_ptr<Property>& GetObjectItem(const std::string& name) const { return std::get<object_t>(_value).at(name); }
     void SetObjectItem(const std::string& name, const std::shared_ptr<Property>& property) { std::get<object_t>(_value)[name] = property; }
+    //std::shared_ptr<Property>&& GetObjectItem(const std::string& name) noexcept { return std::move(std::get<object_t>(_value).at(name)); }
+    //void SetObjectItem(const std::string& name, std::shared_ptr<Property>&& property) { std::get<object_t>(_value)[name] = std::move(property); }
     bool HasObjectItem(const std::string& name) { return std::get<object_t>(_value).find(name) != std::get<object_t>(_value).end(); }
     void RemoveObjectItem(const std::string& name) { std::get<object_t>(_value).erase(name); }
     //void VisitObjectItem(std::function<void(const std::string&, const std::shared_ptr<Property>&)> visitor) { for (auto& v : std::get<object>(_value)) visitor(v.first, v.second); }
@@ -129,21 +131,21 @@ namespace RayGene3D
 
     const std::shared_ptr<Property>& GetArrayItem(uint32_t index) const { return std::get<array_t>(_value).at(index); }
     void SetArrayItem(uint32_t index, const std::shared_ptr<Property>& property) { std::get<array_t>(_value).at(index) = property; }
+    //std::shared_ptr<Property>&& GetArrayItem(uint32_t index) noexcept { return std::move(std::get<array_t>(_value).at(index)); }
+    //void SetArrayItem(uint32_t index, std::shared_ptr<Property>&& property) noexcept { std::get<array_t>(_value).at(index) = std::move(property); }
     uint32_t GetArraySize() const { return uint32_t(std::get<array_t>(_value).size()); }
     void SetArraySize(uint32_t size) { std::get<array_t>(_value).resize(size); }
 
     void RawAllocate(uint32_t size) { std::get<raw_t>(_value).Allocate(size); }
     void RawFree() { std::get<raw_t>(_value).Free(); }
-    void SetRawBytes(std::pair<const void*, uint32_t> bytes, uint32_t offset) { std::get<raw_t>(_value).SetBytes(bytes, offset); }
-    std::pair<const void*, uint32_t> GetRawBytes(uint32_t offset) const { return std::get<raw_t>(_value).GetBytes(offset); }
-    template<typename T> void SetTypedBytes(std::pair<const T*, uint32_t> bytes, uint32_t offset)
-    {
-      SetRawBytes({ bytes.first, uint32_t(bytes.second * sizeof(T)) }, uint32_t(offset * sizeof(T)));
-    }
-    template<typename T> std::pair<const T*, uint32_t> GetTypedBytes(uint32_t offset)
-    {
-      const auto bytes = GetRawBytes(uint32_t(offset * sizeof(T))); return { reinterpret_cast<const T*>(bytes.first), uint32_t(bytes.second / sizeof(T)) };
-    }
+    void SetRawBytes(std::pair<const void*, uint32_t> bytes, uint32_t offset = 0u) { std::get<raw_t>(_value).SetBytes(bytes, offset); }
+    std::pair<const void*, uint32_t> GetRawBytes(uint32_t offset = 0u) const { return std::get<raw_t>(_value).GetBytes(offset); }
+    template<typename T> void SetTypedBytes(std::pair<const T*, uint32_t> bytes, uint32_t offset = 0u) { std::get<raw_t>(_value).SetElements<T>(bytes, offset); }
+    template<typename T> std::pair<const T*, uint32_t> GetTypedBytes(uint32_t offset = 0u) { return std::get<raw_t>(_value).GetElements<T>(offset); }
+
+    void SetRaw(Raw&& raw) noexcept { std::get<raw_t>(_value) = std::move(raw); }
+    Raw&& GetRaw() noexcept { return std::move(std::get<raw_t>(_value)); }
+    //const Raw&& GetRaw() const { return std::get<raw_t>(_value); }
 
 
 
@@ -254,19 +256,38 @@ namespace RayGene3D
   std::shared_ptr<Property> CreateUVec3Property();
   std::shared_ptr<Property> CreateUVec2Property();
   std::shared_ptr<Property> CreateUIntProperty();
-  std::shared_ptr<Property> CreateBufferProperty(const void* data, uint32_t stride, uint32_t count);
-  std::shared_ptr<Property> CreateTextureProperty(const void* data, uint32_t stride, uint32_t size_x, uint32_t size_y, uint32_t mipmaps);
 
-  //std::shared_ptr<Property> ImportOBJ(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps);
-  //std::shared_ptr<Property> ImportGLTF(const std::string& path, const std::string& name, bool flip, float scale, uint32_t mipmaps);
+  std::shared_ptr<Property> CreateBufferProperty(std::pair<Raw*, uint32_t> raws,
+    uint32_t stride, uint32_t count);
 
-  //std::shared_ptr<Property> ImportAsPanoEXR(const std::string& path, const std::string& name, float exposure, uint32_t mipmaps);
-  //std::shared_ptr<Property> ImportAsCubeMapEXR(const std::string& path, const std::string& name, float exposure, uint32_t mipmaps);
-
-  //std::shared_ptr<Property> CreatePropertyFromTextures(const std::vector<Texture>& textures, uint32_t mipmaps);
+  std::shared_ptr<Property> CreateTextureProperty(std::pair<Raw*, uint32_t> raws,
+    uint32_t extent_x, uint32_t extent_y, uint32_t mipmap, uint32_t layers);
 
   void SaveProperty(const std::string& directory, const std::string& name, const std::shared_ptr<Property>& root);
   std::shared_ptr<Property> LoadProperty(const std::string& directory, const std::string& name);
+
+  std::tuple<Raw, uint32_t, uint32_t> LoadTextureLDR(const std::string& path);
+  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureLDR(uint32_t extent_x, uint32_t extent_y,
+    const std::tuple<Raw, uint32_t, uint32_t>& texture);
+  std::tuple<std::vector<Raw>, uint32_t, uint32_t> MipmapTextureLDR(uint32_t mipmap,
+    const std::tuple<Raw, uint32_t, uint32_t>& texture);
+  void SaveTextureLDR(const std::string& path,
+    const std::tuple<Raw, uint32_t, uint32_t>& texture);
+
+  std::tuple<Raw, uint32_t, uint32_t> LoadTextureHDR(const std::string& path);
+  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureHDR(uint32_t extent_x, uint32_t extent_y,
+    const std::tuple<Raw, uint32_t, uint32_t>& texture);
+  std::tuple<std::vector<Raw>, uint32_t, uint32_t> MipmapTextureHDR(uint32_t mipmap,
+    const std::tuple<Raw, uint32_t, uint32_t>& texture);
+  void SaveTextureHDR(const std::string& path,
+    const std::tuple<Raw, uint32_t, uint32_t>& texture);
+
+  Raw LoadBuffer(const std::string& path);
+  void SaveBuffer(const std::string& path, const Raw& raw);
+  Raw CombineBuffer(std::vector<Raw>&& raws);
+  std::vector<Raw> DivideBuffer(Raw&& raw, std::pair<const uint32_t*, uint32_t> counts);
+
+
 }
 
 
