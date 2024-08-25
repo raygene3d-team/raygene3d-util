@@ -38,6 +38,7 @@ THE SOFTWARE.
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/round.hpp>
 #include <glm/gtc/packing.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/component_wise.hpp>
 #include <glm/gtx/hash.hpp>
 #include <glm/gtx/norm.hpp>
