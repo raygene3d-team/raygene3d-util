@@ -121,6 +121,10 @@ namespace RayGene3D
     uint32_t texture1_idx{ uint32_t(-1) };
     uint32_t texture2_idx{ uint32_t(-1) };
     uint32_t texture3_idx{ uint32_t(-1) };
+    uint32_t texture4_idx{ uint32_t(-1) };
+    uint32_t texture5_idx{ uint32_t(-1) };
+    uint32_t texture6_idx{ uint32_t(-1) };
+    uint32_t texture7_idx{ uint32_t(-1) };
 
     glm::f32vec3 debug_color{ 0.0f, 0.0f, 0.0f };
     uint32_t geometry_idx{ uint32_t(-1) };
@@ -130,7 +134,7 @@ namespace RayGene3D
     glm::f32vec3 bb_max{-FLT_MAX,-FLT_MAX,-FLT_MAX };
     uint32_t bb_max_padding{ 0 };
 
-    glm::u32vec4 padding[5];
+    glm::u32vec4 padding[4];
   };
 
   struct Screen
