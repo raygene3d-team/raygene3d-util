@@ -109,12 +109,10 @@ namespace RayGene3D
     uint32_t vert_offset{ 0 };
     uint32_t vert_count{ 0 };
 
-    glm::f32vec3 emission{ 0.0f, 0.0f, 0.0f }; // emission color
-    float intensity{ 0.0f }; // emission intensity 
-    glm::f32vec3 diffuse{ 1.0f, 1.0f, 1.0f }; // diffuse color
-    float shininess{ 0.0f }; // specular coherency
-    glm::f32vec3 specular{ 0.0f, 0.0f, 0.0f }; // specular color
-    float alpha{ 1.0f }; // transparency or ior
+    glm::f32vec4 brdf_param0{ 0.0f, 0.0f, 0.0f, 0.0f };
+    glm::f32vec4 brdf_param1{ 0.0f, 0.0f, 0.0f, 0.0f };
+    glm::f32vec4 brdf_param2{ 0.0f, 0.0f, 0.0f, 0.0f };
+    glm::f32vec4 brdf_param3{ 0.0f, 0.0f, 0.0f, 0.0f };
 
     uint32_t texture0_idx{ uint32_t(-1) };
     uint32_t texture1_idx{ uint32_t(-1) };
@@ -125,13 +123,10 @@ namespace RayGene3D
     uint32_t texture6_idx{ uint32_t(-1) };
     uint32_t texture7_idx{ uint32_t(-1) };
 
-    glm::f32vec3 debug_color{ 0.0f, 0.0f, 0.0f };
-    uint32_t geometry_idx{ uint32_t(-1) };
-
     glm::f32vec3 bb_min{ FLT_MAX, FLT_MAX, FLT_MAX };
-    uint32_t bb_min_padding{ 0 };
+    uint32_t geom_idx{ uint32_t(-1) };
     glm::f32vec3 bb_max{-FLT_MAX,-FLT_MAX,-FLT_MAX };
-    uint32_t bb_max_padding{ 0 };
+    uint32_t brdf_idx{ uint32_t(-1) };
 
     glm::u32vec4 padding[4];
   };

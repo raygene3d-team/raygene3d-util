@@ -677,20 +677,19 @@ namespace RayGene3D
       const auto vert_offset_property = CreateUIntProperty();    vert_offset_property->FromUInt(instance.vert_offset);    item_property->SetObjectItem("vert_offset", vert_offset_property);
       const auto vert_count_property = CreateUIntProperty();     vert_count_property->FromUInt(instance.vert_count);      item_property->SetObjectItem("vert_count", vert_count_property);
 
-      const auto emission_property = CreateFVec3Property();      emission_property->FromFVec3(instance.emission);         item_property->SetObjectItem("emission", emission_property);
-      const auto intensity_property = CreateFloatProperty();     intensity_property->FromFloat(instance.intensity);       item_property->SetObjectItem("intensity", intensity_property);
-      const auto diffuse_property = CreateFVec3Property();       diffuse_property->FromFVec3(instance.diffuse);           item_property->SetObjectItem("diffuse", diffuse_property);
-      const auto shininess_property = CreateFloatProperty();     shininess_property->FromFloat(instance.shininess);       item_property->SetObjectItem("shininess", shininess_property);
-      const auto specular_property = CreateFVec3Property();      specular_property->FromFVec3(instance.specular);         item_property->SetObjectItem("specular", specular_property);
-      const auto alpha_property = CreateFloatProperty();         alpha_property->FromFloat(instance.alpha);               item_property->SetObjectItem("ior", alpha_property);
+      const auto brdf_param0_property = CreateFVec4Property();   brdf_param0_property->FromFVec4(instance.brdf_param0);   item_property->SetObjectItem("brdf_param0", brdf_param0_property);
+      const auto brdf_param1_property = CreateFVec4Property();   brdf_param1_property->FromFVec4(instance.brdf_param1);   item_property->SetObjectItem("brdf_param1", brdf_param1_property);
+      const auto brdf_param2_property = CreateFVec4Property();   brdf_param2_property->FromFVec4(instance.brdf_param2);   item_property->SetObjectItem("brdf_param2", brdf_param2_property);
+      const auto brdf_param3_property = CreateFVec4Property();   brdf_param3_property->FromFVec4(instance.brdf_param3);   item_property->SetObjectItem("brdf_param3", brdf_param3_property);
 
       const auto texture0_idx_property = CreateUIntProperty();   texture0_idx_property->FromUInt(instance.texture0_idx);  item_property->SetObjectItem("texture0_idx", texture0_idx_property);
       const auto texture1_idx_property = CreateUIntProperty();   texture1_idx_property->FromUInt(instance.texture1_idx);  item_property->SetObjectItem("texture1_idx", texture1_idx_property);
       const auto texture2_idx_property = CreateUIntProperty();   texture2_idx_property->FromUInt(instance.texture2_idx);  item_property->SetObjectItem("texture2_idx", texture2_idx_property);
       const auto texture3_idx_property = CreateUIntProperty();   texture3_idx_property->FromUInt(instance.texture3_idx);  item_property->SetObjectItem("texture3_idx", texture3_idx_property);
-
-      const auto debug_color_property = CreateFVec3Property();   debug_color_property->FromFVec3(instance.debug_color);   item_property->SetObjectItem("debug_color", debug_color_property);
-      const auto geometry_idx_property = CreateUIntProperty();   geometry_idx_property->FromUInt(instance.geometry_idx);  item_property->SetObjectItem("geometry_idx", geometry_idx_property);
+      const auto texture4_idx_property = CreateUIntProperty();   texture4_idx_property->FromUInt(instance.texture4_idx);  item_property->SetObjectItem("texture4_idx", texture4_idx_property);
+      const auto texture5_idx_property = CreateUIntProperty();   texture5_idx_property->FromUInt(instance.texture5_idx);  item_property->SetObjectItem("texture5_idx", texture5_idx_property);
+      const auto texture6_idx_property = CreateUIntProperty();   texture6_idx_property->FromUInt(instance.texture6_idx);  item_property->SetObjectItem("texture6_idx", texture6_idx_property);
+      const auto texture7_idx_property = CreateUIntProperty();   texture7_idx_property->FromUInt(instance.texture7_idx);  item_property->SetObjectItem("texture7_idx", texture7_idx_property);
 
       root_property->SetArrayItem(i, item_property);
     }
