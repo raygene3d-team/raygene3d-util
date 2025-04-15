@@ -49,6 +49,8 @@ THE SOFTWARE.
 
 namespace RayGene3D
 {
+  //struct Raw;
+
   //struct Vertex
   //{
   //  glm::f32vec3 pos{ 0.0f, 0.0f, 0.0f };
@@ -100,6 +102,63 @@ namespace RayGene3D
     glm::u32vec3 idx{ uint32_t(-1), uint32_t(-1) , uint32_t(-1) };
   };
 
+
+
+  //struct Mesh
+  //{
+  //  Raw vtx_array;
+  //  uint32_t vtx_count;
+  //  Raw idx_array;
+  //  uint32_t idx_count;
+  //};
+
+
+
+  //struct Mesh
+  //{
+  //  uint32_t buffer0;
+  //  uint32_t buffer1;
+  //  uint32_t buffer2;
+  //  uint32_t buffer3;
+  //  uint32_t buffer4;
+  //  uint32_t buffer5;
+  //  uint32_t buffer6;
+  //  uint32_t buffer7;
+
+  //  uint32_t texture0;
+  //  uint32_t texture1;
+  //  uint32_t texture2;
+  //  uint32_t texture3;
+  //  uint32_t texture4;
+  //  uint32_t texture5;
+  //  uint32_t texture6;
+  //  uint32_t texture7;
+
+  //  glm::f32vec4 parameter0;
+  //  glm::f32vec4 parameter1;
+  //  glm::f32vec4 parameter2;
+  //  glm::f32vec4 parameter3;
+  //  glm::f32vec4 parameter4;
+  //  glm::f32vec4 parameter5;
+  //  glm::f32vec4 parameter6;
+  //  glm::f32vec4 parameter7;
+
+  //  glm::f32vec3 bb_min;
+  //  uint32_t geom_idx;
+  //  glm::f32vec3 bb_max;
+  //  uint32_t brdf_idx;
+  //};
+
+  //struct Scene
+  //{
+  //  std::vector<Mesh> meshes;
+  //  std::vector<Buffer> buffers;
+  //  std::vector<Texture> textures;
+  //};
+
+
+
+
   struct Instance
   {
     glm::f32mat3x4 transform;
@@ -108,6 +167,11 @@ namespace RayGene3D
     uint32_t prim_count{ 0 };
     uint32_t vert_offset{ 0 };
     uint32_t vert_count{ 0 };
+
+    uint32_t mlet_offset{ 0 };
+    uint32_t mlet_count{ 0 };
+    uint32_t bone_offset{ 0 };
+    uint32_t bone_count{ 0 };
 
     glm::f32vec4 brdf_param0{ 0.0f, 0.0f, 0.0f, 0.0f };
     glm::f32vec4 brdf_param1{ 0.0f, 0.0f, 0.0f, 0.0f };
@@ -118,15 +182,24 @@ namespace RayGene3D
     uint32_t texture1_idx{ uint32_t(-1) };
     uint32_t texture2_idx{ uint32_t(-1) };
     uint32_t texture3_idx{ uint32_t(-1) };
-    uint32_t texture4_idx{ uint32_t(-1) };
-    uint32_t texture5_idx{ uint32_t(-1) };
-    uint32_t texture6_idx{ uint32_t(-1) };
-    uint32_t texture7_idx{ uint32_t(-1) };
+    //uint32_t texture4_idx{ uint32_t(-1) };
+    //uint32_t texture5_idx{ uint32_t(-1) };
+    //uint32_t texture6_idx{ uint32_t(-1) };
+    //uint32_t texture7_idx{ uint32_t(-1) };
 
-    glm::f32vec3 bb_min{ FLT_MAX, FLT_MAX, FLT_MAX };
+    glm::f32vec3 aabb_min{ FLT_MAX, FLT_MAX, FLT_MAX };
     uint32_t geom_idx{ uint32_t(-1) };
-    glm::f32vec3 bb_max{-FLT_MAX,-FLT_MAX,-FLT_MAX };
+    glm::f32vec3 aabb_max{-FLT_MAX,-FLT_MAX,-FLT_MAX };
     uint32_t brdf_idx{ uint32_t(-1) };
+
+    //uint32_t buffer0_idx{ uint32_t(-1) };
+    //uint32_t buffer1_idx{ uint32_t(-1) };
+    //uint32_t buffer2_idx{ uint32_t(-1) };
+    //uint32_t buffer3_idx{ uint32_t(-1) };
+    //uint32_t buffer4_idx{ uint32_t(-1) };
+    //uint32_t buffer5_idx{ uint32_t(-1) };
+    //uint32_t buffer6_idx{ uint32_t(-1) };
+    //uint32_t buffer7_idx{ uint32_t(-1) };
 
     glm::u32vec4 padding[4];
   };
@@ -289,6 +362,11 @@ namespace RayGene3D
       return _bytes;
     }
 
+    template<typename T> std::pair<T*, uint32_t> AccessElements() const
+    {
+      return { reinterpret_cast<T*>(_bytes.first), _bytes.second / uint32_t(sizeof(T)) };
+    }
+
     //void CommitBytes(std::pair<uint8_t*, uint32_t>&& bytes) { _bytes = bytes; }
     //std::pair<uint8_t*, uint32_t>&& RetrieveBytes() { return std::move(_bytes); }
 
@@ -310,19 +388,26 @@ namespace RayGene3D
     }
   };
 
+  struct Meshlet
+  {
+    uint32_t vert_offset : 24;
+    uint32_t vert_count : 8;
+    uint32_t trng_offset : 24;
+    uint32_t trng_count : 8;
+  };
 
   //struct Texture
   //{
   //  Raw texels;
-  //  uint32_t extent_x{ 0 };
-  //  uint32_t extent_y{ 0 };
+  //  uint32_t size_x;
+  //  uint32_t size_y;
   //};
 
   //struct Buffer
   //{
-  //  Raw bytes;
-  //  uint32_t stride{ 0 };
-  //  uint32_t offset{ 0 };
+  //  Raw elements;
+  //  uint32_t stride;
+  //  uint32_t count;
   //};
 }
 

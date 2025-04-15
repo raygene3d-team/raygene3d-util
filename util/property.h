@@ -140,8 +140,10 @@ namespace RayGene3D
     void RawFree() { std::get<raw_t>(_value).Free(); }
     void SetRawBytes(std::pair<const void*, uint32_t> bytes, uint32_t offset = 0u) { std::get<raw_t>(_value).SetBytes(bytes, offset); }
     std::pair<const void*, uint32_t> GetRawBytes(uint32_t offset = 0u) const { return std::get<raw_t>(_value).GetBytes(offset); }
-    template<typename T> void SetTypedBytes(std::pair<const T*, uint32_t> bytes, uint32_t offset = 0u) { std::get<raw_t>(_value).SetElements<T>(bytes, offset); }
-    template<typename T> std::pair<const T*, uint32_t> GetTypedBytes(uint32_t offset = 0u) { return std::get<raw_t>(_value).GetElements<T>(offset); }
+    std::pair<void*, uint32_t> AccessRawBytes() const { return std::get<raw_t>(_value).AccessBytes(); }
+    template<typename T> void SetRawTyped(std::pair<const T*, uint32_t> bytes, uint32_t offset = 0u) { std::get<raw_t>(_value).SetElements<T>(bytes, offset); }
+    template<typename T> std::pair<const T*, uint32_t> GetRawTyped(uint32_t offset = 0u) const { return std::get<raw_t>(_value).GetElements<T>(offset); }
+    template<typename T> std::pair<T*, uint32_t> AccessRawTyped() const { return std::get<raw_t>(_value).AccessElements<T>(); }
 
     void SetRaw(Raw&& raw) noexcept { std::get<raw_t>(_value) = std::move(raw); }
     Raw&& GetRaw() noexcept { return std::move(std::get<raw_t>(_value)); }
@@ -261,7 +263,7 @@ namespace RayGene3D
     uint32_t stride, uint32_t count);
 
   std::shared_ptr<Property> CreateTextureProperty(std::pair<Raw*, uint32_t> raws,
-    uint32_t extent_x, uint32_t extent_y, uint32_t mipmap, uint32_t layers);
+    Format format, uint32_t size_x, uint32_t size_y, uint32_t size_z, uint32_t mipmap = 1u, uint32_t layers = 1u);
 
   void SaveProperty(const std::string& directory, const std::string& name, const std::shared_ptr<Property>& root);
   std::shared_ptr<Property> LoadProperty(const std::string& directory, const std::string& name);
