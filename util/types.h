@@ -182,26 +182,27 @@ namespace RayGene3D
     uint32_t texture1_idx{ uint32_t(-1) };
     uint32_t texture2_idx{ uint32_t(-1) };
     uint32_t texture3_idx{ uint32_t(-1) };
-    //uint32_t texture4_idx{ uint32_t(-1) };
-    //uint32_t texture5_idx{ uint32_t(-1) };
-    //uint32_t texture6_idx{ uint32_t(-1) };
-    //uint32_t texture7_idx{ uint32_t(-1) };
+    uint32_t texture4_idx{ uint32_t(-1) };
+    uint32_t texture5_idx{ uint32_t(-1) };
+    uint32_t texture6_idx{ uint32_t(-1) };
+    uint32_t texture7_idx{ uint32_t(-1) };
 
     glm::f32vec3 aabb_min{ FLT_MAX, FLT_MAX, FLT_MAX };
     uint32_t geom_idx{ uint32_t(-1) };
     glm::f32vec3 aabb_max{-FLT_MAX,-FLT_MAX,-FLT_MAX };
     uint32_t brdf_idx{ uint32_t(-1) };
 
-    //uint32_t buffer0_idx{ uint32_t(-1) };
-    //uint32_t buffer1_idx{ uint32_t(-1) };
-    //uint32_t buffer2_idx{ uint32_t(-1) };
-    //uint32_t buffer3_idx{ uint32_t(-1) };
-    //uint32_t buffer4_idx{ uint32_t(-1) };
-    //uint32_t buffer5_idx{ uint32_t(-1) };
-    //uint32_t buffer6_idx{ uint32_t(-1) };
-    //uint32_t buffer7_idx{ uint32_t(-1) };
+    glm::f32vec3 bs_center;
+    float bs_radius;
 
-    glm::u32vec4 padding[4];
+    uint32_t buffer0_idx{ uint32_t(-1) };
+    uint32_t buffer1_idx{ uint32_t(-1) };
+    uint32_t buffer2_idx{ uint32_t(-1) };
+    uint32_t buffer3_idx{ uint32_t(-1) };
+    uint32_t buffer4_idx{ uint32_t(-1) };
+    uint32_t buffer5_idx{ uint32_t(-1) };
+    uint32_t buffer6_idx{ uint32_t(-1) };
+    uint32_t buffer7_idx{ uint32_t(-1) };
   };
 
   struct Screen
@@ -390,10 +391,15 @@ namespace RayGene3D
 
   struct Meshlet
   {
-    uint32_t vert_offset : 24;
-    uint32_t vert_count : 8;
-    uint32_t trng_offset : 24;
-    uint32_t trng_count : 8;
+    //uint32_t vert_offset : 24;
+    //uint32_t vert_count : 8;
+    //uint32_t trng_offset : 24;
+    //uint32_t trng_count : 8;
+
+    uint32_t vrt_offset;
+    uint32_t vrt_count;
+    uint32_t trg_offset;
+    uint32_t trg_count;
   };
 
   //struct Texture
