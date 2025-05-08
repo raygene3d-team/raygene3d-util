@@ -878,6 +878,38 @@ namespace RayGene3D
   void SaveTextureLDR(const std::string& path, const std::tuple<Raw, uint32_t, uint32_t>& texture)
   {}
 
+  std::tuple<Raw, uint32_t, uint32_t> CombineTextureLDR(
+    const std::tuple<Raw, uint32_t, uint32_t>& r_texture, uint32_t r_channel,
+    const std::tuple<Raw, uint32_t, uint32_t>& g_texture, uint32_t g_channel,
+    const std::tuple<Raw, uint32_t, uint32_t>& b_texture, uint32_t b_channel,
+    const std::tuple<Raw, uint32_t, uint32_t>& a_texture, uint32_t a_channel)
+  {
+    BLAST_ASSERT(std::get<1>(r_texture) == std::get<1>(g_texture) == std::get<1>(b_texture) == std::get<1>(a_texture));
+    BLAST_ASSERT(std::get<2>(r_texture) == std::get<2>(g_texture) == std::get<2>(b_texture) == std::get<2>(a_texture));
+    
+    BLAST_ASSERT(r_channel < 4 && g_channel < 4 && b_channel < 4 && a_channel < 4);
+    
+    auto extent_x = std::get<1>(r_texture);
+    auto extent_y = std::get<2>(r_texture);
+
+    const auto [r_texels, r_count] = std::get<0>(r_texture).GetElements<glm::u8vec4>();
+    const auto [g_texels, g_count] = std::get<0>(g_texture).GetElements<glm::u8vec4>();
+    const auto [b_texels, b_count] = std::get<0>(b_texture).GetElements<glm::u8vec4>();
+    const auto [a_texels, a_count] = std::get<0>(a_texture).GetElements<glm::u8vec4>();
+
+    auto raw = Raw(uint32_t(sizeof(glm::u8vec4)) * extent_x * extent_y);
+    for (auto i = 0u; i < uint32_t(extent_x * extent_y); ++i)
+    {
+      const auto r = r_texels[i][r_channel];
+      const auto g = g_texels[i][g_channel];
+      const auto b = b_texels[i][b_channel];
+      const auto a = a_texels[i][a_channel];
+      raw.SetElement<glm::u8vec4>({ r, g, b, a }, i);
+    }
+
+    return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
+  }
+
   std::tuple<Raw, uint32_t, uint32_t> LoadTextureHDR(const std::string& path)
   {
     auto extent_x = 0;
@@ -1044,6 +1076,38 @@ namespace RayGene3D
     const auto extent_y = std::get<2>(texture);
     
     SaveEXR(reinterpret_cast<const float*>(bytes.first), extent_x, extent_y, 4, false, path.c_str(), nullptr);
+  }
+
+  std::tuple<Raw, uint32_t, uint32_t> CombineTextureHDR(
+    const std::tuple<Raw, uint32_t, uint32_t>& r_texture, uint32_t r_channel,
+    const std::tuple<Raw, uint32_t, uint32_t>& g_texture, uint32_t g_channel,
+    const std::tuple<Raw, uint32_t, uint32_t>& b_texture, uint32_t b_channel,
+    const std::tuple<Raw, uint32_t, uint32_t>& a_texture, uint32_t a_channel)
+  {
+    BLAST_ASSERT(std::get<1>(r_texture) == std::get<1>(g_texture) == std::get<1>(b_texture) == std::get<1>(a_texture));
+    BLAST_ASSERT(std::get<2>(r_texture) == std::get<2>(g_texture) == std::get<2>(b_texture) == std::get<2>(a_texture));
+
+    BLAST_ASSERT(r_channel < 4 && g_channel < 4 && b_channel < 4 && a_channel < 4);
+
+    auto extent_x = std::get<1>(r_texture);
+    auto extent_y = std::get<2>(r_texture);
+
+    const auto [r_texels, r_count] = std::get<0>(r_texture).GetElements<glm::f32vec4>();
+    const auto [g_texels, g_count] = std::get<0>(g_texture).GetElements<glm::f32vec4>();
+    const auto [b_texels, b_count] = std::get<0>(b_texture).GetElements<glm::f32vec4>();
+    const auto [a_texels, a_count] = std::get<0>(a_texture).GetElements<glm::f32vec4>();
+
+    auto raw = Raw(uint32_t(sizeof(glm::f32vec4)) * extent_x * extent_y);
+    for (auto i = 0u; i < uint32_t(extent_x * extent_y); ++i)
+    {
+      const auto r = r_texels[i][r_channel];
+      const auto g = g_texels[i][g_channel];
+      const auto b = b_texels[i][b_channel];
+      const auto a = a_texels[i][a_channel];
+      raw.SetElement<glm::f32vec4>({ r, g, b, a }, i);
+    }
+
+    return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
   }
 
   //Raw LoadBuffer(const std::string& path)
