@@ -129,21 +129,21 @@ namespace RayGene3D
     //void VisitObjectItem(std::function<void(const std::string&, const std::shared_ptr<Property>&)> visitor) { for (auto& v : std::get<object>(_value)) visitor(v.first, v.second); }
     //uint32_t CountObjectItem(){ return static_cast<uint32_t>(std::get<object>(_value).size()); }
 
-    const std::shared_ptr<Property>& GetArrayItem(uint32_t index) const { return std::get<array_t>(_value).at(index); }
-    void SetArrayItem(uint32_t index, const std::shared_ptr<Property>& property) { std::get<array_t>(_value).at(index) = property; }
+    const std::shared_ptr<Property>& GetArrayItem(size_t index) const { return std::get<array_t>(_value).at(index); }
+    void SetArrayItem(size_t index, const std::shared_ptr<Property>& property) { std::get<array_t>(_value).at(index) = property; }
     //std::shared_ptr<Property>&& GetArrayItem(uint32_t index) noexcept { return std::move(std::get<array_t>(_value).at(index)); }
     //void SetArrayItem(uint32_t index, std::shared_ptr<Property>&& property) noexcept { std::get<array_t>(_value).at(index) = std::move(property); }
-    uint32_t GetArraySize() const { return uint32_t(std::get<array_t>(_value).size()); }
-    void SetArraySize(uint32_t size) { std::get<array_t>(_value).resize(size); }
+    size_t GetArraySize() const { return std::get<array_t>(_value).size(); }
+    void SetArraySize(size_t size) { std::get<array_t>(_value).resize(size); }
 
-    void RawAllocate(uint32_t size) { std::get<raw_t>(_value).Allocate(size); }
+    void RawAllocate(size_t size) { std::get<raw_t>(_value).Allocate(size); }
     void RawFree() { std::get<raw_t>(_value).Free(); }
-    void SetRawBytes(std::pair<const void*, uint32_t> bytes, uint32_t offset = 0u) { std::get<raw_t>(_value).SetBytes(bytes, offset); }
-    std::pair<const void*, uint32_t> GetRawBytes(uint32_t offset = 0u) const { return std::get<raw_t>(_value).GetBytes(offset); }
-    std::pair<void*, uint32_t> AccessRawBytes() const { return std::get<raw_t>(_value).AccessBytes(); }
-    template<typename T> void SetRawTyped(std::pair<const T*, uint32_t> bytes, uint32_t offset = 0u) { std::get<raw_t>(_value).SetElements<T>(bytes, offset); }
-    template<typename T> std::pair<const T*, uint32_t> GetRawTyped(uint32_t offset = 0u) const { return std::get<raw_t>(_value).GetElements<T>(offset); }
-    template<typename T> std::pair<T*, uint32_t> AccessRawTyped() const { return std::get<raw_t>(_value).AccessElements<T>(); }
+    void SetRawBytes(std::pair<const uint8_t*, size_t> bytes, size_t offset = 0u) { std::get<raw_t>(_value).SetBytes(bytes, offset); }
+    std::pair<const uint8_t*, size_t> GetRawBytes(size_t offset = 0u) const { return std::get<raw_t>(_value).GetBytes(offset); }
+    std::pair<uint8_t*, size_t> AccessRawBytes() const { return std::get<raw_t>(_value).AccessBytes(); }
+    template<typename T> void SetRawTyped(std::pair<const T*, size_t> bytes, size_t offset = 0u) { std::get<raw_t>(_value).SetElements<T>(bytes, offset); }
+    template<typename T> std::pair<const T*, size_t> GetRawTyped(size_t offset = 0u) const { return std::get<raw_t>(_value).GetElements<T>(offset); }
+    template<typename T> std::pair<T*, size_t> AccessRawTyped() const { return std::get<raw_t>(_value).AccessElements<T>(); }
 
     void SetRaw(Raw&& raw) noexcept { std::get<raw_t>(_value) = std::move(raw); }
     Raw&& GetRaw() noexcept { return std::move(std::get<raw_t>(_value)); }
@@ -268,7 +268,11 @@ namespace RayGene3D
   void SaveProperty(const std::string& directory, const std::string& name, const std::shared_ptr<Property>& root);
   std::shared_ptr<Property> LoadProperty(const std::string& directory, const std::string& name);
 
-
+  //typedef glm::u8vec4(*ColorFuncTextureLDR)(uint32_t i);
+  //std::tuple<Raw, uint32_t, uint32_t> PopulateTextureLDR(uint32_t extent_x, uint32_t extent_y, 
+  //  ColorFuncTextureLDR color_fn);
+  std::tuple<Raw, uint32_t, uint32_t> PopulateTextureLDR(uint32_t extent_x, uint32_t extent_y,
+    std::function<glm::u8vec4(uint32_t)> color_fn);
   std::tuple<Raw, uint32_t, uint32_t> LoadTextureLDR(const std::string& path);
   std::tuple<Raw, uint32_t, uint32_t> CombineTextureLDR(
     const std::tuple<Raw, uint32_t, uint32_t>& r_texture, uint32_t r_channel,

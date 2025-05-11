@@ -245,13 +245,15 @@ namespace RayGene3D
     uint32_t dummy[62];
   };
 
+
+  //template<typename T = uint8_t>
   class Raw
   {
   protected:
-    std::pair<void*, uint32_t> _bytes{ nullptr, 0 };
+    std::pair<uint8_t*, size_t> _bytes{ nullptr, 0 };
 
   public:
-    void Allocate(uint32_t size)
+    void Allocate(size_t size)
     {
       if (_bytes.first == nullptr && _bytes.second == 0 && size != 0u)
       {
@@ -264,12 +266,12 @@ namespace RayGene3D
     {
       if (_bytes.first != nullptr && _bytes.second != 0)
       {
-        delete[] reinterpret_cast<uint8_t*>(_bytes.first);
+        delete[] _bytes.first;
         _bytes = { nullptr, 0 };
       }
     }
 
-    void SetBytes(std::pair<const void*, uint32_t> bytes, uint32_t offset = 0u) const
+    void SetBytes(std::pair<const uint8_t*, size_t> bytes, size_t offset = 0u) const
     {
       if (offset > _bytes.second)
       {
@@ -278,49 +280,49 @@ namespace RayGene3D
 
       if (bytes.first != nullptr && bytes.second + offset <= _bytes.second)
       {
-        std::memcpy(reinterpret_cast<uint8_t*>(_bytes.first) + offset, bytes.first, bytes.second);
+        std::memcpy(_bytes.first + offset, bytes.first, bytes.second);
       }
     }
  
-    std::pair<const void*, uint32_t> GetBytes(uint32_t offset = 0u) const
+    std::pair<const uint8_t*, size_t> GetBytes(size_t offset = 0u) const
     {
       if (offset > _bytes.second)
       {
         throw std::runtime_error("get bytes failed");
       }
 
-      return { reinterpret_cast<uint8_t*>(_bytes.first) + offset, _bytes.second - offset };
+      return { _bytes.first + offset, _bytes.second - offset };
     }
 
-    template<typename T> void SetElements(std::pair<const T*, uint32_t> elements, uint32_t offset = 0u)
+    template<typename T> void SetElements(std::pair<const T*, size_t> elements, size_t offset = 0u)
     {
-      if (offset * uint32_t(sizeof(T)) > _bytes.second)
+      if (offset * sizeof(T) > _bytes.second)
       {
         throw std::runtime_error("set elements failed");
       }
 
       const auto element_data = reinterpret_cast<T*>(_bytes.first);
-      const auto element_size = elements.second * uint32_t(sizeof(T));
+      const auto element_size = elements.second * sizeof(T);
 
       std::memcpy(element_data + offset, elements.first, element_size);
     }
 
-    template<typename T> std::pair<const T*, uint32_t> GetElements(uint32_t offset = 0u) const
+    template<typename T> std::pair<const T*, size_t> GetElements(size_t offset = 0u) const
     {
-      if (offset * uint32_t(sizeof(T)) > _bytes.second)
+      if (offset * sizeof(T) > _bytes.second)
       {
         throw std::runtime_error("get elements failed");
       }
 
       const auto element_data = reinterpret_cast<const T*>(_bytes.first);
-      const auto element_size = _bytes.second - uint32_t(sizeof(T)) * offset;
+      const auto element_size = _bytes.second - sizeof(T) * offset;
 
-      return { element_data + offset, element_size / uint32_t(sizeof(T)) };
+      return { element_data + offset, element_size / sizeof(T) };
     }
 
-    template<typename T> void SetElement(const T& element, uint32_t index)
+    template<typename T> void SetElement(const T& element, size_t index)
     {
-      if (index * uint32_t(sizeof(T)) > _bytes.second)
+      if (index * sizeof(T) > _bytes.second)
       {
         throw std::runtime_error("set element failed");
       }
@@ -328,9 +330,9 @@ namespace RayGene3D
       reinterpret_cast<T*>(_bytes.first)[index] = element;
     }
 
-    template<typename T> const T& GetElement(uint32_t index) const
+    template<typename T> const T& GetElement(size_t index) const
     {
-      if (index * uint32_t(sizeof(T)) > _bytes.second)
+      if (index * sizeof(T) > _bytes.second)
       {
         throw std::runtime_error("get element failed");
       }
@@ -338,42 +340,42 @@ namespace RayGene3D
       return reinterpret_cast<T*>(_bytes.first)[index];
     }
 
-    template<typename T> void SetElement(T&& element, uint32_t index)
+    template<typename T> void SetElement(T&& element, size_t index)
     {
-      if (index * uint32_t(sizeof(T)) > _bytes.second)
+      if (index * sizeof(T) > _bytes.second)
       {
         throw std::runtime_error("set element failed");
       }
 
-      reinterpret_cast<T*>(_bytes.first)[index] = element;
+      reinterpret_cast<T*>(_bytes.first)[index] = std::move(element);
     }
 
-    template<typename T> T&& GetElement(uint32_t index)
+    template<typename T> T&& GetElement(size_t index)
     {
-      if (index * uint32_t(sizeof(T)) > _bytes.second)
+      if (index * sizeof(T) > _bytes.second)
       {
         throw std::runtime_error("get element failed");
       }
 
-      return reinterpret_cast<T*>(_bytes.first)[index];
+      return std::move(reinterpret_cast<T*>(_bytes.first)[index]);
     }
 
-    std::pair<void*, uint32_t> AccessBytes() const
+    std::pair<uint8_t*, size_t> AccessBytes() const
     {
       return _bytes;
     }
 
-    template<typename T> std::pair<T*, uint32_t> AccessElements() const
+    template<typename T> std::pair<T*, size_t> AccessElements() const
     {
-      return { reinterpret_cast<T*>(_bytes.first), _bytes.second / uint32_t(sizeof(T)) };
+      return { reinterpret_cast<T*>(_bytes.first), _bytes.second / sizeof(T) };
     }
 
     //void CommitBytes(std::pair<uint8_t*, uint32_t>&& bytes) { _bytes = bytes; }
     //std::pair<uint8_t*, uint32_t>&& RetrieveBytes() { return std::move(_bytes); }
 
   public:
-    Raw(uint32_t size = 0) { Allocate(size); }
-    Raw(const std::pair<const void*, uint32_t>& bytes) { Allocate(bytes.second); SetBytes(bytes); }
+    Raw(size_t size = 0) { Allocate(size); }
+    Raw(const std::pair<const uint8_t*, size_t>& bytes) { Allocate(bytes.second); SetBytes(bytes); }
     //Raw(std::pair<void*, uint32_t>&& bytes) noexcept { std::swap(bytes, _bytes); }
     ~Raw() { Free(); }
     Raw(const Raw& raw) = delete;

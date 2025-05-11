@@ -87,12 +87,12 @@ namespace RayGene3D
       const size_t size = file_stream.tellg();
       file_stream.seekg(0, std::ios::beg);
 
-      auto data = new char[size];
-      file_stream.read(data, size);
+      auto data = new uint8_t[size];
+      file_stream.read(reinterpret_cast<char*>(data), size);
       file_stream.close();
 
-      key->RawAllocate(uint32_t(size));
-      key->SetRawBytes({ data, uint32_t(size) }, 0);
+      key->RawAllocate(size);
+      key->SetRawBytes({ data, size }, 0);
 
       delete[] data;
     }

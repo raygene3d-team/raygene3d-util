@@ -766,8 +766,8 @@ namespace RayGene3D
       const size_t size = file_stream.tellg();
       file_stream.seekg(0, std::ios::beg);
 
-      auto data = new char[size];
-      file_stream.read(data, size);
+      auto data = new uint8_t[size];
+      file_stream.read(reinterpret_cast<char*>(data), size);
       file_stream.close();
 
       key->RawAllocate(uint32_t(size));
@@ -811,7 +811,7 @@ namespace RayGene3D
     auto src_extent_y = std::get<2>(texture);
     auto src_data = reinterpret_cast<uint8_t*>(std::get<0>(texture).AccessBytes().first);
 
-    auto raw = Raw(uint32_t(sizeof(glm::u8vec4)) * extent_x * extent_y);
+    auto raw = Raw(sizeof(glm::u8vec4) * extent_x * extent_y);
 
     auto dst_extent_x = extent_x;
     auto dst_extent_y = extent_y;
@@ -819,7 +819,7 @@ namespace RayGene3D
 
     stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
 
-    return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
+    return { std::move(raw), extent_x, extent_y };
   }
 
   std::tuple<std::vector<Raw>, uint32_t, uint32_t> MipmapTextureLDR(uint32_t mipmap, const std::tuple<Raw, uint32_t, uint32_t>& texture)
@@ -878,6 +878,30 @@ namespace RayGene3D
   void SaveTextureLDR(const std::string& path, const std::tuple<Raw, uint32_t, uint32_t>& texture)
   {}
 
+  //std::tuple<Raw, uint32_t, uint32_t> PopulateTextureLDR(uint32_t extent_x, uint32_t extent_y,
+  //  ColorFuncTextureLDR color_fn)
+  //{
+  //  auto raw = Raw(uint32_t(sizeof(glm::u8vec4)) * extent_x * extent_y);
+  //  for (auto i = 0u; i < uint32_t(extent_x * extent_y); ++i)
+  //  {
+  //    raw.SetElement<glm::u8vec4>(color_fn(i), i);
+  //  }
+
+  //  return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
+  //}
+
+  std::tuple<Raw, uint32_t, uint32_t> PopulateTextureLDR(uint32_t extent_x, uint32_t extent_y,
+    std::function<glm::u8vec4(uint32_t)> color_fn)
+  {
+    auto raw = Raw(sizeof(glm::u8vec4) * extent_x * extent_y);
+    for (auto i = 0u; i < extent_x * extent_y; ++i)
+    {
+      raw.SetElement<glm::u8vec4>(color_fn(i), i);
+    }
+
+    return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
+  }
+
   std::tuple<Raw, uint32_t, uint32_t> CombineTextureLDR(
     const std::tuple<Raw, uint32_t, uint32_t>& r_texture, uint32_t r_channel,
     const std::tuple<Raw, uint32_t, uint32_t>& g_texture, uint32_t g_channel,
@@ -887,8 +911,6 @@ namespace RayGene3D
     BLAST_ASSERT(std::get<1>(r_texture) == std::get<1>(g_texture) == std::get<1>(b_texture) == std::get<1>(a_texture));
     BLAST_ASSERT(std::get<2>(r_texture) == std::get<2>(g_texture) == std::get<2>(b_texture) == std::get<2>(a_texture));
     
-    BLAST_ASSERT(r_channel < 4 && g_channel < 4 && b_channel < 4 && a_channel < 4);
-    
     auto extent_x = std::get<1>(r_texture);
     auto extent_y = std::get<2>(r_texture);
 
@@ -897,17 +919,17 @@ namespace RayGene3D
     const auto [b_texels, b_count] = std::get<0>(b_texture).GetElements<glm::u8vec4>();
     const auto [a_texels, a_count] = std::get<0>(a_texture).GetElements<glm::u8vec4>();
 
-    auto raw = Raw(uint32_t(sizeof(glm::u8vec4)) * extent_x * extent_y);
-    for (auto i = 0u; i < uint32_t(extent_x * extent_y); ++i)
+    auto raw = Raw(sizeof(glm::u8vec4) * extent_x * extent_y);
+    for (auto i = 0u; i < extent_x * extent_y; ++i)
     {
-      const auto r = r_texels[i][r_channel];
-      const auto g = g_texels[i][g_channel];
-      const auto b = b_texels[i][b_channel];
-      const auto a = a_texels[i][a_channel];
+      const auto r = r_channel < 4 ? r_texels[i][r_channel] : 0u;
+      const auto g = g_channel < 4 ? g_texels[i][g_channel] : 0u;
+      const auto b = b_channel < 4 ? b_texels[i][b_channel] : 0u;
+      const auto a = a_channel < 4 ? a_texels[i][a_channel] : 0u;
       raw.SetElement<glm::u8vec4>({ r, g, b, a }, i);
     }
 
-    return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
+    return { std::move(raw), extent_x, extent_y };
   }
 
   std::tuple<Raw, uint32_t, uint32_t> LoadTextureHDR(const std::string& path)
@@ -943,7 +965,7 @@ namespace RayGene3D
     auto src_extent_y = std::get<2>(texture);
     auto src_data = reinterpret_cast<float*>(std::get<0>(texture).AccessBytes().first);
 
-    auto raw = Raw(uint32_t(sizeof(glm::f32vec4)) * extent_x * extent_y);
+    auto raw = Raw(sizeof(glm::f32vec4) * extent_x * extent_y);
 
     auto dst_extent_x = extent_x;
     auto dst_extent_y = extent_y;
@@ -951,7 +973,7 @@ namespace RayGene3D
 
     stbir_resize_float(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
 
-    return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
+    return { std::move(raw), extent_x, extent_y };
   }
 
   std::tuple<std::vector<Raw>, uint32_t, uint32_t> MipmapTextureHDR(uint32_t mipmap,
@@ -1087,8 +1109,6 @@ namespace RayGene3D
     BLAST_ASSERT(std::get<1>(r_texture) == std::get<1>(g_texture) == std::get<1>(b_texture) == std::get<1>(a_texture));
     BLAST_ASSERT(std::get<2>(r_texture) == std::get<2>(g_texture) == std::get<2>(b_texture) == std::get<2>(a_texture));
 
-    BLAST_ASSERT(r_channel < 4 && g_channel < 4 && b_channel < 4 && a_channel < 4);
-
     auto extent_x = std::get<1>(r_texture);
     auto extent_y = std::get<2>(r_texture);
 
@@ -1097,17 +1117,17 @@ namespace RayGene3D
     const auto [b_texels, b_count] = std::get<0>(b_texture).GetElements<glm::f32vec4>();
     const auto [a_texels, a_count] = std::get<0>(a_texture).GetElements<glm::f32vec4>();
 
-    auto raw = Raw(uint32_t(sizeof(glm::f32vec4)) * extent_x * extent_y);
-    for (auto i = 0u; i < uint32_t(extent_x * extent_y); ++i)
+    auto raw = Raw(sizeof(glm::f32vec4) * extent_x * extent_y);
+    for (auto i = 0u; i < extent_x * extent_y; ++i)
     {
-      const auto r = r_texels[i][r_channel];
-      const auto g = g_texels[i][g_channel];
-      const auto b = b_texels[i][b_channel];
-      const auto a = a_texels[i][a_channel];
+      const auto r = r_channel < 4 ? r_texels[i][r_channel] : 0.0f;
+      const auto g = g_channel < 4 ? g_texels[i][g_channel] : 0.0f;
+      const auto b = b_channel < 4 ? b_texels[i][b_channel] : 0.0f;
+      const auto a = a_channel < 4 ? a_texels[i][a_channel] : 0.0f;
       raw.SetElement<glm::f32vec4>({ r, g, b, a }, i);
     }
 
-    return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
+    return { std::move(raw), extent_x, extent_y };
   }
 
   //Raw LoadBuffer(const std::string& path)
