@@ -167,7 +167,6 @@ namespace RayGene3D
     uint32_t prim_count{ 0 };
     uint32_t vert_offset{ 0 };
     uint32_t vert_count{ 0 };
-
     uint32_t mlet_offset{ 0 };
     uint32_t mlet_count{ 0 };
     uint32_t bone_offset{ 0 };
@@ -195,14 +194,14 @@ namespace RayGene3D
     glm::f32vec3 bs_center;
     float bs_radius;
 
-    uint32_t buffer0_idx{ uint32_t(-1) };
-    uint32_t buffer1_idx{ uint32_t(-1) };
-    uint32_t buffer2_idx{ uint32_t(-1) };
-    uint32_t buffer3_idx{ uint32_t(-1) };
-    uint32_t buffer4_idx{ uint32_t(-1) };
-    uint32_t buffer5_idx{ uint32_t(-1) };
-    uint32_t buffer6_idx{ uint32_t(-1) };
-    uint32_t buffer7_idx{ uint32_t(-1) };
+    uint32_t segment0_idx{ uint32_t(-1) };
+    uint32_t segment1_idx{ uint32_t(-1) };
+    uint32_t segment2_idx{ uint32_t(-1) };
+    uint32_t segment3_idx{ uint32_t(-1) };
+    uint32_t segment4_idx{ uint32_t(-1) };
+    uint32_t segment5_idx{ uint32_t(-1) };
+    uint32_t segment6_idx{ uint32_t(-1) };
+    uint32_t segment7_idx{ uint32_t(-1) };
   };
 
   struct Screen
@@ -362,7 +361,7 @@ namespace RayGene3D
 
     std::pair<uint8_t*, size_t> AccessBytes() const
     {
-      return _bytes;
+      return { _bytes.first, _bytes.second };
     }
 
     template<typename T> std::pair<T*, size_t> AccessElements() const
@@ -404,18 +403,51 @@ namespace RayGene3D
     uint32_t trg_count;
   };
 
-  //struct Texture
-  //{
-  //  Raw texels;
-  //  uint32_t size_x;
-  //  uint32_t size_y;
-  //};
+  struct TextureArrayLDR
+  {
+    Raw raw;
+    uint32_t extent_x;
+    uint32_t extent_y;
+    size_t mipmap;
+    size_t layers;
 
-  //struct Buffer
-  //{
-  //  Raw elements;
-  //  uint32_t stride;
-  //  uint32_t count;
-  //};
+  public:
+    void Fill(size_t layer, std::function<glm::u8vec4(size_t index)> fill_fn);
+    void Copy(size_t layer, std::pair<const glm::u8vec4*, size_t> texels);
+
+  public:
+    TextureArrayLDR(uint32_t extent_x, uint32_t extent_y, size_t mipmap = 1, size_t layers = 1);
+  };
+
+  struct TextureArrayHDR
+  {
+    Raw raw;
+    uint32_t extent_x;
+    uint32_t extent_y;
+    size_t mipmap;
+    size_t layers;
+
+  public:
+    void Fill(size_t layer, std::function<glm::f32vec4(size_t index)> fill_fn);
+    void Copy(size_t layer, std::pair<const glm::f32vec4*, size_t> texels);
+
+  public:
+    TextureArrayHDR(uint32_t extent_x, uint32_t extent_y, size_t mipmap = 1, size_t layers = 1);
+  };
+
+
+  struct SegmentedBuffer
+  {
+    Raw raw;
+    size_t stride;
+    size_t count;
+
+  public:
+    template<typename T> void Fill(size_t offset, size_t count, std::function<T(size_t index)> fill_fn);
+    template<typename T> void Copy(size_t offset, std::pair<const T*, size_t> elements);
+
+  public:
+    SegmentedBuffer(size_t stride, size_t count = 1);
+  };
 }
 

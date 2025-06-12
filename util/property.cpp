@@ -637,8 +637,7 @@ namespace RayGene3D
     return root_property;
   }
 
-  std::shared_ptr<Property> CreateBufferProperty(std::pair<Raw*, uint32_t> raws,
-    uint32_t stride, uint32_t count)
+  std::shared_ptr<Property> CreateBufferProperty(Raw&& raw, uint32_t stride, uint32_t count)
   {
     const auto root_property = std::shared_ptr<Property>(new Property(Property::TYPE_OBJECT));
 
@@ -650,16 +649,9 @@ namespace RayGene3D
     count_property->SetUint(count);
     root_property->SetObjectItem("count", count_property);
 
-    const auto chunks_property = std::shared_ptr<Property>(new Property(Property::TYPE_ARRAY));
-    chunks_property->SetArraySize(raws.second);
-    root_property->SetObjectItem("raws", chunks_property);
-
-    for (auto i = 0u; i < raws.second; ++i)
-    {
-      const auto bytes_property = std::shared_ptr<Property>(new Property(Property::TYPE_RAW));
-      bytes_property->SetRaw(std::move(raws.first[i]));
-      chunks_property->SetArrayItem(i, bytes_property);
-    }
+    const auto raw_property = std::shared_ptr<Property>(new Property(Property::TYPE_RAW));
+    raw_property->SetRaw(std::move(raw));
+    root_property->SetObjectItem("raw", raw_property);
 
     return root_property;
   }

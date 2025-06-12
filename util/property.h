@@ -259,8 +259,7 @@ namespace RayGene3D
   std::shared_ptr<Property> CreateUVec2Property();
   std::shared_ptr<Property> CreateUIntProperty();
 
-  std::shared_ptr<Property> CreateBufferProperty(std::pair<Raw*, uint32_t> raws,
-    uint32_t stride, uint32_t count);
+  std::shared_ptr<Property> CreateBufferProperty(Raw&& raw, uint32_t stride, uint32_t count);
 
   std::shared_ptr<Property> CreateTextureProperty(std::pair<Raw*, uint32_t> raws,
     Format format, uint32_t size_x, uint32_t size_y, uint32_t size_z, uint32_t mipmap = 1u, uint32_t layers = 1u);
@@ -286,6 +285,8 @@ namespace RayGene3D
   void SaveTextureLDR(const std::string& path,
     const std::tuple<Raw, uint32_t, uint32_t>& texture);
 
+  Raw LoadTextureLDR(const std::string& path, uint32_t size_x, uint32_t size_y);
+
   std::tuple<Raw, uint32_t, uint32_t> LoadTextureHDR(const std::string& path);
   std::tuple<Raw, uint32_t, uint32_t> CombineTextureHDR(
     const std::tuple<Raw, uint32_t, uint32_t>& r_texture, uint32_t r_channel,
@@ -301,8 +302,8 @@ namespace RayGene3D
 
   Raw LoadBuffer(const std::string& path);
   void SaveBuffer(const std::string& path, const Raw& raw);
-  Raw CombineBuffer(std::vector<Raw>&& raws);
-  std::vector<Raw> DivideBuffer(Raw&& raw, std::pair<const uint32_t*, uint32_t> counts);
+  Raw UniteBuffer(std::vector<Raw>&& raws);
+  std::vector<Raw> SplitBuffer(Raw&& raw, std::pair<const uint32_t*, uint32_t> counts);
 
 
 }
