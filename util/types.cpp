@@ -131,14 +131,14 @@ namespace RayGene3D
 
 
 
-  SegmentedBuffer::SegmentedBuffer(size_t stride, size_t count)
+  StructureBuffer::StructureBuffer(size_t stride, size_t count)
   {
     BLAST_ASSERT(stride > 0 && count > 0);
 
     raw.Allocate(stride * count);
   }
 
-  template<typename T> void SegmentedBuffer::Fill(size_t offset, size_t count, std::function<T(size_t index)> fill_fn)
+  template<typename T> void StructureBuffer::Fill(size_t offset, size_t count, std::function<T(size_t index)> fill_fn)
   {
     BLAST_ASSERT(offset >= 0 && fill_fn != nullptr);
 
@@ -148,7 +148,7 @@ namespace RayGene3D
     }
   }
 
-  template<typename T> void SegmentedBuffer::Copy(size_t offset, std::pair<const T*, size_t> structures)
+  template<typename T> void StructureBuffer::Copy(size_t offset, std::pair<const T*, size_t> structures)
   {
     BLAST_ASSERT(offset >= 0 && structures.first != nullptr && structures.second > 0);
 

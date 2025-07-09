@@ -163,45 +163,34 @@ namespace RayGene3D
   {
     glm::f32mat3x4 transform;
 
-    uint32_t prim_offset{ 0 };
-    uint32_t prim_count{ 0 };
-    uint32_t vert_offset{ 0 };
-    uint32_t vert_count{ 0 };
-    uint32_t mlet_offset{ 0 };
-    uint32_t mlet_count{ 0 };
-    uint32_t bone_offset{ 0 };
-    uint32_t bone_count{ 0 };
+    uint32_t layer_0{ uint32_t(-1) }; // texture_0
+    uint32_t layer_1{ uint32_t(-1) }; // texture_1
+    uint32_t layer_2{ uint32_t(-1) }; // texture_2
+    uint32_t layer_3{ uint32_t(-1) }; // texture_3
 
-    glm::f32vec4 brdf_param0{ 0.0f, 0.0f, 0.0f, 0.0f };
-    glm::f32vec4 brdf_param1{ 0.0f, 0.0f, 0.0f, 0.0f };
-    glm::f32vec4 brdf_param2{ 0.0f, 0.0f, 0.0f, 0.0f };
-    glm::f32vec4 brdf_param3{ 0.0f, 0.0f, 0.0f, 0.0f };
-
-    uint32_t texture0_idx{ uint32_t(-1) };
-    uint32_t texture1_idx{ uint32_t(-1) };
-    uint32_t texture2_idx{ uint32_t(-1) };
-    uint32_t texture3_idx{ uint32_t(-1) };
-    uint32_t texture4_idx{ uint32_t(-1) };
-    uint32_t texture5_idx{ uint32_t(-1) };
-    uint32_t texture6_idx{ uint32_t(-1) };
-    uint32_t texture7_idx{ uint32_t(-1) };
+    uint32_t offset_0{ 0u }; // vert_offset
+    uint32_t count_0{ 0u }; // vert_count
+    uint32_t offset_1{ 0u }; // prim_offset
+    uint32_t count_1{ 0u }; // prim_count
+    uint32_t offset_2{ 0u }; // bone_offset
+    uint32_t count_2{ 0u }; // bone_count
+    uint32_t offset_3{ 0u }; // mlet_offset
+    uint32_t count_3{ 0u }; // mlet_count
 
     glm::f32vec3 aabb_min{ FLT_MAX, FLT_MAX, FLT_MAX };
     uint32_t geom_idx{ uint32_t(-1) };
     glm::f32vec3 aabb_max{-FLT_MAX,-FLT_MAX,-FLT_MAX };
     uint32_t brdf_idx{ uint32_t(-1) };
 
-    glm::f32vec3 bs_center;
-    float bs_radius;
+    glm::f32vec4 param_0;
+    glm::f32vec4 param_1;
+    glm::f32vec4 param_2;
+    glm::f32vec4 param_3;
 
-    uint32_t segment0_idx{ uint32_t(-1) };
-    uint32_t segment1_idx{ uint32_t(-1) };
-    uint32_t segment2_idx{ uint32_t(-1) };
-    uint32_t segment3_idx{ uint32_t(-1) };
-    uint32_t segment4_idx{ uint32_t(-1) };
-    uint32_t segment5_idx{ uint32_t(-1) };
-    uint32_t segment6_idx{ uint32_t(-1) };
-    uint32_t segment7_idx{ uint32_t(-1) };
+    glm::u32vec4 padding_0;
+    glm::u32vec4 padding_1;
+    glm::u32vec4 padding_2;
+    glm::u32vec4 padding_3;
   };
 
   struct Screen
@@ -405,15 +394,16 @@ namespace RayGene3D
 
   struct TextureArrayLDR
   {
-    Raw raw;
+    std::vector<Raw> raws;
     uint32_t extent_x;
     uint32_t extent_y;
     size_t mipmap;
     size_t layers;
 
   public:
-    void Fill(size_t layer, std::function<glm::u8vec4(size_t index)> fill_fn);
-    void Copy(size_t layer, std::pair<const glm::u8vec4*, size_t> texels);
+    void Insert(size_t layer, Raw&& raw) { raws.insert(raws.cbegin() + layer, std::move(raw)); }
+    Raw Remove(size_t layer) { auto raw = std::move(raws.at(layer)); raws.erase(raws.cbegin() + layer); return raw; }
+    size_t Length() const { return raws.size(); }
 
   public:
     TextureArrayLDR(uint32_t extent_x, uint32_t extent_y, size_t mipmap = 1, size_t layers = 1);
@@ -421,33 +411,35 @@ namespace RayGene3D
 
   struct TextureArrayHDR
   {
-    Raw raw;
+    std::vector<Raw> raws;
     uint32_t extent_x;
     uint32_t extent_y;
     size_t mipmap;
     size_t layers;
 
   public:
-    void Fill(size_t layer, std::function<glm::f32vec4(size_t index)> fill_fn);
-    void Copy(size_t layer, std::pair<const glm::f32vec4*, size_t> texels);
+    void Insert(size_t layer, Raw&& raw) { raws.insert(raws.cbegin() + layer, std::move(raw)); }
+    Raw Remove(size_t layer) { auto raw = std::move(raws.at(layer)); raws.erase(raws.cbegin() + layer); return raw; }
+    size_t Length() const { return raws.size(); }
 
   public:
     TextureArrayHDR(uint32_t extent_x, uint32_t extent_y, size_t mipmap = 1, size_t layers = 1);
   };
 
 
-  struct SegmentedBuffer
+  struct StructureBuffer
   {
-    Raw raw;
+    std::list<Raw> raws;
     size_t stride;
     size_t count;
 
   public:
-    template<typename T> void Fill(size_t offset, size_t count, std::function<T(size_t index)> fill_fn);
-    template<typename T> void Copy(size_t offset, std::pair<const T*, size_t> elements);
+    void Append(Raw&& raw) { raws.push_back(std::move(raw)); }
+    Raw Consume() { auto raw = std::move(raws.back()); raws.pop_back(); return raw; }
+    size_t Length() const { return raws.empty() ? 0 : raws.back().GetBytes().second / stride; }
 
   public:
-    SegmentedBuffer(size_t stride, size_t count = 1);
+    StructureBuffer(size_t stride, size_t count = 1);
   };
 }
 
