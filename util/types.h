@@ -406,7 +406,12 @@ namespace RayGene3D
     size_t Length() const { return raws.size(); }
 
   public:
-    TextureArrayLDR(uint32_t extent_x, uint32_t extent_y, size_t mipmap = 1, size_t layers = 1);
+    TextureArrayLDR(uint32_t extent_x, uint32_t extent_y, size_t mipmap = 1, size_t layers = 1)
+      : extent_x(extent_x)
+      , extent_y(extent_y)
+      , mipmap(mipmap)
+      , layers(layers) {}
+    ~TextureArrayLDR() {}
   };
 
   struct TextureArrayHDR
@@ -423,7 +428,12 @@ namespace RayGene3D
     size_t Length() const { return raws.size(); }
 
   public:
-    TextureArrayHDR(uint32_t extent_x, uint32_t extent_y, size_t mipmap = 1, size_t layers = 1);
+    TextureArrayHDR(uint32_t extent_x, uint32_t extent_y, size_t mipmap = 1, size_t layers = 1)
+      : extent_x(extent_x)
+      , extent_y(extent_y)
+      , mipmap(mipmap)
+      , layers(layers) {}
+    ~TextureArrayHDR() {}
   };
 
 
@@ -436,10 +446,13 @@ namespace RayGene3D
   public:
     void Append(Raw&& raw) { raws.push_back(std::move(raw)); }
     Raw Consume() { auto raw = std::move(raws.back()); raws.pop_back(); return raw; }
-    size_t Length() const { return raws.empty() ? 0 : raws.back().GetBytes().second / stride; }
+    size_t Length() const { return raws.size(); }
 
   public:
-    StructureBuffer(size_t stride, size_t count = 1);
+    StructureBuffer(size_t stride, size_t count = 1)
+      : stride(stride)
+      , count(count) {}
+    ~StructureBuffer() {}
   };
 }
 
