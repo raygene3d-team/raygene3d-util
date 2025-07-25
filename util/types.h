@@ -247,7 +247,7 @@ namespace RayGene3D
       {
         _bytes.first = new uint8_t[size];
         _bytes.second = size;
-      }      
+      }
     }
 
     void Free()
@@ -271,7 +271,7 @@ namespace RayGene3D
         std::memcpy(_bytes.first + offset, bytes.first, bytes.second);
       }
     }
- 
+
     std::pair<const uint8_t*, size_t> GetBytes(size_t offset = 0u) const
     {
       if (offset > _bytes.second)
@@ -348,14 +348,14 @@ namespace RayGene3D
       return std::move(reinterpret_cast<T*>(_bytes.first)[index]);
     }
 
-    std::pair<uint8_t*, size_t> AccessBytes() const
+    std::pair<uint8_t*, size_t> AccessBytes(size_t offset = 0) const
     {
-      return { _bytes.first, _bytes.second };
+      return { _bytes.first + offset, _bytes.second - offset };
     }
 
-    template<typename T> std::pair<T*, size_t> AccessElements() const
+    template<typename T> std::pair<T*, size_t> AccessElements(size_t offset = 0) const
     {
-      return { reinterpret_cast<T*>(_bytes.first), _bytes.second / sizeof(T) };
+      return { reinterpret_cast<T*>(_bytes.first) + offset, _bytes.second / sizeof(T) - offset };
     }
 
     //void CommitBytes(std::pair<uint8_t*, uint32_t>&& bytes) { _bytes = bytes; }
@@ -369,12 +369,12 @@ namespace RayGene3D
     Raw(const Raw& raw) = delete;
     Raw& operator=(const Raw& raw) = delete;
     Raw(Raw&& raw) noexcept
-    { 
+    {
       std::swap(raw._bytes, _bytes);
     }
     Raw& operator=(Raw&& raw) noexcept
-    { 
-      std::swap(raw._bytes, _bytes); 
+    {
+      std::swap(raw._bytes, _bytes);
       return *this;
     }
   };
@@ -391,5 +391,101 @@ namespace RayGene3D
     uint32_t trg_offset;
     uint32_t trg_count;
   };
-}
 
+
+  class TextureLDR
+  {
+    Raw raw;
+    uint32_t extent_x;
+    uint32_t extent_y;
+    size_t mipmap;
+
+  public:
+    void Load(const std::string& name);
+    void Save(const std::string& name);
+    void Assemble(std::function<glm::u8vec4(uint32_t, uint32_t)> texels_fn);
+
+  public:
+    void SetRaw(Raw&& raw) { this->raw = std::move(raw); }
+    Raw GetRaw() { return std::move(this->raw); }
+
+  public:
+    TextureLDR(uint32_t extent_x, uint32_t extent_y, size_t mipmap = 1)
+      : extent_x(extent_x)
+      , extent_y(extent_y)
+      , mipmap(mipmap)
+    {
+      raw.Allocate(sizeof(glm::u8vec4) * extent_x * extent_y);
+    }
+    ~TextureLDR() {}
+  };
+
+  struct TextureHDR
+  {
+    Raw raw;
+    uint32_t extent_x;
+    uint32_t extent_y;
+    size_t mipmap;
+
+  public:
+    void Load(const std::string& name, size_t mipmap = 0) const;
+    void Save(const std::string& name, size_t mipmap = 0) const;
+    void Fill(std::function<glm::f32vec4(uint32_t, uint32_t)>fill_fn, size_t mipmap = 0) const;
+    void Update();
+
+  public:
+    void Set(const glm::f32vec4& value, uint32_t x, uint32_t y, size_t mipmap = 0) const
+    { 
+      return raw.SetElement<glm::f32vec4>(value, size_t(y) * extent_x + x);
+    }
+    const glm::f32vec4& Get(uint32_t x, uint32_t y, size_t mipmap = 0) const
+    { 
+      return raw.GetElement<glm::f32vec4>(size_t(y) * extent_x + x);
+    }
+    std::pair<uint8_t*, size_t> Access(size_t mipmap = 0) const
+    { 
+      return raw.AccessBytes();
+    }
+
+  public:
+    TextureHDR(uint32_t extent_x, uint32_t extent_y, size_t mipmap = 1)
+      : extent_x(extent_x)
+      , extent_y(extent_y)
+      , mipmap(mipmap)
+    {
+      raw.Allocate(sizeof(glm::f32vec4) * extent_x * extent_y);
+    }
+    ~TextureHDR() {}
+  };
+
+
+  struct ItemBuffer
+  {
+    Raw raw;
+    size_t stride;
+
+  public:
+    void Load(const std::string& path);
+    void Save(const std::string& path);
+    template<typename T> void Fill(std::function<T(size_t)> fill_fn);
+    template<typename T> void Set(const T& value, size_t index)
+    { 
+      return raw.SetElement<T>(value, index);
+    }
+    template<typename T> const T& Get(size_t index) const 
+    { 
+      return raw.GetElement<T>(index);
+    }
+    std::pair<uint8_t*, size_t> Access() const
+    { 
+      return raw.AccessBytes();
+    }
+
+  public:
+    ItemBuffer(size_t stride)
+      : stride(stride)
+    {
+    }
+    ~ItemBuffer() {}
+  };
+}
