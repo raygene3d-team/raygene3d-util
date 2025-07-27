@@ -393,99 +393,63 @@ namespace RayGene3D
   };
 
 
-  class TextureLDR
+  struct TextureArrayLDR
   {
-    Raw raw;
-    uint32_t extent_x;
-    uint32_t extent_y;
-    size_t mipmap;
+    std::vector<Raw> raws;
+    uint32_t extent_x{ 0u };
+    uint32_t extent_y{ 0u };
+    size_t mipmap{ 0u };
+    size_t layers{ 0u };
 
   public:
-    void Load(const std::string& name);
-    void Save(const std::string& name);
-    void Assemble(std::function<glm::u8vec4(uint32_t, uint32_t)> texels_fn);
+    void Load(size_t layer, const char* name);
+    void Save(size_t layer, const char* name);
+    void Insert(size_t layer, Raw&& raw) { raws.insert(raws.cbegin() + layer, std::move(raw)); }
+    Raw Remove(size_t layer) { auto raw = std::move(raws.at(layer)); raws.erase(raws.cbegin() + layer); return raw; }
+    size_t Length() const { return raws.size(); }
 
   public:
-    void SetRaw(Raw&& raw) { this->raw = std::move(raw); }
-    Raw GetRaw() { return std::move(this->raw); }
-
-  public:
-    TextureLDR(uint32_t extent_x, uint32_t extent_y, size_t mipmap = 1)
-      : extent_x(extent_x)
-      , extent_y(extent_y)
-      , mipmap(mipmap)
-    {
-      raw.Allocate(sizeof(glm::u8vec4) * extent_x * extent_y);
-    }
-    ~TextureLDR() {}
+    TextureArrayLDR(uint32_t extent_x, uint32_t extent_y, size_t mipmap = 1, size_t layers = 0) {}
+    ~TextureArrayLDR() {}
   };
 
-  struct TextureHDR
+  struct TextureArrayHDR
   {
-    Raw raw;
-    uint32_t extent_x;
-    uint32_t extent_y;
-    size_t mipmap;
+    std::vector<Raw> raws;
+    uint32_t extent_x{ 0u };
+    uint32_t extent_y{ 0u };
+    size_t mipmap{ 0u };
+    size_t layers{ 0u };
 
   public:
-    void Load(const std::string& name, size_t mipmap = 0) const;
-    void Save(const std::string& name, size_t mipmap = 0) const;
-    void Fill(std::function<glm::f32vec4(uint32_t, uint32_t)>fill_fn, size_t mipmap = 0) const;
-    void Update();
+    void Load(size_t layer, const char* name);
+    void Save(size_t layer, const char* name);
+    void Insert(size_t layer, Raw&& raw) { raws.insert(raws.cbegin() + layer, std::move(raw)); }
+    Raw Remove(size_t layer) { auto raw = std::move(raws.at(layer)); raws.erase(raws.cbegin() + layer); return raw; }
+    size_t Length() const { return raws.size(); }
 
   public:
-    void Set(const glm::f32vec4& value, uint32_t x, uint32_t y, size_t mipmap = 0) const
-    { 
-      return raw.SetElement<glm::f32vec4>(value, size_t(y) * extent_x + x);
-    }
-    const glm::f32vec4& Get(uint32_t x, uint32_t y, size_t mipmap = 0) const
-    { 
-      return raw.GetElement<glm::f32vec4>(size_t(y) * extent_x + x);
-    }
-    std::pair<uint8_t*, size_t> Access(size_t mipmap = 0) const
-    { 
-      return raw.AccessBytes();
-    }
-
-  public:
-    TextureHDR(uint32_t extent_x, uint32_t extent_y, size_t mipmap = 1)
-      : extent_x(extent_x)
-      , extent_y(extent_y)
-      , mipmap(mipmap)
-    {
-      raw.Allocate(sizeof(glm::f32vec4) * extent_x * extent_y);
-    }
-    ~TextureHDR() {}
+    TextureArrayHDR(uint32_t extent_x, uint32_t extent_y, size_t mipmap = 1, size_t layers = 0) {}
+    ~TextureArrayHDR() {}
   };
 
 
-  struct ItemBuffer
+  struct StructureBuffer
   {
-    Raw raw;
-    size_t stride;
+    std::list<Raw> raws;
+    size_t stride{ 0u };
+    size_t count{ 0u };
 
   public:
-    void Load(const std::string& path);
-    void Save(const std::string& path);
-    template<typename T> void Fill(std::function<T(size_t)> fill_fn);
-    template<typename T> void Set(const T& value, size_t index)
-    { 
-      return raw.SetElement<T>(value, index);
-    }
-    template<typename T> const T& Get(size_t index) const 
-    { 
-      return raw.GetElement<T>(index);
-    }
-    std::pair<uint8_t*, size_t> Access() const
-    { 
-      return raw.AccessBytes();
-    }
+    void Load(const char* name);
+    void Save(const char* name);
+    template<typename T> Visit(std::function<T&(size_t)> visitor_fn);
+    void Append(Raw&& raw) { raws.push_back(std::move(raw)); }
+    Raw Consume() { auto raw = std::move(raws.back()); raws.pop_back(); return raw; }
+    size_t Length() const { return raws.size(); }
 
   public:
-    ItemBuffer(size_t stride)
-      : stride(stride)
-    {
-    }
-    ~ItemBuffer() {}
+    StructureBuffer(size_t stride, size_t count = 0) {}
+    ~StructureBuffer() {}
   };
 }
