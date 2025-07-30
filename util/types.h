@@ -422,11 +422,20 @@ namespace RayGene3D
     size_t layers{ 0u };
 
   public:
-    void Load(size_t layer, const char* name);
-    void Save(size_t layer, const char* name);
+    void Initialize(size_t layer, size_t mipmap, glm::f32vec4 value = glm::zero<glm::f32vec4>());
+    void Discard(size_t layer);
+    void Load(size_t layer, size_t mipmap, const char* name);
+    void Save(size_t layer, size_t mipmap, const char* name);
+    void Visit(size_t layer, size_t mipmap, std::function<glm::f32vec4&(uint32_t, uint32_t, uint32_t, uint32_t)> visitor);
+    void Set(size_t layer, size_t mipmap, size_t index, const glm::f32vec4& value);
+    const glm::f32vec4& Get(size_t layer, size_t mipmap, size_t index);
+    std::pair<glm::f32vec4*, size_t> Access(size_t layer, size_t mipmap);
+    size_t Length() const { return raws.size(); }
+
+  public:
     void Insert(size_t layer, Raw&& raw) { raws.insert(raws.cbegin() + layer, std::move(raw)); }
     Raw Remove(size_t layer) { auto raw = std::move(raws.at(layer)); raws.erase(raws.cbegin() + layer); return raw; }
-    size_t Length() const { return raws.size(); }
+    
 
   public:
     TextureArrayHDR(uint32_t extent_x, uint32_t extent_y, size_t mipmap = 1, size_t layers = 0) {}
@@ -441,12 +450,19 @@ namespace RayGene3D
     size_t count{ 0u };
 
   public:
+    template<typename T> void Initialize(size_t count, T value = {});
+    void Discard();
     void Load(const char* name);
     void Save(const char* name);
-    template<typename T> Visit(std::function<T&(size_t)> visitor_fn);
+    template<typename T> void Visit(std::function<T& (size_t)> visitor_fn);
+    template<typename T> void Set(size_t index, const T& value);
+    template<typename T> const T& Get(size_t index);
+    template<typename T> std::pair<T*, size_t> Access();
+    size_t Length() const { return raws.size(); }
+
+  public:
     void Append(Raw&& raw) { raws.push_back(std::move(raw)); }
     Raw Consume() { auto raw = std::move(raws.back()); raws.pop_back(); return raw; }
-    size_t Length() const { return raws.size(); }
 
   public:
     StructureBuffer(size_t stride, size_t count = 0) {}
