@@ -26,8 +26,48 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ================================================================================*/
 
-#include "types.h"
+
+#pragma once
+#include "property.h"
 
 namespace RayGene3D
 {
+  struct StructureBuffer
+  {
+    std::list<Raw> raws;
+    size_t stride{ 0u };
+    size_t count{ 0u };
+
+  public:
+    size_t Count() const;
+    template<typename T> void Initialize(size_t count, T value = {});
+    void Discard();
+
+  public:
+    template<typename T> void Set(size_t index, const T& value);
+    template<typename T> const T& Get(size_t index) const;
+    std::pair<uint8_t*, size_t> Access();
+    
+  public:
+    std::list<Raw>::iterator begin() { return raws.begin(); }
+    std::list<Raw>::iterator end() { return raws.end(); }
+    std::list<Raw>::const_iterator cbegin() const { return raws.cbegin(); }
+    std::list<Raw>::const_iterator cend() const { return raws.cend(); }
+    void Push(Raw&& raw) { raws.push_back(std::move(raw)); }
+    void Pop() { raws.pop_back(); }
+
+  //public:
+  //  void Load(const char* name);
+  //  void Save(const char* name);
+
+  public:
+    SPtrProperty Export() const;
+    void Import(SPtrProperty property);
+
+  public:
+    StructureBuffer(size_t stride)
+      : stride(stride)
+    {}
+    ~StructureBuffer() {}
+  };
 }

@@ -259,9 +259,9 @@ namespace RayGene3D
   std::shared_ptr<Property> CreateUVec2Property();
   std::shared_ptr<Property> CreateUIntProperty();
 
-  std::shared_ptr<Property> CreateStructureBufferProperty(const StructureBuffer* buffer);
-  std::shared_ptr<Property> CreateTextureArrayLDRProperty(const TextureArrayLDR* array);
-  std::shared_ptr<Property> CreateTextureArrayHDRProperty(const TextureArrayHDR* array);
+  //std::shared_ptr<Property> CreateStructureBufferProperty(const StructureBuffer& buffer);
+  //std::shared_ptr<Property> CreateTextureArrayLDRProperty(const TextureArrayLDR& array, size_t mipmap);
+  //std::shared_ptr<Property> CreateTextureArrayHDRProperty(const TextureArrayHDR& array, size_t mipmap);
 
   //std::shared_ptr<Property> CreateItemBufferProperty(Raw&& raw,
   //  size_t stride, size_t count = 1u);
@@ -315,7 +315,9 @@ namespace RayGene3D
 
 
 
-
+  typedef std::shared_ptr<Property> SPtrProperty;
+  typedef std::weak_ptr<Property> WPtrProperty;
+  typedef std::unique_ptr<Property> UPtrProperty;
 }
 
 

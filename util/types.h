@@ -335,7 +335,7 @@ namespace RayGene3D
         throw std::runtime_error("set element failed");
       }
 
-      reinterpret_cast<T*>(_bytes.first)[index] = std::move(element);
+      reinterpret_cast<T*>(_bytes.first)[index] = element;
     }
 
     template<typename T> T&& GetElement(size_t index)
@@ -369,7 +369,7 @@ namespace RayGene3D
   public:
     Raw(size_t size = 0) { Allocate(size); }
     Raw(const std::pair<const uint8_t*, size_t>& bytes) { Allocate(bytes.second); SetBytes(bytes); }
-    template<typename T> Raw(size_t count, T value = {}) { Allocate(count * sizeof(T)); for (size_t i = 0; i < count; ++i) { SetElement(value, i); }}
+    template<typename T> Raw(size_t count, T value = {}) { Allocate(count * sizeof(T)); for (size_t i = 0; i < count; ++i) { SetElement(std::move(value), i); }}
     template<typename T> Raw(const std::pair<const T*, size_t>& elements) { Allocate(count * sizeof(T)); SetElements(elements); }
     ~Raw() { Free(); }
 
@@ -391,128 +391,5 @@ namespace RayGene3D
     uint32_t vrt_count;
     uint32_t trg_offset;
     uint32_t trg_count;
-  };
-
-
-  struct TextureArrayLDR
-  {
-    std::vector<Raw> raws;
-    uint32_t extent_x{ 0u };
-    uint32_t extent_y{ 0u };
-    size_t mipmap{ 0u };
-    size_t layers{ 0u };
-
-  public:
-    size_t Count(size_t layer) const;
-    void Initialize(size_t layer, glm::u8vec4 value = glm::zero<glm::u8vec4>());
-    void Discard(size_t layer);
-
-  public:
-    void Set(size_t layer, size_t mipmap, size_t index, const glm::u8vec4& value);
-    const glm::u8vec4& Get(size_t layer, size_t mipmap, size_t index) const;
-    std::pair<glm::u8vec4*, size_t> Access(size_t layer, size_t mipmap);
-
-  public:
-    std::vector<Raw>::iterator begin() { return raws.begin(); }
-    std::vector<Raw>::iterator end() { return raws.end(); }
-    std::vector<Raw>::const_iterator cbegin() const { return raws.cbegin(); }
-    std::vector<Raw>::const_iterator cend() const { return raws.cend(); }
-    void Add(size_t layer, Raw&& raw) { raws.at(layer) = std::move(raw); }
-    void Remove(size_t layer) { raws.at(layer) = {}; }
-    //size_t Size() const { return raws.size(); }
-
-  public:
-    void Load(size_t layer, size_t mipmap, const char* name);
-    void Save(size_t layer, size_t mipmap, const char* name);
-
-  public:
-    TextureArrayLDR(uint32_t extent_x, uint32_t extent_y, size_t layers, size_t mipmap = 1)
-      : extent_x(extent_x)
-      , extent_y(extent_y)
-      , layers(layers)
-      , mipmap(mipmap)
-    {
-      BLAST_ASSERT(mipmap <= 1 + floor(log2(std::max(extent_x, extent_y))));
-      raws.resize(layers);
-    }
-    ~TextureArrayLDR() {}
-  };
-
-  struct TextureArrayHDR
-  {
-    std::vector<Raw> raws;
-    uint32_t extent_x{ 0u };
-    uint32_t extent_y{ 0u };
-    size_t layers{ 0u };
-    size_t mipmap{ 0u };    
-
-  public:
-    size_t Count(size_t mipmap) const;
-    void Initialize(size_t layer, glm::f32vec4 value = glm::zero<glm::f32vec4>());
-    void Discard(size_t layer);
-
-  public:
-    void Set(size_t layer, size_t mipmap, size_t index, const glm::f32vec4& value);
-    const glm::f32vec4& Get(size_t layer, size_t mipmap, size_t index) const;
-    std::pair<glm::f32vec4*, size_t> Access(size_t layer, size_t mipmap);
-    
-  public:
-    std::vector<Raw>::iterator begin() { return raws.begin(); }
-    std::vector<Raw>::iterator end() { return raws.end(); }
-    std::vector<Raw>::const_iterator cbegin() const { return raws.cbegin(); }
-    std::vector<Raw>::const_iterator cend() const { return raws.cend(); }
-    void Add(size_t layer, Raw&& raw) { raws.at(layer) = std::move(raw); }
-    void Remove(size_t layer) { raws.at(layer) = {}; }
-
-  public:
-    void Load(size_t layer, size_t mipmap, const char* name);
-    void Save(size_t layer, size_t mipmap, const char* name);
-
-  public:
-    TextureArrayHDR(uint32_t extent_x, uint32_t extent_y, size_t layers, size_t mipmap = 1)
-      : extent_x(extent_x)
-      , extent_y(extent_y)
-      , layers(layers)
-      , mipmap(mipmap)
-    {
-      BLAST_ASSERT(mipmap <= 1 + floor(log2(std::max(extent_x, extent_y))));
-      raws.resize(layers);
-    }
-    ~TextureArrayHDR() {}
-  };
-
-
-  struct StructureBuffer
-  {
-    std::list<Raw> raws;
-    size_t stride{ 0u };
-    size_t count{ 0u };
-
-  public:
-    size_t Count();
-    template<typename T> void Initialize(size_t count, T value = {});
-    void Discard();
-
-  public:
-    template<typename T> void Set(size_t index, const T& value);
-    template<typename T> const T& Get(size_t index);
-    template<typename T> std::pair<T*, size_t> Access();
-    
-  public:
-    std::list<Raw>::iterator begin() { return raws.begin(); }
-    std::list<Raw>::iterator end() { return raws.end(); }
-    std::list<Raw>::const_iterator cbegin() const { return raws.cbegin(); }
-    std::list<Raw>::const_iterator cend() const { return raws.cend(); }
-    void Push(Raw&& raw) { raws.push_back(std::move(raw)); }
-    void Pop() { raws.pop_back(); }
-    //size_t Size() const { return raws.size(); }
-
-  public:
-    void Load(const char* name);
-    void Save(const char* name);
-
-  public:
-    StructureBuffer(size_t stride, size_t count = 0) {}
-    ~StructureBuffer() {}
   };
 }

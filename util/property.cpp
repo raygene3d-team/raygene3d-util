@@ -29,17 +29,6 @@ THE SOFTWARE.
 
 #include "property.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb/stb_image.h>
-
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb/stb_image_write.h>
-
-#define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include <stb/stb_image_resize.h>
-
-#define TINYEXR_IMPLEMENTATION
-#include <tinyexr/tinyexr.h>
 
 namespace RayGene3D
 {
@@ -712,169 +701,165 @@ namespace RayGene3D
   //}
 
 
+  //std::shared_ptr<Property> CreateStructureBufferProperty(const StructureBuffer& buffer)
+  //{
 
-  void SaveProperty(const std::string& directory, const std::string& name, const std::shared_ptr<Property>& root)
-  {
-    std::map<std::shared_ptr<Property>, std::string> binaries;
-    auto json = Property::ToJSON(root, binaries);
-    {
-      std::string file_name = directory + name + std::string(".json");
-      std::ofstream file_stream(file_name, std::ios::out);
-      file_stream << std::setw(4) << json << std::endl;
-      file_stream.close();
-    }
+  //}
 
-    for (auto& [key, value] : binaries)
-    {
-      std::string file_name = std::string("cache/") + name + value;
-      std::ofstream file_stream(file_name, std::ios::out | std::ios::binary);
+  //std::shared_ptr<Property> CreateTextureArrayLDRProperty(const TextureArrayLDR& array, size_t mipmap)
+  //{ }
 
-      const auto [byte, size] = key->GetRawBytes(0);
-      file_stream.write(reinterpret_cast<const char*>(byte), size);
-      file_stream.close();
-    }
-  }
+  //std::shared_ptr<Property> CreateTextureArrayHDRProperty(const TextureArrayHDR& array, size_t mipmap)
+  //{ }
 
 
-  std::shared_ptr<Property> LoadProperty(const std::string& directory, const std::string& name)
-  {
-    nlohmann::json json;
-    {
-      std::string file_name = directory + name + std::string(".json");
-      std::ifstream file_stream(file_name, std::ios::in);
-      file_stream >> std::setw(4) >> json;
-      file_stream.close();
-    }
+  //void SaveProperty(const std::string& directory, const std::string& name, const std::shared_ptr<Property>& root)
+  //{
+  //  std::map<std::shared_ptr<Property>, std::string> binaries;
+  //  auto json = Property::ToJSON(root, binaries);
+  //  {
+  //    std::string file_name = directory + name + std::string(".json");
+  //    std::ofstream file_stream(file_name, std::ios::out);
+  //    file_stream << std::setw(4) << json << std::endl;
+  //    file_stream.close();
+  //  }
 
-    std::map<std::shared_ptr<Property>, std::string> binaries;
-    const auto root = Property::FromJSON(json, binaries);
+  //  for (auto& [key, value] : binaries)
+  //  {
+  //    std::string file_name = std::string("cache/") + name + value;
+  //    std::ofstream file_stream(file_name, std::ios::out | std::ios::binary);
 
-    for (auto& [key, value] : binaries)
-    {
-      std::string file_name = std::string("cache/") + name + value;
-      std::ifstream file_stream(file_name, std::ios::in | std::ios::binary);
-
-      file_stream.seekg(0, std::ios::end);
-      const size_t size = file_stream.tellg();
-      file_stream.seekg(0, std::ios::beg);
-
-      auto data = new uint8_t[size];
-      file_stream.read(reinterpret_cast<char*>(data), size);
-      file_stream.close();
-
-      key->RawAllocate(uint32_t(size));
-      key->SetRawBytes({ data, uint32_t(size) }, 0);
-
-      delete[] data;
-    }
-
-    return root;
-  }
+  //    const auto [byte, size] = key->GetRawBytes(0);
+  //    file_stream.write(reinterpret_cast<const char*>(byte), size);
+  //    file_stream.close();
+  //  }
+  //}
 
 
-  std::tuple<Raw, uint32_t, uint32_t> LoadTextureLDR(const std::string& path)
-  {
-    auto extent_x = 0;
-    auto extent_y = 0;
-    auto channels = 0;
-    const auto texels = stbi_load(path.c_str(), &extent_x, &extent_y, &channels, STBI_default);
+  //std::shared_ptr<Property> LoadProperty(const std::string& directory, const std::string& name)
+  //{
+  //  nlohmann::json json;
+  //  {
+  //    std::string file_name = directory + name + std::string(".json");
+  //    std::ifstream file_stream(file_name, std::ios::in);
+  //    file_stream >> std::setw(4) >> json;
+  //    file_stream.close();
+  //  }
 
-    const auto stride = uint32_t(sizeof(glm::u8vec4));
-    const auto count = uint32_t(extent_x * extent_y);
-    auto raw = Raw(stride * count);
+  //  std::map<std::shared_ptr<Property>, std::string> binaries;
+  //  const auto root = Property::FromJSON(json, binaries);
 
-    for (auto i = 0u; i < uint32_t(extent_x * extent_y); ++i)
-    {
-      const auto r = channels > 0 ? texels[i * channels + 0] : 0; //0xFF;
-      const auto g = channels > 1 ? texels[i * channels + 1] : r; //0xFF;
-      const auto b = channels > 2 ? texels[i * channels + 2] : r; //0xFF;
-      const auto a = channels > 3 ? texels[i * channels + 3] : r; //0xFF;
-      raw.SetElement<glm::u8vec4>({ r, g, b, a }, i);
-    }
-    stbi_image_free(texels);
+  //  for (auto& [key, value] : binaries)
+  //  {
+  //    std::string file_name = std::string("cache/") + name + value;
+  //    std::ifstream file_stream(file_name, std::ios::in | std::ios::binary);
 
-    return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
-  }
+  //    file_stream.seekg(0, std::ios::end);
+  //    const size_t size = file_stream.tellg();
+  //    file_stream.seekg(0, std::ios::beg);
 
-  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureLDR(uint32_t extent_x, uint32_t extent_y,
-    const std::tuple<Raw, uint32_t, uint32_t>& texture)
-  {
-    auto src_extent_x = std::get<1>(texture);
-    auto src_extent_y = std::get<2>(texture);
-    auto src_data = reinterpret_cast<uint8_t*>(std::get<0>(texture).AccessBytes().first);
+  //    auto data = new uint8_t[size];
+  //    file_stream.read(reinterpret_cast<char*>(data), size);
+  //    file_stream.close();
 
-    auto raw = Raw(sizeof(glm::u8vec4) * extent_x * extent_y);
+  //    key->RawAllocate(uint32_t(size));
+  //    key->SetRawBytes({ data, uint32_t(size) }, 0);
 
-    auto dst_extent_x = extent_x;
-    auto dst_extent_y = extent_y;
-    auto dst_data = reinterpret_cast<uint8_t*>(raw.AccessBytes().first);
+  //    delete[] data;
+  //  }
 
-    stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
+  //  return root;
+  //}
 
-    return { std::move(raw), extent_x, extent_y };
-  }
 
-  std::tuple<std::vector<Raw>, uint32_t, uint32_t> MipmapTextureLDR(uint32_t mipmap, const std::tuple<Raw, uint32_t, uint32_t>& texture)
-  {
-    auto& raw = std::get<0>(texture);
-    auto extent_x = std::get<1>(texture);
-    auto extent_y = std::get<2>(texture);
+  //std::tuple<Raw, uint32_t, uint32_t> LoadTextureLDR(const std::string& path)
+  //{
+  //  
 
-    auto src_extent_x = extent_x;
-    auto src_extent_y = extent_y;
-    auto src_data = reinterpret_cast<uint8_t*>(raw.AccessBytes().first);
+  //  return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
+  //}
 
-    const auto mipmap_count_fn = [](uint32_t value)
-    {
-      uint32_t power = 0;
-      while ((value >> power) > 0) ++power;
-      return power;
-    };
+  //std::tuple<Raw, uint32_t, uint32_t> ResizeTextureLDR(uint32_t extent_x, uint32_t extent_y,
+  //  const std::tuple<Raw, uint32_t, uint32_t>& texture)
+  //{
+  //  
 
-    const auto mipmap_x = mipmap_count_fn(extent_x);
-    const auto mipmap_y = mipmap_count_fn(extent_y);
-    extent_x = 1u << int32_t(mipmap_x) - 1;
-    extent_y = 1u << int32_t(mipmap_y) - 1;
-    mipmap = std::min(std::max(mipmap_x, mipmap_y), mipmap);
-    
-    auto raws = std::vector<Raw>(mipmap);
-    for (auto i = 0; i < mipmap; ++i)
-    {
-      const auto x = std::max(1u, extent_x >> i);
-      const auto y = std::max(1u, extent_y >> i);
-      raws[i] = Raw(x * y * uint32_t(sizeof(glm::u8vec4)));
-    }
-    
-    auto dst_extent_x = extent_x;
-    auto dst_extent_y = extent_y;
-    auto dst_data = reinterpret_cast<uint8_t*>(raws[0].AccessBytes().first);
-    
-    stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
+  //  return { std::move(raw), extent_x, extent_y };
+  //}
 
-    for (auto i = 1; i < mipmap; ++i)
-    {
-      src_extent_x = dst_extent_x;
-      src_extent_y = dst_extent_y;
-      src_data = dst_data;
+  //std::tuple<std::vector<Raw>, uint32_t, uint32_t> MipmapTextureLDR(uint32_t mipmap, const std::tuple<Raw, uint32_t, uint32_t>& texture)
+  //{
+  //  auto& raw = std::get<0>(texture);
+  //  auto extent_x = std::get<1>(texture);
+  //  auto extent_y = std::get<2>(texture);
 
-      dst_extent_x = std::max(1u, extent_x >> i);
-      dst_extent_y = std::max(1u, extent_y >> i);
-      dst_data = reinterpret_cast<uint8_t*>(raws[i].AccessBytes().first);
+  //  auto src_extent_x = extent_x;
+  //  auto src_extent_y = extent_y;
+  //  auto src_data = reinterpret_cast<uint8_t*>(raw.AccessBytes().first);
 
-      stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
-    }
+  //  const auto mipmap_count_fn = [](uint32_t value)
+  //  {
+  //    uint32_t power = 0;
+  //    while ((value >> power) > 0) ++power;
+  //    return power;
+  //  };
 
-    return std::make_tuple(std::move(raws), extent_x, extent_y);
-  }
+  //  const auto mipmap_x = mipmap_count_fn(extent_x);
+  //  const auto mipmap_y = mipmap_count_fn(extent_y);
+  //  extent_x = 1u << int32_t(mipmap_x) - 1;
+  //  extent_y = 1u << int32_t(mipmap_y) - 1;
+  //  mipmap = std::min(std::max(mipmap_x, mipmap_y), mipmap);
+  //  
+  //  auto raws = std::vector<Raw>(mipmap);
+  //  for (auto i = 0; i < mipmap; ++i)
+  //  {
+  //    const auto x = std::max(1u, extent_x >> i);
+  //    const auto y = std::max(1u, extent_y >> i);
+  //    raws[i] = Raw(x * y * uint32_t(sizeof(glm::u8vec4)));
+  //  }
+  //  
+  //  auto dst_extent_x = extent_x;
+  //  auto dst_extent_y = extent_y;
+  //  auto dst_data = reinterpret_cast<uint8_t*>(raws[0].AccessBytes().first);
+  //  
+  //  stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
 
-  void SaveTextureLDR(const std::string& path, const std::tuple<Raw, uint32_t, uint32_t>& texture)
-  {}
+  //  for (auto i = 1; i < mipmap; ++i)
+  //  {
+  //    src_extent_x = dst_extent_x;
+  //    src_extent_y = dst_extent_y;
+  //    src_data = dst_data;
+
+  //    dst_extent_x = std::max(1u, extent_x >> i);
+  //    dst_extent_y = std::max(1u, extent_y >> i);
+  //    dst_data = reinterpret_cast<uint8_t*>(raws[i].AccessBytes().first);
+
+  //    stbir_resize_uint8(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
+  //  }
+
+  //  return std::make_tuple(std::move(raws), extent_x, extent_y);
+  //}
+
+  //void SaveTextureLDR(const std::string& path, const std::tuple<Raw, uint32_t, uint32_t>& texture)
+  //{}
+
+  ////std::tuple<Raw, uint32_t, uint32_t> PopulateTextureLDR(uint32_t extent_x, uint32_t extent_y,
+  ////  ColorFuncTextureLDR color_fn)
+  ////{
+  ////  auto raw = Raw(uint32_t(sizeof(glm::u8vec4)) * extent_x * extent_y);
+  ////  for (auto i = 0u; i < uint32_t(extent_x * extent_y); ++i)
+  ////  {
+  ////    raw.SetElement<glm::u8vec4>(color_fn(i), i);
+  ////  }
+
+  ////  return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
+  ////}
 
   //std::tuple<Raw, uint32_t, uint32_t> PopulateTextureLDR(uint32_t extent_x, uint32_t extent_y,
-  //  ColorFuncTextureLDR color_fn)
+  //  std::function<glm::u8vec4(uint32_t)> color_fn)
   //{
-  //  auto raw = Raw(uint32_t(sizeof(glm::u8vec4)) * extent_x * extent_y);
-  //  for (auto i = 0u; i < uint32_t(extent_x * extent_y); ++i)
+  //  auto raw = Raw(sizeof(glm::u8vec4) * extent_x * extent_y);
+  //  for (auto i = 0u; i < extent_x * extent_y; ++i)
   //  {
   //    raw.SetElement<glm::u8vec4>(color_fn(i), i);
   //  }
@@ -882,245 +867,233 @@ namespace RayGene3D
   //  return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
   //}
 
-  std::tuple<Raw, uint32_t, uint32_t> PopulateTextureLDR(uint32_t extent_x, uint32_t extent_y,
-    std::function<glm::u8vec4(uint32_t)> color_fn)
-  {
-    auto raw = Raw(sizeof(glm::u8vec4) * extent_x * extent_y);
-    for (auto i = 0u; i < extent_x * extent_y; ++i)
-    {
-      raw.SetElement<glm::u8vec4>(color_fn(i), i);
-    }
+  //std::tuple<Raw, uint32_t, uint32_t> CombineTextureLDR(
+  //  const std::tuple<Raw, uint32_t, uint32_t>& r_texture, uint32_t r_channel,
+  //  const std::tuple<Raw, uint32_t, uint32_t>& g_texture, uint32_t g_channel,
+  //  const std::tuple<Raw, uint32_t, uint32_t>& b_texture, uint32_t b_channel,
+  //  const std::tuple<Raw, uint32_t, uint32_t>& a_texture, uint32_t a_channel)
+  //{
+  //  BLAST_ASSERT(std::get<1>(r_texture) == std::get<1>(g_texture) == std::get<1>(b_texture) == std::get<1>(a_texture));
+  //  BLAST_ASSERT(std::get<2>(r_texture) == std::get<2>(g_texture) == std::get<2>(b_texture) == std::get<2>(a_texture));
+  //  
+  //  auto extent_x = std::get<1>(r_texture);
+  //  auto extent_y = std::get<2>(r_texture);
 
-    return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
-  }
+  //  const auto [r_texels, r_count] = std::get<0>(r_texture).GetElements<glm::u8vec4>();
+  //  const auto [g_texels, g_count] = std::get<0>(g_texture).GetElements<glm::u8vec4>();
+  //  const auto [b_texels, b_count] = std::get<0>(b_texture).GetElements<glm::u8vec4>();
+  //  const auto [a_texels, a_count] = std::get<0>(a_texture).GetElements<glm::u8vec4>();
 
-  std::tuple<Raw, uint32_t, uint32_t> CombineTextureLDR(
-    const std::tuple<Raw, uint32_t, uint32_t>& r_texture, uint32_t r_channel,
-    const std::tuple<Raw, uint32_t, uint32_t>& g_texture, uint32_t g_channel,
-    const std::tuple<Raw, uint32_t, uint32_t>& b_texture, uint32_t b_channel,
-    const std::tuple<Raw, uint32_t, uint32_t>& a_texture, uint32_t a_channel)
-  {
-    BLAST_ASSERT(std::get<1>(r_texture) == std::get<1>(g_texture) == std::get<1>(b_texture) == std::get<1>(a_texture));
-    BLAST_ASSERT(std::get<2>(r_texture) == std::get<2>(g_texture) == std::get<2>(b_texture) == std::get<2>(a_texture));
-    
-    auto extent_x = std::get<1>(r_texture);
-    auto extent_y = std::get<2>(r_texture);
+  //  auto raw = Raw(sizeof(glm::u8vec4) * extent_x * extent_y);
+  //  for (auto i = 0u; i < extent_x * extent_y; ++i)
+  //  {
+  //    const auto r = r_channel < 4 ? r_texels[i][r_channel] : 0u;
+  //    const auto g = g_channel < 4 ? g_texels[i][g_channel] : 0u;
+  //    const auto b = b_channel < 4 ? b_texels[i][b_channel] : 0u;
+  //    const auto a = a_channel < 4 ? a_texels[i][a_channel] : 0u;
+  //    raw.SetElement<glm::u8vec4>({ r, g, b, a }, i);
+  //  }
 
-    const auto [r_texels, r_count] = std::get<0>(r_texture).GetElements<glm::u8vec4>();
-    const auto [g_texels, g_count] = std::get<0>(g_texture).GetElements<glm::u8vec4>();
-    const auto [b_texels, b_count] = std::get<0>(b_texture).GetElements<glm::u8vec4>();
-    const auto [a_texels, a_count] = std::get<0>(a_texture).GetElements<glm::u8vec4>();
+  //  return { std::move(raw), extent_x, extent_y };
+  //}
 
-    auto raw = Raw(sizeof(glm::u8vec4) * extent_x * extent_y);
-    for (auto i = 0u; i < extent_x * extent_y; ++i)
-    {
-      const auto r = r_channel < 4 ? r_texels[i][r_channel] : 0u;
-      const auto g = g_channel < 4 ? g_texels[i][g_channel] : 0u;
-      const auto b = b_channel < 4 ? b_texels[i][b_channel] : 0u;
-      const auto a = a_channel < 4 ? a_texels[i][a_channel] : 0u;
-      raw.SetElement<glm::u8vec4>({ r, g, b, a }, i);
-    }
+  //std::tuple<Raw, uint32_t, uint32_t> LoadTextureHDR(const std::string& path)
+  //{
+  //  auto extent_x = 0;
+  //  auto extent_y = 0;
+  //  auto channels = 4;
+  //  float* texels = nullptr; // stbi_loadf(path.c_str(), &extent_x, &extent_y, &channels, STBI_default);
 
-    return { std::move(raw), extent_x, extent_y };
-  }
+  //  LoadEXR(&texels, &extent_x, &extent_y, path.c_str(), nullptr);
 
-  std::tuple<Raw, uint32_t, uint32_t> LoadTextureHDR(const std::string& path)
-  {
-    auto extent_x = 0;
-    auto extent_y = 0;
-    auto channels = 4;
-    float* texels = nullptr; // stbi_loadf(path.c_str(), &extent_x, &extent_y, &channels, STBI_default);
+  //  const auto stride = uint32_t(sizeof(glm::f32vec4));
+  //  const auto count = uint32_t(extent_x * extent_y);
+  //  auto raw = Raw(stride * count);
 
-    LoadEXR(&texels, &extent_x, &extent_y, path.c_str(), nullptr);
+  //  for (auto i = 0u; i < uint32_t(extent_x * extent_y); ++i)
+  //  {
+  //    const auto r = channels > 0 ? texels[i * channels + 0] : 0; //0xFF;
+  //    const auto g = channels > 1 ? texels[i * channels + 1] : r; //0xFF;
+  //    const auto b = channels > 2 ? texels[i * channels + 2] : r; //0xFF;
+  //    const auto a = channels > 3 ? texels[i * channels + 3] : r; //0xFF;
+  //    raw.SetElement<glm::f32vec4>({ r, g, b, a }, i);
+  //  }
+  //  delete[] texels;
 
-    const auto stride = uint32_t(sizeof(glm::f32vec4));
-    const auto count = uint32_t(extent_x * extent_y);
-    auto raw = Raw(stride * count);
+  //  return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
+  //}
 
-    for (auto i = 0u; i < uint32_t(extent_x * extent_y); ++i)
-    {
-      const auto r = channels > 0 ? texels[i * channels + 0] : 0; //0xFF;
-      const auto g = channels > 1 ? texels[i * channels + 1] : r; //0xFF;
-      const auto b = channels > 2 ? texels[i * channels + 2] : r; //0xFF;
-      const auto a = channels > 3 ? texels[i * channels + 3] : r; //0xFF;
-      raw.SetElement<glm::f32vec4>({ r, g, b, a }, i);
-    }
-    delete[] texels;
+  //std::tuple<Raw, uint32_t, uint32_t> ResizeTextureHDR(uint32_t extent_x, uint32_t extent_y,
+  //  const std::tuple<Raw, uint32_t, uint32_t>& texture)
+  //{
+  //  auto src_extent_x = std::get<1>(texture);
+  //  auto src_extent_y = std::get<2>(texture);
+  //  auto src_data = reinterpret_cast<float*>(std::get<0>(texture).AccessBytes().first);
 
-    return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
-  }
+  //  auto raw = Raw(sizeof(glm::f32vec4) * extent_x * extent_y);
 
-  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureHDR(uint32_t extent_x, uint32_t extent_y,
-    const std::tuple<Raw, uint32_t, uint32_t>& texture)
-  {
-    auto src_extent_x = std::get<1>(texture);
-    auto src_extent_y = std::get<2>(texture);
-    auto src_data = reinterpret_cast<float*>(std::get<0>(texture).AccessBytes().first);
+  //  auto dst_extent_x = extent_x;
+  //  auto dst_extent_y = extent_y;
+  //  auto dst_data = reinterpret_cast<float*>(raw.AccessBytes().first);
 
-    auto raw = Raw(sizeof(glm::f32vec4) * extent_x * extent_y);
+  //  stbir_resize_float(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
 
-    auto dst_extent_x = extent_x;
-    auto dst_extent_y = extent_y;
-    auto dst_data = reinterpret_cast<float*>(raw.AccessBytes().first);
+  //  return { std::move(raw), extent_x, extent_y };
+  //}
 
-    stbir_resize_float(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
+  //std::tuple<std::vector<Raw>, uint32_t, uint32_t> MipmapTextureHDR(uint32_t mipmap,
+  //  const std::tuple<Raw, uint32_t, uint32_t>& texture)
+  //{
+  //  auto& raw = std::get<0>(texture);
+  //  auto extent_x = std::get<1>(texture);
+  //  auto extent_y = std::get<2>(texture);
 
-    return { std::move(raw), extent_x, extent_y };
-  }
+  //  auto src_extent_x = extent_x;
+  //  auto src_extent_y = extent_y;
+  //  auto src_data = reinterpret_cast<float*>(raw.AccessBytes().first);
 
-  std::tuple<std::vector<Raw>, uint32_t, uint32_t> MipmapTextureHDR(uint32_t mipmap,
-    const std::tuple<Raw, uint32_t, uint32_t>& texture)
-  {
-    auto& raw = std::get<0>(texture);
-    auto extent_x = std::get<1>(texture);
-    auto extent_y = std::get<2>(texture);
+  //  const auto mipmap_count_fn = [](uint32_t value)
+  //    {
+  //      uint32_t power = 0;
+  //      while ((value >> power) > 0) ++power;
+  //      return power;
+  //    };
 
-    auto src_extent_x = extent_x;
-    auto src_extent_y = extent_y;
-    auto src_data = reinterpret_cast<float*>(raw.AccessBytes().first);
+  //  const auto mipmap_x = mipmap_count_fn(extent_x);
+  //  const auto mipmap_y = mipmap_count_fn(extent_y);
+  //  extent_x = 1u << int32_t(mipmap_x) - 1;
+  //  extent_y = 1u << int32_t(mipmap_y) - 1;
+  //  mipmap = std::min(std::max(mipmap_x, mipmap_y), mipmap);
 
-    const auto mipmap_count_fn = [](uint32_t value)
-      {
-        uint32_t power = 0;
-        while ((value >> power) > 0) ++power;
-        return power;
-      };
+  //  auto raws = std::vector<Raw>(mipmap);
+  //  for (auto i = 0; i < mipmap; ++i)
+  //  {
+  //    const auto x = std::max(1u, extent_x >> i);
+  //    const auto y = std::max(1u, extent_y >> i);
+  //    raws[i] = Raw(x * y * uint32_t(sizeof(glm::f32vec4)));
+  //  }
 
-    const auto mipmap_x = mipmap_count_fn(extent_x);
-    const auto mipmap_y = mipmap_count_fn(extent_y);
-    extent_x = 1u << int32_t(mipmap_x) - 1;
-    extent_y = 1u << int32_t(mipmap_y) - 1;
-    mipmap = std::min(std::max(mipmap_x, mipmap_y), mipmap);
+  //  auto dst_extent_x = extent_x;
+  //  auto dst_extent_y = extent_y;
+  //  auto dst_data = reinterpret_cast<float*>(raws[0].AccessBytes().first);
 
-    auto raws = std::vector<Raw>(mipmap);
-    for (auto i = 0; i < mipmap; ++i)
-    {
-      const auto x = std::max(1u, extent_x >> i);
-      const auto y = std::max(1u, extent_y >> i);
-      raws[i] = Raw(x * y * uint32_t(sizeof(glm::f32vec4)));
-    }
+  //  stbir_resize_float(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
 
-    auto dst_extent_x = extent_x;
-    auto dst_extent_y = extent_y;
-    auto dst_data = reinterpret_cast<float*>(raws[0].AccessBytes().first);
+  //  for (auto i = 1; i < mipmap; ++i)
+  //  {
+  //    src_extent_x = dst_extent_x;
+  //    src_extent_y = dst_extent_y;
+  //    src_data = dst_data;
 
-    stbir_resize_float(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
+  //    dst_extent_x = std::max(1u, extent_x >> i);
+  //    dst_extent_y = std::max(1u, extent_y >> i);
+  //    dst_data = reinterpret_cast<float*>(raws[i].AccessBytes().first);
 
-    for (auto i = 1; i < mipmap; ++i)
-    {
-      src_extent_x = dst_extent_x;
-      src_extent_y = dst_extent_y;
-      src_data = dst_data;
+  //    stbir_resize_float(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
+  //  }
 
-      dst_extent_x = std::max(1u, extent_x >> i);
-      dst_extent_y = std::max(1u, extent_y >> i);
-      dst_data = reinterpret_cast<float*>(raws[i].AccessBytes().first);
+  //  return std::make_tuple(std::move(raws), extent_x, extent_y);
+  //}
 
-      stbir_resize_float(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
-    }
+  //std::tuple<Raw, uint32_t, uint32_t> ResizeTextureHDR(const std::tuple<Raw, uint32_t, uint32_t>& texture, uint32_t mipmap, bool symmetric)
+  //{
+  //  const auto mipmap_count_fn = [](int32_t value)
+  //  {
+  //    int32_t power = 0;
+  //    while ((value >> power) > 0) ++power;
+  //    return power;
+  //  };
 
-    return std::make_tuple(std::move(raws), extent_x, extent_y);
-  }
+  //  auto& texels = std::get<0>(texture);
+  //  auto extent_x = std::get<1>(texture);
+  //  auto extent_y = std::get<2>(texture);
 
-  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureHDR(const std::tuple<Raw, uint32_t, uint32_t>& texture, uint32_t mipmap, bool symmetric)
-  {
-    const auto mipmap_count_fn = [](int32_t value)
-    {
-      int32_t power = 0;
-      while ((value >> power) > 0) ++power;
-      return power;
-    };
+  //  auto src_extent_x = extent_x;
+  //  auto src_extent_y = extent_y;
+  //  auto src_data = reinterpret_cast<float*>(texels.AccessBytes().first);
 
-    auto& texels = std::get<0>(texture);
-    auto extent_x = std::get<1>(texture);
-    auto extent_y = std::get<2>(texture);
+  //  auto mipmap_x = mipmap_count_fn(extent_x);
+  //  auto mipmap_y = mipmap_count_fn(extent_y);
+  //  extent_x = 1u << (symmetric ? int32_t(mipmap) - 1 : mipmap_x > mipmap_y ? int32_t(mipmap) - 1 : std::max(0, int32_t(mipmap) - 1 - (mipmap_y - mipmap_x)));
+  //  extent_y = 1u << (symmetric ? int32_t(mipmap) - 1 : mipmap_y > mipmap_x ? int32_t(mipmap) - 1 : std::max(0, int32_t(mipmap) - 1 - (mipmap_x - mipmap_y)));
 
-    auto src_extent_x = extent_x;
-    auto src_extent_y = extent_y;
-    auto src_data = reinterpret_cast<float*>(texels.AccessBytes().first);
+  //  const auto texel_count_fn = [](uint32_t extent_x, uint32_t extent_y)
+  //  {
+  //      auto count = 1u;
+  //      while (extent_x > 1u || extent_y > 1u)
+  //      {
+  //        count += extent_x * extent_y;
+  //        extent_x = std::max(1u, extent_x >> 1u);
+  //        extent_y = std::max(1u, extent_y >> 1u);
+  //      }
 
-    auto mipmap_x = mipmap_count_fn(extent_x);
-    auto mipmap_y = mipmap_count_fn(extent_y);
-    extent_x = 1u << (symmetric ? int32_t(mipmap) - 1 : mipmap_x > mipmap_y ? int32_t(mipmap) - 1 : std::max(0, int32_t(mipmap) - 1 - (mipmap_y - mipmap_x)));
-    extent_y = 1u << (symmetric ? int32_t(mipmap) - 1 : mipmap_y > mipmap_x ? int32_t(mipmap) - 1 : std::max(0, int32_t(mipmap) - 1 - (mipmap_x - mipmap_y)));
+  //      return count;
+  //  };
 
-    const auto texel_count_fn = [](uint32_t extent_x, uint32_t extent_y)
-    {
-        auto count = 1u;
-        while (extent_x > 1u || extent_y > 1u)
-        {
-          count += extent_x * extent_y;
-          extent_x = std::max(1u, extent_x >> 1u);
-          extent_y = std::max(1u, extent_y >> 1u);
-        }
+  //  const auto stride = uint32_t(sizeof(glm::f32vec4));
+  //  const auto count = texel_count_fn(extent_x, extent_y);
+  //  auto raw = Raw(stride * count);
 
-        return count;
-    };
+  //  auto dst_extent_x = extent_x;
+  //  auto dst_extent_y = extent_y;
+  //  auto dst_data = reinterpret_cast<float*>(raw.AccessBytes().first);
 
-    const auto stride = uint32_t(sizeof(glm::f32vec4));
-    const auto count = texel_count_fn(extent_x, extent_y);
-    auto raw = Raw(stride * count);
+  //  stbir_resize_float(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
 
-    auto dst_extent_x = extent_x;
-    auto dst_extent_y = extent_y;
-    auto dst_data = reinterpret_cast<float*>(raw.AccessBytes().first);
+  //  for (auto i = 1; i < mipmap; ++i)
+  //  {
+  //    src_extent_x = dst_extent_x;
+  //    src_extent_y = dst_extent_y;
+  //    src_data = dst_data;
 
-    stbir_resize_float(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
+  //    dst_extent_x = std::max(1u, extent_x >> i);
+  //    dst_extent_y = std::max(1u, extent_y >> i);
+  //    dst_data = src_data + src_extent_x * src_extent_y * 4;
 
-    for (auto i = 1; i < mipmap; ++i)
-    {
-      src_extent_x = dst_extent_x;
-      src_extent_y = dst_extent_y;
-      src_data = dst_data;
+  //    stbir_resize_float(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
+  //  }
 
-      dst_extent_x = std::max(1u, extent_x >> i);
-      dst_extent_y = std::max(1u, extent_y >> i);
-      dst_data = src_data + src_extent_x * src_extent_y * 4;
+  //  return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
+  //}
 
-      stbir_resize_float(src_data, src_extent_x, src_extent_y, 0, dst_data, dst_extent_x, dst_extent_y, 0, 4);
-    }
+  //void SaveTextureHDR(const std::string& path, const std::tuple<Raw, uint32_t, uint32_t>& texture)
+  //{
+  //  const auto bytes = std::get<0>(texture).GetBytes();
+  //  const auto extent_x = std::get<1>(texture);
+  //  const auto extent_y = std::get<2>(texture);
+  //  
+  //  SaveEXR(reinterpret_cast<const float*>(bytes.first), extent_x, extent_y, 4, false, path.c_str(), nullptr);
+  //}
 
-    return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
-  }
+  //std::tuple<Raw, uint32_t, uint32_t> CombineTextureHDR(
+  //  const std::tuple<Raw, uint32_t, uint32_t>& r_texture, uint32_t r_channel,
+  //  const std::tuple<Raw, uint32_t, uint32_t>& g_texture, uint32_t g_channel,
+  //  const std::tuple<Raw, uint32_t, uint32_t>& b_texture, uint32_t b_channel,
+  //  const std::tuple<Raw, uint32_t, uint32_t>& a_texture, uint32_t a_channel)
+  //{
+  //  BLAST_ASSERT(std::get<1>(r_texture) == std::get<1>(g_texture) == std::get<1>(b_texture) == std::get<1>(a_texture));
+  //  BLAST_ASSERT(std::get<2>(r_texture) == std::get<2>(g_texture) == std::get<2>(b_texture) == std::get<2>(a_texture));
 
-  void SaveTextureHDR(const std::string& path, const std::tuple<Raw, uint32_t, uint32_t>& texture)
-  {
-    const auto bytes = std::get<0>(texture).GetBytes();
-    const auto extent_x = std::get<1>(texture);
-    const auto extent_y = std::get<2>(texture);
-    
-    SaveEXR(reinterpret_cast<const float*>(bytes.first), extent_x, extent_y, 4, false, path.c_str(), nullptr);
-  }
+  //  auto extent_x = std::get<1>(r_texture);
+  //  auto extent_y = std::get<2>(r_texture);
 
-  std::tuple<Raw, uint32_t, uint32_t> CombineTextureHDR(
-    const std::tuple<Raw, uint32_t, uint32_t>& r_texture, uint32_t r_channel,
-    const std::tuple<Raw, uint32_t, uint32_t>& g_texture, uint32_t g_channel,
-    const std::tuple<Raw, uint32_t, uint32_t>& b_texture, uint32_t b_channel,
-    const std::tuple<Raw, uint32_t, uint32_t>& a_texture, uint32_t a_channel)
-  {
-    BLAST_ASSERT(std::get<1>(r_texture) == std::get<1>(g_texture) == std::get<1>(b_texture) == std::get<1>(a_texture));
-    BLAST_ASSERT(std::get<2>(r_texture) == std::get<2>(g_texture) == std::get<2>(b_texture) == std::get<2>(a_texture));
+  //  const auto [r_texels, r_count] = std::get<0>(r_texture).GetElements<glm::f32vec4>();
+  //  const auto [g_texels, g_count] = std::get<0>(g_texture).GetElements<glm::f32vec4>();
+  //  const auto [b_texels, b_count] = std::get<0>(b_texture).GetElements<glm::f32vec4>();
+  //  const auto [a_texels, a_count] = std::get<0>(a_texture).GetElements<glm::f32vec4>();
 
-    auto extent_x = std::get<1>(r_texture);
-    auto extent_y = std::get<2>(r_texture);
+  //  auto raw = Raw(sizeof(glm::f32vec4) * extent_x * extent_y);
+  //  for (auto i = 0u; i < extent_x * extent_y; ++i)
+  //  {
+  //    const auto r = r_channel < 4 ? r_texels[i][r_channel] : 0.0f;
+  //    const auto g = g_channel < 4 ? g_texels[i][g_channel] : 0.0f;
+  //    const auto b = b_channel < 4 ? b_texels[i][b_channel] : 0.0f;
+  //    const auto a = a_channel < 4 ? a_texels[i][a_channel] : 0.0f;
+  //    raw.SetElement<glm::f32vec4>({ r, g, b, a }, i);
+  //  }
 
-    const auto [r_texels, r_count] = std::get<0>(r_texture).GetElements<glm::f32vec4>();
-    const auto [g_texels, g_count] = std::get<0>(g_texture).GetElements<glm::f32vec4>();
-    const auto [b_texels, b_count] = std::get<0>(b_texture).GetElements<glm::f32vec4>();
-    const auto [a_texels, a_count] = std::get<0>(a_texture).GetElements<glm::f32vec4>();
-
-    auto raw = Raw(sizeof(glm::f32vec4) * extent_x * extent_y);
-    for (auto i = 0u; i < extent_x * extent_y; ++i)
-    {
-      const auto r = r_channel < 4 ? r_texels[i][r_channel] : 0.0f;
-      const auto g = g_channel < 4 ? g_texels[i][g_channel] : 0.0f;
-      const auto b = b_channel < 4 ? b_texels[i][b_channel] : 0.0f;
-      const auto a = a_channel < 4 ? a_texels[i][a_channel] : 0.0f;
-      raw.SetElement<glm::f32vec4>({ r, g, b, a }, i);
-    }
-
-    return { std::move(raw), extent_x, extent_y };
-  }
+  //  return { std::move(raw), extent_x, extent_y };
+  //}
 
   //Raw LoadBuffer(const std::string& path)
   //{}

@@ -2,6 +2,10 @@ set(NAME raygene3d)
 
 set(UTIL_DIR ${CMAKE_SOURCE_DIR}/${NAME}-util/util)
 set(UTIL_SOURCE
+	${UTIL_DIR}/array.h
+	${UTIL_DIR}/array.cpp
+	${UTIL_DIR}/buffer.h
+	${UTIL_DIR}/buffer.cpp
 	${UTIL_DIR}/property.h
 	${UTIL_DIR}/property.cpp
 	${UTIL_DIR}/storage.h
