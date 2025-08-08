@@ -48,6 +48,11 @@ namespace RayGene3D
     return size_t(size_x) * size_t(size_y);
   }
 
+  void TextureArrayLDR::Resize(size_t layers)
+  {
+    raws.resize(layers);
+  }
+
   void TextureArrayLDR::Initialize(size_t layer, glm::u8vec4 value)
   {
     raws.at(layer) = std::move(Raw(size_t(size_x) * size_t(size_y), value));
@@ -99,13 +104,10 @@ namespace RayGene3D
 
   void TextureArrayLDR::Save(size_t layer, const char* name)
   {
-    BLAST_ASSERT(layer <= this->layers);
-
     auto src_size_x = 0;
     auto src_size_y = 0;
     auto src_stride = 0;
     //auto src_data = stbi_save(name, &src_extent_x, &src_extent_y, &src_channels, STBI_default);
-
   }
 
   SPtrProperty TextureArrayLDR::Export() const
@@ -114,6 +116,7 @@ namespace RayGene3D
     auto y = size_y;
     auto count = 0ull;
     auto mipmap = 0ull;
+    auto layers = raws.size();
 
     while (x > 1 && y > 1)
     {
@@ -199,6 +202,11 @@ namespace RayGene3D
     return size_t(size_x) * size_t(size_y);
   }
 
+  void TextureArrayHDR::Resize(size_t layers)
+  {
+    raws.resize(layers);
+  }
+
   void TextureArrayHDR::Initialize(size_t layer, glm::f32vec4 value)
   {
     raws.at(layer) = std::move(Raw(size_t(size_x) * size_t(size_y), value));
@@ -252,6 +260,7 @@ namespace RayGene3D
     auto y = size_y;
     auto count = 0ull;
     auto mipmap = 0ull;
+    auto layers = raws.size();
 
     while (x > 1 && y > 1)
     {

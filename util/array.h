@@ -39,10 +39,10 @@ namespace RayGene3D
     Format format{ Format::FORMAT_UNKNOWN };
     uint32_t size_x{ 0u };
     uint32_t size_y{ 0u };
-    size_t layers{ 0u };
 
   public:
     size_t Count() const;
+    void Resize(size_t layers);
     void Initialize(size_t layer, glm::u8vec4 value = glm::zero<glm::u8vec4>());
     void Discard(size_t layer);
 
@@ -68,14 +68,11 @@ namespace RayGene3D
     void Import(SPtrProperty property);
 
   public:
-    TextureArrayLDR(Format format, uint32_t size_x, uint32_t size_y, size_t layers)
+    TextureArrayLDR(Format format, uint32_t size_x, uint32_t size_y)
       : format(format)
       , size_x(size_x)
       , size_y(size_y)
-      , layers(layers)
-    {
-      raws.resize(layers);
-    }
+    {}
     ~TextureArrayLDR() {}
   };
 
@@ -84,11 +81,11 @@ namespace RayGene3D
     std::vector<Raw> raws;
     Format format{ Format::FORMAT_UNKNOWN };
     uint32_t size_x{ 0u };
-    uint32_t size_y{ 0u };
-    size_t layers{ 0u };   
+    uint32_t size_y{ 0u };   
 
   public:
     size_t Count() const;
+    void Resize(size_t layers);
     void Initialize(size_t layer, glm::f32vec4 value = glm::zero<glm::f32vec4>());
     void Discard(size_t layer);
 
@@ -114,14 +111,11 @@ namespace RayGene3D
     void Import(SPtrProperty property);
 
   public:
-    TextureArrayHDR(Format format, uint32_t size_x, uint32_t size_y, size_t layers)
+    TextureArrayHDR(Format format, uint32_t size_x, uint32_t size_y)
       : format(format)
       , size_x(size_x)
       , size_y(size_y)
-      , layers(layers)
-    {
-      raws.resize(layers);
-    }
+    {}
     ~TextureArrayHDR() {}
   };
 }
