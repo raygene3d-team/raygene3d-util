@@ -32,20 +32,20 @@ THE SOFTWARE.
 
 namespace RayGene3D
 {
+  template<typename T>
   struct StructureBuffer
   {
     std::list<Raw> raws;
-    size_t stride{ 0u };
-    size_t count{ 0u };
 
   public:
-    size_t Count() const;
-    template<typename T> void Initialize(size_t count, T value = {});
+    void Initialize(size_t count, T value = {});
+    void Initialize(std::pair<const T*, size_t> structures);
     void Discard();
 
   public:
-    template<typename T> void Set(size_t index, const T& value);
-    template<typename T> const T& Get(size_t index) const;
+    size_t Count() const;
+    void Set(size_t index, const T& value);
+    const T& Get(size_t index) const;
     std::pair<uint8_t*, size_t> Access();
     
   public:
@@ -65,8 +65,8 @@ namespace RayGene3D
     void Import(SPtrProperty property);
 
   public:
-    StructureBuffer(size_t stride)
-      : stride(stride)
+    StructureBuffer(std::initializer_list<std::pair<const T*, size_t>> initializers = {})
+      : raws(initializers.begin(), initializers.end())
     {}
     ~StructureBuffer() {}
   };

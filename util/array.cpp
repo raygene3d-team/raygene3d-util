@@ -43,11 +43,6 @@ THE SOFTWARE.
 
 namespace RayGene3D
 {
-  size_t TextureArrayLDR::Count() const
-  {
-    return size_t(size_x) * size_t(size_y);
-  }
-
   void TextureArrayLDR::Resize(size_t layers)
   {
     raws.resize(layers);
@@ -58,9 +53,19 @@ namespace RayGene3D
     raws.at(layer) = std::move(Raw(size_t(size_x) * size_t(size_y), value));
   }
 
+  void TextureArrayLDR::Initialize(size_t layer, std::pair<const glm::u8vec4*, size_t> texels)
+  {
+    raws.at(layer) = std::move(Raw(texels));
+  }
+
   void TextureArrayLDR::Discard(size_t layer)
   {
     raws.at(layer) = {};
+  }
+
+  size_t TextureArrayLDR::Count() const
+  {
+    return size_t(size_x) * size_t(size_y);
   }
 
   void TextureArrayLDR::Set(size_t layer, size_t index, const glm::u8vec4& value)
@@ -196,12 +201,6 @@ namespace RayGene3D
   }
 
 
-
-  size_t TextureArrayHDR::Count() const
-  {
-    return size_t(size_x) * size_t(size_y);
-  }
-
   void TextureArrayHDR::Resize(size_t layers)
   {
     raws.resize(layers);
@@ -212,9 +211,19 @@ namespace RayGene3D
     raws.at(layer) = std::move(Raw(size_t(size_x) * size_t(size_y), value));
   }
 
+  void TextureArrayHDR::Initialize(size_t layer, std::pair<const glm::f32vec4*, size_t> texels)
+  {
+    raws.at(layer) = std::move(Raw(texels));
+  }
+
   void TextureArrayHDR::Discard(size_t layer)
   {
     raws.at(layer) = {};
+  }
+
+  size_t TextureArrayHDR::Count() const
+  {
+    return size_t(size_x) * size_t(size_y);
   }
 
   void TextureArrayHDR::Set(size_t layer, size_t index, const glm::f32vec4& value)

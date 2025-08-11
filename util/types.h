@@ -328,26 +328,6 @@ namespace RayGene3D
       return reinterpret_cast<T*>(_bytes.first)[index];
     }
 
-    template<typename T> void SetElement(T&& element, size_t index)
-    {
-      if (index * sizeof(T) > _bytes.second)
-      {
-        throw std::runtime_error("set element failed");
-      }
-
-      reinterpret_cast<T*>(_bytes.first)[index] = element;
-    }
-
-    template<typename T> T&& GetElement(size_t index)
-    {
-      if (index * sizeof(T) > _bytes.second)
-      {
-        throw std::runtime_error("get element failed");
-      }
-
-      return std::move(reinterpret_cast<T*>(_bytes.first)[index]);
-    }
-
     std::pair<uint8_t*, size_t> AccessBytes(size_t offset = 0) const
     {
       return { _bytes.first + offset, _bytes.second - offset };
@@ -363,21 +343,21 @@ namespace RayGene3D
 
     template<typename T> T& operator[](size_t index) 
     {
-      return  reinterpret_cast<T*>(_bytes.first)[index];
+      return reinterpret_cast<T*>(_bytes.first)[index];
     }
 
   public:
     Raw(size_t size = 0) { Allocate(size); }
     Raw(const std::pair<const uint8_t*, size_t>& bytes) { Allocate(bytes.second); SetBytes(bytes); }
-    template<typename T> Raw(size_t count, T value = {}) { Allocate(count * sizeof(T)); for (size_t i = 0; i < count; ++i) { SetElement(std::move(value), i); }}
-    template<typename T> Raw(const std::pair<const T*, size_t>& elements) { Allocate(count * sizeof(T)); SetElements(elements); }
-    ~Raw() { Free(); }
+    template<typename T> Raw(size_t count, T value = {}) { Allocate(count * sizeof(T)); for (size_t i = 0; i < count; ++i) { SetElement(value, i); }}
+    template<typename T> Raw(const std::pair<const T*, size_t>& elements) { Allocate(elements.second * sizeof(T)); SetElements(elements); }
 
   public:
     Raw(const Raw& raw) = delete;
     Raw& operator=(const Raw& raw) = delete;
     Raw(Raw&& raw) noexcept { std::swap(raw._bytes, _bytes); }
     Raw& operator=(Raw&& raw) noexcept { std::swap(raw._bytes, _bytes); return *this; }
+    ~Raw() { Free(); }
   };
 
   struct Meshlet

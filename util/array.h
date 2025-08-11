@@ -41,12 +41,13 @@ namespace RayGene3D
     uint32_t size_y{ 0u };
 
   public:
-    size_t Count() const;
     void Resize(size_t layers);
     void Initialize(size_t layer, glm::u8vec4 value = glm::zero<glm::u8vec4>());
+    void Initialize(size_t layer, std::pair<const glm::u8vec4*, size_t> texels);
     void Discard(size_t layer);
 
   public:
+    size_t Count() const;
     void Set(size_t layer, size_t index, const glm::u8vec4& value);
     const glm::u8vec4& Get(size_t layer, size_t index) const;
     std::pair<uint8_t*, size_t> Access(size_t layer);
@@ -68,10 +69,11 @@ namespace RayGene3D
     void Import(SPtrProperty property);
 
   public:
-    TextureArrayLDR(Format format, uint32_t size_x, uint32_t size_y)
+    TextureArrayLDR(Format format, uint32_t size_x, uint32_t size_y, std::initializer_list<std::pair<const glm::u8vec4*, size_t>> initializers = {})
       : format(format)
       , size_x(size_x)
       , size_y(size_y)
+      , raws(initializers.begin(), initializers.end())
     {}
     ~TextureArrayLDR() {}
   };
@@ -84,12 +86,13 @@ namespace RayGene3D
     uint32_t size_y{ 0u };   
 
   public:
-    size_t Count() const;
     void Resize(size_t layers);
     void Initialize(size_t layer, glm::f32vec4 value = glm::zero<glm::f32vec4>());
+    void Initialize(size_t layer, std::pair<const glm::f32vec4*, size_t> texels);
     void Discard(size_t layer);
 
   public:
+    size_t Count() const;
     void Set(size_t layer, size_t index, const glm::f32vec4& value);
     const glm::f32vec4& Get(size_t layer, size_t index) const;
     std::pair<uint8_t*, size_t> Access(size_t layer, size_t mipmap);
@@ -111,10 +114,11 @@ namespace RayGene3D
     void Import(SPtrProperty property);
 
   public:
-    TextureArrayHDR(Format format, uint32_t size_x, uint32_t size_y)
+    TextureArrayHDR(Format format, uint32_t size_x, uint32_t size_y, std::initializer_list<std::pair<const glm::f32vec4*, size_t>> initializers = {})
       : format(format)
       , size_x(size_x)
       , size_y(size_y)
+      , raws(initializers.begin(), initializers.end())
     {}
     ~TextureArrayHDR() {}
   };

@@ -30,37 +30,42 @@ THE SOFTWARE.
 
 namespace RayGene3D
 {
-  size_t StructureBuffer::Count() const
-  { 
-    return raws.back().AccessBytes().second / stride;
-  }
-
-  template<typename T> void StructureBuffer::Initialize(size_t count, T value)
+  template<typename T> void StructureBuffer<T>::Initialize(size_t count, T value)
   {
     raws.push_back(std::move(Raw(count, value)));
   }
 
-  void StructureBuffer::Discard()
+  template<typename T> void StructureBuffer<T>::Initialize(std::pair<const T*, size_t> structures)
+  {
+    raws.push_back(std::move(Raw(structures)));
+  }
+
+  template<typename T>void StructureBuffer<T>::Discard()
   {
     raws.pop_back();
   }
 
-  template<typename T> void StructureBuffer::Set(size_t index, const T& value)
+  template<typename T> size_t StructureBuffer<T>::Count() const
+  {
+    return raws.back().AccessBytes().second / stride;
+  }
+
+  template<typename T> void StructureBuffer<T>::Set(size_t index, const T& value)
   {
     raws.back().SetElement<T>(value, index);
   }
 
-  template<typename T> const T& StructureBuffer::Get(size_t index) const
+  template<typename T> const T& StructureBuffer<T>::Get(size_t index) const
   {
     return raws.back().GetElement<T>(index);
   }
 
-  std::pair<uint8_t*, size_t> StructureBuffer::Access()
+  template<typename T> std::pair<uint8_t*, size_t> StructureBuffer<T>::Access()
   { 
     return raws.back().AccessBytes();
   }
 
-  SPtrProperty StructureBuffer::Export() const
+  template<typename T> SPtrProperty StructureBuffer<T>::Export() const
   {
     auto length = 0ull;
     auto counts = std::vector<size_t>();
@@ -104,7 +109,7 @@ namespace RayGene3D
     return root_property;
   }
 
-  void StructureBuffer::Import(SPtrProperty property)
+  template<typename T> void StructureBuffer<T>::Import(SPtrProperty property)
   {
 
   }
