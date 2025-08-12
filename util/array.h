@@ -41,13 +41,15 @@ namespace RayGene3D
     uint32_t size_y{ 0u };
 
   public:
-    void Resize(size_t layers);
-    void Initialize(size_t layer, glm::u8vec4 value = glm::zero<glm::u8vec4>());
-    void Initialize(size_t layer, std::pair<const glm::u8vec4*, size_t> texels);
-    void Discard(size_t layer);
+    //void Resize(size_t layers);
+    size_t Size() const;
+    void Create(size_t layer, glm::u8vec4 value = glm::zero<glm::u8vec4>());
+    void Create(size_t layer, std::pair<const glm::u8vec4*, size_t> texels);
+    void Delete(size_t layer);
 
   public:
-    size_t Count() const;
+    bool Empty(size_t layer) const;
+    size_t Count(size_t layer) const;
     void Set(size_t layer, size_t index, const glm::u8vec4& value);
     const glm::u8vec4& Get(size_t layer, size_t index) const;
     std::pair<uint8_t*, size_t> Access(size_t layer);
@@ -57,8 +59,7 @@ namespace RayGene3D
     std::vector<Raw>::iterator end() { return raws.end(); }
     std::vector<Raw>::const_iterator cbegin() const { return raws.cbegin(); }
     std::vector<Raw>::const_iterator cend() const { return raws.cend(); }
-    void Add(size_t layer, Raw&& raw) { raws.at(layer) = std::move(raw); }
-    void Remove(size_t layer) { raws.at(layer) = {}; }
+    Raw&& operator[](size_t layer) { return std::move(raws.at(layer)); }
 
   public:
     void Load(size_t layer, const char* name);
@@ -69,7 +70,13 @@ namespace RayGene3D
     void Import(SPtrProperty property);
 
   public:
-    TextureArrayLDR(Format format, uint32_t size_x, uint32_t size_y, std::initializer_list<std::pair<const glm::u8vec4*, size_t>> initializers = {})
+    TextureArrayLDR(Format format, uint32_t size_x, uint32_t size_y, size_t layers = 1)
+      : format(format)
+      , size_x(size_x)
+      , size_y(size_y)
+      , raws(layers)
+    {}
+    TextureArrayLDR(Format format, uint32_t size_x, uint32_t size_y, std::initializer_list<std::pair<const glm::u8vec4*, size_t>> initializers)
       : format(format)
       , size_x(size_x)
       , size_y(size_y)
@@ -86,24 +93,24 @@ namespace RayGene3D
     uint32_t size_y{ 0u };   
 
   public:
-    void Resize(size_t layers);
-    void Initialize(size_t layer, glm::f32vec4 value = glm::zero<glm::f32vec4>());
-    void Initialize(size_t layer, std::pair<const glm::f32vec4*, size_t> texels);
-    void Discard(size_t layer);
+    size_t Size() const;
+    void Create(size_t layer, glm::f32vec4 value = glm::zero<glm::f32vec4>());
+    void Create(size_t layer, std::pair<const glm::f32vec4*, size_t> texels);
+    void Delete(size_t layer);
 
   public:
-    size_t Count() const;
+    bool Empty(size_t layer) const;
+    size_t Count(size_t layer) const;
     void Set(size_t layer, size_t index, const glm::f32vec4& value);
     const glm::f32vec4& Get(size_t layer, size_t index) const;
-    std::pair<uint8_t*, size_t> Access(size_t layer, size_t mipmap);
+    std::pair<uint8_t*, size_t> Access(size_t layer);
     
   public:
     std::vector<Raw>::iterator begin() { return raws.begin(); }
     std::vector<Raw>::iterator end() { return raws.end(); }
     std::vector<Raw>::const_iterator cbegin() const { return raws.cbegin(); }
     std::vector<Raw>::const_iterator cend() const { return raws.cend(); }
-    void Add(size_t layer, Raw&& raw) { raws.at(layer) = std::move(raw); }
-    void Remove(size_t layer) { raws.at(layer) = {}; }
+    Raw&& operator[](size_t layer) { return std::move(raws.at(layer)); }
 
   public:
     void Load(size_t layer, const char* name);
@@ -114,7 +121,13 @@ namespace RayGene3D
     void Import(SPtrProperty property);
 
   public:
-    TextureArrayHDR(Format format, uint32_t size_x, uint32_t size_y, std::initializer_list<std::pair<const glm::f32vec4*, size_t>> initializers = {})
+    TextureArrayHDR(Format format, uint32_t size_x, uint32_t size_y, size_t layers = 1)
+      : format(format)
+      , size_x(size_x)
+      , size_y(size_y)
+      , raws(layers)
+    {}
+    TextureArrayHDR(Format format, uint32_t size_x, uint32_t size_y, std::initializer_list<std::pair<const glm::f32vec4*, size_t>> initializers)
       : format(format)
       , size_x(size_x)
       , size_y(size_y)

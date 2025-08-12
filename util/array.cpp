@@ -43,29 +43,39 @@ THE SOFTWARE.
 
 namespace RayGene3D
 {
-  void TextureArrayLDR::Resize(size_t layers)
+  //void TextureArrayLDR::Resize(size_t layers)
+  //{
+  //  raws.resize(layers);
+  //}
+
+  size_t TextureArrayLDR::Size() const
   {
-    raws.resize(layers);
+    return raws.size();
   }
 
-  void TextureArrayLDR::Initialize(size_t layer, glm::u8vec4 value)
+  void TextureArrayLDR::Create(size_t layer, glm::u8vec4 value)
   {
     raws.at(layer) = std::move(Raw(size_t(size_x) * size_t(size_y), value));
   }
 
-  void TextureArrayLDR::Initialize(size_t layer, std::pair<const glm::u8vec4*, size_t> texels)
+  void TextureArrayLDR::Create(size_t layer, std::pair<const glm::u8vec4*, size_t> texels)
   {
     raws.at(layer) = std::move(Raw(texels));
   }
 
-  void TextureArrayLDR::Discard(size_t layer)
+  void TextureArrayLDR::Delete(size_t layer)
   {
     raws.at(layer) = {};
   }
 
-  size_t TextureArrayLDR::Count() const
+  bool TextureArrayLDR::Empty(size_t layer) const
   {
-    return size_t(size_x) * size_t(size_y);
+    return raws.at(layer).AccessBytes().second != 0;
+  }
+
+  size_t TextureArrayLDR::Count(size_t layer) const
+  {
+    return raws.at(layer).AccessBytes().second / sizeof(glm::u8vec4);;
   }
 
   void TextureArrayLDR::Set(size_t layer, size_t index, const glm::u8vec4& value)
@@ -201,29 +211,39 @@ namespace RayGene3D
   }
 
 
-  void TextureArrayHDR::Resize(size_t layers)
+  //void TextureArrayHDR::Resize(size_t layers)
+  //{
+  //  raws.resize(layers);
+  //}
+
+  size_t TextureArrayHDR::Size() const
   {
-    raws.resize(layers);
+    return raws.size();
   }
 
-  void TextureArrayHDR::Initialize(size_t layer, glm::f32vec4 value)
+  void TextureArrayHDR::Create(size_t layer, glm::f32vec4 value)
   {
     raws.at(layer) = std::move(Raw(size_t(size_x) * size_t(size_y), value));
   }
 
-  void TextureArrayHDR::Initialize(size_t layer, std::pair<const glm::f32vec4*, size_t> texels)
+  void TextureArrayHDR::Create(size_t layer, std::pair<const glm::f32vec4*, size_t> texels)
   {
     raws.at(layer) = std::move(Raw(texels));
   }
 
-  void TextureArrayHDR::Discard(size_t layer)
+  void TextureArrayHDR::Delete(size_t layer)
   {
     raws.at(layer) = {};
   }
 
-  size_t TextureArrayHDR::Count() const
+  bool TextureArrayHDR::Empty(size_t layer) const
   {
-    return size_t(size_x) * size_t(size_y);
+    return raws.at(layer).AccessBytes().second != 0;
+  }
+
+  size_t TextureArrayHDR::Count(size_t layer) const
+  {
+    return raws.at(layer).AccessBytes().second / sizeof(glm::f32vec4);
   }
 
   void TextureArrayHDR::Set(size_t layer, size_t index, const glm::f32vec4& value)
@@ -236,7 +256,7 @@ namespace RayGene3D
     return raws.at(layer).GetElement<glm::f32vec4>(index);
   }
 
-  std::pair<uint8_t*, size_t> TextureArrayHDR::Access(size_t layer, size_t mipmap)
+  std::pair<uint8_t*, size_t> TextureArrayHDR::Access(size_t layer)
   {
     return raws.at(layer).AccessBytes();
   }

@@ -38,11 +38,12 @@ namespace RayGene3D
     std::list<Raw> raws;
 
   public:
-    void Initialize(size_t count, T value = {});
-    void Initialize(std::pair<const T*, size_t> structures);
-    void Discard();
+    void Create(size_t count, T value = {});
+    void Create(std::pair<const T*, size_t> structures);
+    void Delete();
 
   public:
+    bool Empty(size_t layer) const;
     size_t Count() const;
     void Set(size_t index, const T& value);
     const T& Get(size_t index) const;

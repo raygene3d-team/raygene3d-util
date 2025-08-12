@@ -30,24 +30,29 @@ THE SOFTWARE.
 
 namespace RayGene3D
 {
-  template<typename T> void StructureBuffer<T>::Initialize(size_t count, T value)
+  template<typename T> void StructureBuffer<T>::Create(size_t count, T value)
   {
     raws.push_back(std::move(Raw(count, value)));
   }
 
-  template<typename T> void StructureBuffer<T>::Initialize(std::pair<const T*, size_t> structures)
+  template<typename T> void StructureBuffer<T>::Create(std::pair<const T*, size_t> structures)
   {
     raws.push_back(std::move(Raw(structures)));
   }
 
-  template<typename T>void StructureBuffer<T>::Discard()
+  template<typename T>void StructureBuffer<T>::Delete()
   {
     raws.pop_back();
   }
 
+  template<typename T> bool StructureBuffer<T>::Empty(size_t layer) const
+  {
+    return raws.back().AccessBytes().second != 0;
+  }
+
   template<typename T> size_t StructureBuffer<T>::Count() const
   {
-    return raws.back().AccessBytes().second / stride;
+    return raws.back().AccessBytes().second / sizeof(T);
   }
 
   template<typename T> void StructureBuffer<T>::Set(size_t index, const T& value)
