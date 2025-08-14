@@ -169,28 +169,28 @@ namespace RayGene3D
     uint32_t layer_3{ uint32_t(-1) }; // texture_3
 
     uint32_t offset_0{ 0u }; // vert_offset
-    uint32_t count_0{ 0u }; // vert_count
+    uint32_t count_0{ 0u };  // vert_count
     uint32_t offset_1{ 0u }; // prim_offset
-    uint32_t count_1{ 0u }; // prim_count
+    uint32_t count_1{ 0u };  // prim_count
     uint32_t offset_2{ 0u }; // bone_offset
-    uint32_t count_2{ 0u }; // bone_count
+    uint32_t count_2{ 0u };  // bone_count
     uint32_t offset_3{ 0u }; // mlet_offset
-    uint32_t count_3{ 0u }; // mlet_count
+    uint32_t count_3{ 0u };  // mlet_count
 
     glm::f32vec3 aabb_min{ FLT_MAX, FLT_MAX, FLT_MAX };
     uint32_t geom_idx{ uint32_t(-1) };
     glm::f32vec3 aabb_max{-FLT_MAX,-FLT_MAX,-FLT_MAX };
     uint32_t brdf_idx{ uint32_t(-1) };
 
-    glm::f32vec4 param_0;
-    glm::f32vec4 param_1;
-    glm::f32vec4 param_2;
-    glm::f32vec4 param_3;
+    glm::f32vec4 fparam_0{ glm::zero<glm::f32vec4>() };
+    glm::f32vec4 fparam_1{ glm::zero<glm::f32vec4>() };
+    glm::f32vec4 fparam_2{ glm::zero<glm::f32vec4>() };
+    glm::f32vec4 fparam_3{ glm::zero<glm::f32vec4>() };
 
-    glm::u32vec4 padding_0;
-    glm::u32vec4 padding_1;
-    glm::u32vec4 padding_2;
-    glm::u32vec4 padding_3;
+    glm::u32vec4 uparam_0{ glm::zero<glm::u32vec4>() };
+    glm::u32vec4 uparam_1{ glm::zero<glm::u32vec4>() };
+    glm::u32vec4 uparam_2{ glm::zero<glm::u32vec4>() };
+    glm::u32vec4 uparam_3{ glm::zero<glm::u32vec4>() };
   };
 
   struct Screen
@@ -234,11 +234,13 @@ namespace RayGene3D
   };
 
 
-  //template<typename T = uint8_t>
+  typedef std::pair<uint8_t*, size_t> ByteData;
+  typedef std::pair<const uint8_t*, size_t> CByteData;
+
   class Raw
   {
   protected:
-    std::pair<uint8_t*, size_t> _bytes{ nullptr, 0 };
+    ByteData _bytes{ nullptr, 0 };
 
   public:
     void Allocate(size_t size)
@@ -259,7 +261,7 @@ namespace RayGene3D
       }
     }
 
-    void SetBytes(std::pair<const uint8_t*, size_t> bytes, size_t offset = 0u) const
+    void SetBytes(CByteData bytes, size_t offset = 0u) const
     {
       if (offset > _bytes.second)
       {
@@ -272,7 +274,7 @@ namespace RayGene3D
       }
     }
 
-    std::pair<const uint8_t*, size_t> GetBytes(size_t offset = 0u) const
+    CByteData GetBytes(size_t offset = 0u) const
     {
       if (offset > _bytes.second)
       {
@@ -328,7 +330,7 @@ namespace RayGene3D
       return reinterpret_cast<T*>(_bytes.first)[index];
     }
 
-    std::pair<uint8_t*, size_t> AccessBytes(size_t offset = 0) const
+    ByteData AccessBytes(size_t offset = 0) const
     {
       return { _bytes.first + offset, _bytes.second - offset };
     }
@@ -348,7 +350,7 @@ namespace RayGene3D
 
   public:
     Raw(size_t size = 0) { Allocate(size); }
-    Raw(const std::pair<const uint8_t*, size_t>& bytes) { Allocate(bytes.second); SetBytes(bytes); }
+    Raw(CByteData bytes) { Allocate(bytes.second); SetBytes(bytes); }
     template<typename T> Raw(size_t count, T value = {}) { Allocate(count * sizeof(T)); for (size_t i = 0; i < count; ++i) { SetElement(value, i); }}
     template<typename T> Raw(const std::pair<const T*, size_t>& elements) { Allocate(elements.second * sizeof(T)); SetElements(elements); }
 

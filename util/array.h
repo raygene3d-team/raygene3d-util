@@ -41,7 +41,6 @@ namespace RayGene3D
     uint32_t size_y{ 0u };
 
   public:
-    //void Resize(size_t layers);
     size_t Size() const;
     void Create(size_t layer, glm::u8vec4 value = glm::zero<glm::u8vec4>());
     void Create(size_t layer, std::pair<const glm::u8vec4*, size_t> texels);
@@ -70,7 +69,7 @@ namespace RayGene3D
     void Import(SPtrProperty property);
 
   public:
-    TextureArrayLDR(Format format, uint32_t size_x, uint32_t size_y, size_t layers = 1)
+    TextureArrayLDR(Format format, uint32_t size_x, uint32_t size_y, size_t layers)
       : format(format)
       , size_x(size_x)
       , size_y(size_y)
@@ -82,6 +81,25 @@ namespace RayGene3D
       , size_y(size_y)
       , raws(initializers.begin(), initializers.end())
     {}
+
+  public:
+    TextureArrayLDR(const TextureArrayLDR& raw) = delete;
+    TextureArrayLDR& operator=(const TextureArrayLDR& raw) = delete;
+    TextureArrayLDR(TextureArrayLDR&& array) noexcept 
+    {
+      std::swap(raws, array.raws);
+      std::swap(format, array.format);
+      std::swap(size_x, array.size_x);
+      std::swap(size_y, array.size_y);
+    }
+    TextureArrayLDR& operator=(TextureArrayLDR&& array) noexcept
+    { 
+      std::swap(raws, array.raws);
+      std::swap(format, array.format);
+      std::swap(size_x, array.size_x);
+      std::swap(size_y, array.size_y);
+      return *this;
+    }
     ~TextureArrayLDR() {}
   };
 
@@ -121,7 +139,7 @@ namespace RayGene3D
     void Import(SPtrProperty property);
 
   public:
-    TextureArrayHDR(Format format, uint32_t size_x, uint32_t size_y, size_t layers = 1)
+    TextureArrayHDR(Format format, uint32_t size_x, uint32_t size_y, size_t layers)
       : format(format)
       , size_x(size_x)
       , size_y(size_y)
@@ -133,6 +151,25 @@ namespace RayGene3D
       , size_y(size_y)
       , raws(initializers.begin(), initializers.end())
     {}
+
+  public:
+    TextureArrayHDR(const TextureArrayHDR& raw) = delete;
+    TextureArrayHDR& operator=(const TextureArrayHDR& raw) = delete;
+    TextureArrayHDR(TextureArrayHDR&& array) noexcept
+    {
+      std::swap(raws, array.raws);
+      std::swap(format, array.format);
+      std::swap(size_x, array.size_x);
+      std::swap(size_y, array.size_y);
+    }
+    TextureArrayHDR& operator=(TextureArrayHDR&& array) noexcept
+    {
+      std::swap(raws, array.raws);
+      std::swap(format, array.format);
+      std::swap(size_x, array.size_x);
+      std::swap(size_y, array.size_y);
+      return *this;
+    }
     ~TextureArrayHDR() {}
   };
 }

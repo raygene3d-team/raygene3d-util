@@ -713,63 +713,63 @@ namespace RayGene3D
   //{ }
 
 
-  //void SaveProperty(const std::string& directory, const std::string& name, const std::shared_ptr<Property>& root)
-  //{
-  //  std::map<std::shared_ptr<Property>, std::string> binaries;
-  //  auto json = Property::ToJSON(root, binaries);
-  //  {
-  //    std::string file_name = directory + name + std::string(".json");
-  //    std::ofstream file_stream(file_name, std::ios::out);
-  //    file_stream << std::setw(4) << json << std::endl;
-  //    file_stream.close();
-  //  }
+  void SaveProperty(const std::string& directory, const std::string& name, const std::shared_ptr<Property>& root)
+  {
+    std::map<std::shared_ptr<Property>, std::string> binaries;
+    auto json = Property::ToJSON(root, binaries);
+    {
+      std::string file_name = directory + name + std::string(".json");
+      std::ofstream file_stream(file_name, std::ios::out);
+      file_stream << std::setw(4) << json << std::endl;
+      file_stream.close();
+    }
 
-  //  for (auto& [key, value] : binaries)
-  //  {
-  //    std::string file_name = std::string("cache/") + name + value;
-  //    std::ofstream file_stream(file_name, std::ios::out | std::ios::binary);
+    for (auto& [key, value] : binaries)
+    {
+      std::string file_name = std::string("cache/") + name + value;
+      std::ofstream file_stream(file_name, std::ios::out | std::ios::binary);
 
-  //    const auto [byte, size] = key->GetRawBytes(0);
-  //    file_stream.write(reinterpret_cast<const char*>(byte), size);
-  //    file_stream.close();
-  //  }
-  //}
+      const auto [byte, size] = key->GetRawBytes(0);
+      file_stream.write(reinterpret_cast<const char*>(byte), size);
+      file_stream.close();
+    }
+  }
 
 
-  //std::shared_ptr<Property> LoadProperty(const std::string& directory, const std::string& name)
-  //{
-  //  nlohmann::json json;
-  //  {
-  //    std::string file_name = directory + name + std::string(".json");
-  //    std::ifstream file_stream(file_name, std::ios::in);
-  //    file_stream >> std::setw(4) >> json;
-  //    file_stream.close();
-  //  }
+  std::shared_ptr<Property> LoadProperty(const std::string& directory, const std::string& name)
+  {
+    nlohmann::json json;
+    {
+      std::string file_name = directory + name + std::string(".json");
+      std::ifstream file_stream(file_name, std::ios::in);
+      file_stream >> std::setw(4) >> json;
+      file_stream.close();
+    }
 
-  //  std::map<std::shared_ptr<Property>, std::string> binaries;
-  //  const auto root = Property::FromJSON(json, binaries);
+    std::map<std::shared_ptr<Property>, std::string> binaries;
+    const auto root = Property::FromJSON(json, binaries);
 
-  //  for (auto& [key, value] : binaries)
-  //  {
-  //    std::string file_name = std::string("cache/") + name + value;
-  //    std::ifstream file_stream(file_name, std::ios::in | std::ios::binary);
+    for (auto& [key, value] : binaries)
+    {
+      std::string file_name = std::string("cache/") + name + value;
+      std::ifstream file_stream(file_name, std::ios::in | std::ios::binary);
 
-  //    file_stream.seekg(0, std::ios::end);
-  //    const size_t size = file_stream.tellg();
-  //    file_stream.seekg(0, std::ios::beg);
+      file_stream.seekg(0, std::ios::end);
+      const size_t size = file_stream.tellg();
+      file_stream.seekg(0, std::ios::beg);
 
-  //    auto data = new uint8_t[size];
-  //    file_stream.read(reinterpret_cast<char*>(data), size);
-  //    file_stream.close();
+      auto data = new uint8_t[size];
+      file_stream.read(reinterpret_cast<char*>(data), size);
+      file_stream.close();
 
-  //    key->RawAllocate(uint32_t(size));
-  //    key->SetRawBytes({ data, uint32_t(size) }, 0);
+      key->RawAllocate(uint32_t(size));
+      key->SetRawBytes({ data, uint32_t(size) }, 0);
 
-  //    delete[] data;
-  //  }
+      delete[] data;
+    }
 
-  //  return root;
-  //}
+    return root;
+  }
 
 
   //std::tuple<Raw, uint32_t, uint32_t> LoadTextureLDR(const std::string& path)
