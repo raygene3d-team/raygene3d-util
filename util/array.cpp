@@ -129,16 +129,17 @@ namespace RayGene3D
   {
     auto x = size_x;
     auto y = size_y;
-    auto count = 0ull;
-    auto mipmap = 0ull;
+    auto z = uint32_t{ 1u };
+    auto mipmap = 1 + floor(log2(std::max(x, y)));
     auto layers = raws.size();
 
+    auto count = 0ull;
     while (x > 1 && y > 1)
     {
-      ++mipmap;
-      count += x * y;
-      x = x > 1 ? x >> 1 : 1;
-      y = y > 1 ? y >> 1 : 1;
+      count += x * y * z;
+      x = std::max(1u, x >> 1);
+      y = std::max(1u, y >> 1);
+      z = std::max(1u, z >> 1);
     }
 
     auto raw = Raw(count * layers, glm::zero<glm::u8vec4>());
