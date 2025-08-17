@@ -38,6 +38,7 @@ namespace RayGene3D
     std::list<Raw> raws;
 
   public:
+    size_t Size() const { return raws.size(); }
     void Create(size_t count, T value = {}) { raws.push_back(std::move(Raw(count, value))); }
     void Create(std::pair<const T*, size_t> structures) { raws.push_back(std::move(Raw(structures))); }
     void Delete() { raws.pop_back(); }

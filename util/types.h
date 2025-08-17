@@ -163,34 +163,34 @@ namespace RayGene3D
   {
     glm::f32mat3x4 transform;
 
-    uint32_t layer_0{ uint32_t(-1) }; // texture_0
-    uint32_t layer_1{ uint32_t(-1) }; // texture_1
-    uint32_t layer_2{ uint32_t(-1) }; // texture_2
-    uint32_t layer_3{ uint32_t(-1) }; // texture_3
+    uint32_t am_layer{ uint32_t(-1) }; // AM
+    uint32_t snao_layer{ uint32_t(-1) }; // SNAO
+    uint32_t et_layer{ uint32_t(-1) }; // ET
+    uint32_t mask_layer{ uint32_t(-1) };
 
-    uint32_t offset_0{ 0u }; // vert_offset
-    uint32_t count_0{ 0u };  // vert_count
-    uint32_t offset_1{ 0u }; // prim_offset
-    uint32_t count_1{ 0u };  // prim_count
-    uint32_t offset_2{ 0u }; // bone_offset
-    uint32_t count_2{ 0u };  // bone_count
-    uint32_t offset_3{ 0u }; // mlet_offset
-    uint32_t count_3{ 0u };  // mlet_count
+    uint32_t vert_offset{ 0u }; // vert_offset
+    uint32_t vert_count{ 0u };  // vert_count
+    uint32_t trng_offset{ 0u }; // prim_offset
+    uint32_t trng_count{ 0u };  // prim_count
+    uint32_t mlet_offset{ 0u }; // mlet_offset
+    uint32_t mlet_count{ 0u };  // mlet_count
+    uint32_t bone_offset{ 0u };
+    uint32_t bone_count{ 0u };
 
     glm::f32vec3 aabb_min{ FLT_MAX, FLT_MAX, FLT_MAX };
-    uint32_t geom_idx{ uint32_t(-1) };
+    uint32_t index{ uint32_t(-1) };
     glm::f32vec3 aabb_max{-FLT_MAX,-FLT_MAX,-FLT_MAX };
-    uint32_t brdf_idx{ uint32_t(-1) };
+    uint32_t flags{ 0 };
 
-    glm::f32vec4 fparam_0{ glm::zero<glm::f32vec4>() };
-    glm::f32vec4 fparam_1{ glm::zero<glm::f32vec4>() };
-    glm::f32vec4 fparam_2{ glm::zero<glm::f32vec4>() };
-    glm::f32vec4 fparam_3{ glm::zero<glm::f32vec4>() };
+    glm::f32vec4 fparam_0{ 0.0f, 0.0f, 0.0f, 0.0f };
+    glm::f32vec4 fparam_1{ 0.0f, 0.0f, 0.0f, 0.0f };
+    glm::f32vec4 fparam_2{ 0.0f, 0.0f, 0.0f, 0.0f };
+    glm::f32vec4 fparam_3{ 0.0f, 0.0f, 0.0f, 0.0f };
 
-    glm::u32vec4 uparam_0{ glm::zero<glm::u32vec4>() };
-    glm::u32vec4 uparam_1{ glm::zero<glm::u32vec4>() };
-    glm::u32vec4 uparam_2{ glm::zero<glm::u32vec4>() };
-    glm::u32vec4 uparam_3{ glm::zero<glm::u32vec4>() };
+    glm::u32vec4 uparam_0{ 0u, 0u, 0u, 0u };
+    glm::u32vec4 uparam_1{ 0u, 0u, 0u, 0u };
+    glm::u32vec4 uparam_2{ 0u, 0u, 0u, 0u };
+    glm::u32vec4 uparam_3{ 0u, 0u, 0u, 0u };
   };
 
   struct Screen
@@ -213,7 +213,7 @@ namespace RayGene3D
   {
     glm::f32vec3 min{ FLT_MAX, FLT_MAX, FLT_MAX };
     uint32_t offset{ uint32_t(-1) };
-    glm::f32vec3 max{ -FLT_MAX,-FLT_MAX,-FLT_MAX };
+    glm::f32vec3 max{-FLT_MAX,-FLT_MAX,-FLT_MAX };
     uint32_t count{ 0 };
   };
 
@@ -373,5 +373,10 @@ namespace RayGene3D
     uint32_t vrt_count;
     uint32_t trg_offset;
     uint32_t trg_count;
+  };
+
+  struct Bone
+  {
+    glm::f32mat4x4 transform;
   };
 }
