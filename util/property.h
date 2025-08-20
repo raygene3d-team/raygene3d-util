@@ -136,14 +136,14 @@ namespace RayGene3D
     size_t GetArraySize() const { return std::get<array_t>(_value).size(); }
     void SetArraySize(size_t size) { std::get<array_t>(_value).resize(size); }
 
-    void RawAllocate(size_t size) { std::get<raw_t>(_value).Allocate(size); }
-    void RawFree() { std::get<raw_t>(_value).Free(); }
+    void AllocateRaw(size_t size) { std::get<raw_t>(_value).Allocate(size); }
+    void FreeRaw() { std::get<raw_t>(_value).Free(); }
     void SetRawBytes(std::pair<const uint8_t*, size_t> bytes, size_t offset = 0u) { std::get<raw_t>(_value).SetBytes(bytes, offset); }
     std::pair<const uint8_t*, size_t> GetRawBytes(size_t offset = 0u) const { return std::get<raw_t>(_value).GetBytes(offset); }
     std::pair<uint8_t*, size_t> AccessRawBytes() const { return std::get<raw_t>(_value).AccessBytes(); }
-    template<typename T> void SetRawTyped(std::pair<const T*, size_t> bytes, size_t offset = 0u) { std::get<raw_t>(_value).SetElements<T>(bytes, offset); }
-    template<typename T> std::pair<const T*, size_t> GetRawTyped(size_t offset = 0u) const { return std::get<raw_t>(_value).GetElements<T>(offset); }
-    template<typename T> std::pair<T*, size_t> AccessRawTyped() const { return std::get<raw_t>(_value).AccessElements<T>(); }
+    template<typename T> void SetRawItems(std::pair<const T*, size_t> items, size_t offset = 0u) { std::get<raw_t>(_value).SetItems<T>(items, offset); }
+    template<typename T> std::pair<const T*, size_t> GetRawItems(size_t offset = 0u) const { return std::get<raw_t>(_value).GetItems<T>(offset); }
+    template<typename T> std::pair<T*, size_t> AccessRawItems() const { return std::get<raw_t>(_value).AccessItems<T>(); }
 
     void SetRaw(Raw&& raw) noexcept { std::get<raw_t>(_value) = std::move(raw); }
     Raw&& GetRaw() noexcept { return std::move(std::get<raw_t>(_value)); }
@@ -188,6 +188,39 @@ namespace RayGene3D
       case TYPE_RAW:        _value.emplace<8>(); break;
       }
     }
+    Property(bool_t value)
+      : _value(value)
+    {}
+    Property(real_t value)
+      : _value(value)
+    {}
+    Property(sint_t value)
+      : _value(value)
+    {}
+    Property(uint_t value)
+      : _value(value)
+    {}
+    Property(string_t&& value)
+      : _value(std::move(value))
+    {}
+    Property(object_t&& value)
+      : _value(std::move(value))
+    {}
+    Property(array_t&& value)
+      : _value(std::move(value))
+    {}
+    Property(raw_t&& value)
+      : _value(std::move(value))
+    {}
+    Property(array_t::allocator_type values)
+      : _value(std::move(array_t(values)))
+    {}
+    Property(object_t::allocator_type values)
+      : _value(std::move(object_t(values)))
+    {}
+    Property(std::pair<const uint8_t*, size_t> values)
+      : _value(std::move(raw_t(values)))
+    {}
     ~Property() {}
 
   public:

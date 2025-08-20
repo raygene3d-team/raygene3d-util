@@ -245,7 +245,7 @@ namespace RayGene3D
   public:
     void Allocate(size_t size)
     {
-      if (_bytes.first == nullptr && _bytes.second == 0 && size != 0u)
+      if (_bytes.first == nullptr && _bytes.second == 0 && size > 0u)
       {
         _bytes.first = new uint8_t[size];
         _bytes.second = size;
@@ -260,6 +260,9 @@ namespace RayGene3D
         _bytes = { nullptr, 0 };
       }
     }
+
+    //uint8_t* Data() const { return _bytes.first; }
+    //size_t Size() const { return _bytes.second; }
 
     void SetBytes(CByteData bytes, size_t offset = 0u) const
     {
@@ -284,75 +287,73 @@ namespace RayGene3D
       return { _bytes.first + offset, _bytes.second - offset };
     }
 
-    template<typename T> void SetElements(std::pair<const T*, size_t> elements, size_t offset = 0u)
-    {
-      if (offset * sizeof(T) > _bytes.second)
-      {
-        throw std::runtime_error("set elements failed");
-      }
-
-      const auto element_data = reinterpret_cast<T*>(_bytes.first);
-      const auto element_size = elements.second * sizeof(T);
-
-      std::memcpy(element_data + offset, elements.first, element_size);
-    }
-
-    template<typename T> std::pair<const T*, size_t> GetElements(size_t offset = 0u) const
-    {
-      if (offset * sizeof(T) > _bytes.second)
-      {
-        throw std::runtime_error("get elements failed");
-      }
-
-      const auto element_data = reinterpret_cast<const T*>(_bytes.first);
-      const auto element_size = _bytes.second - sizeof(T) * offset;
-
-      return { element_data + offset, element_size / sizeof(T) };
-    }
-
-    template<typename T> void SetElement(const T& element, size_t index)
-    {
-      if (index * sizeof(T) > _bytes.second)
-      {
-        throw std::runtime_error("set element failed");
-      }
-
-      reinterpret_cast<T*>(_bytes.first)[index] = element;
-    }
-
-    template<typename T> const T& GetElement(size_t index) const
-    {
-      if (index * sizeof(T) > _bytes.second)
-      {
-        throw std::runtime_error("get element failed");
-      }
-
-      return reinterpret_cast<T*>(_bytes.first)[index];
-    }
-
     ByteData AccessBytes(size_t offset = 0) const
     {
       return { _bytes.first + offset, _bytes.second - offset };
     }
 
-    template<typename T> std::pair<T*, size_t> AccessElements(size_t offset = 0) const
+
+    template<typename T> void SetItems(std::pair<const T*, size_t> items, size_t offset = 0u)
+    {
+      if (offset * sizeof(T) > _bytes.second)
+      {
+        throw std::runtime_error("set items failed");
+      }
+
+      const auto item_data = reinterpret_cast<T*>(_bytes.first);
+      const auto item_size = items.second * sizeof(T);
+
+      std::memcpy(item_data + offset, items.first, item_size);
+    }
+
+    template<typename T> std::pair<const T*, size_t> GetItems(size_t offset = 0u) const
+    {
+      if (offset * sizeof(T) > _bytes.second)
+      {
+        throw std::runtime_error("get items failed");
+      }
+
+      const auto item_data = reinterpret_cast<const T*>(_bytes.first);
+      const auto item_size = _bytes.second - sizeof(T) * offset;
+
+      return { item_data + offset, item_size / sizeof(T) };
+    }
+
+    template<typename T> void SetItem(const T& item, size_t index)
+    {
+      if (index * sizeof(T) > _bytes.second)
+      {
+        throw std::runtime_error("set item failed");
+      }
+
+      reinterpret_cast<T*>(_bytes.first)[index] = item;
+    }
+
+    template<typename T> const T& GetItem(size_t index) const
+    {
+      if (index * sizeof(T) > _bytes.second)
+      {
+        throw std::runtime_error("get item failed");
+      }
+
+      return reinterpret_cast<T*>(_bytes.first)[index];
+    }
+
+    template<typename T> std::pair<T*, size_t> AccessItems(size_t offset = 0) const
     {
       return { reinterpret_cast<T*>(_bytes.first) + offset, _bytes.second / sizeof(T) - offset };
     }
 
-    //void CommitBytes(std::pair<uint8_t*, uint32_t>&& bytes) { _bytes = bytes; }
-    //std::pair<uint8_t*, uint32_t>&& RetrieveBytes() { return std::move(_bytes); }
-
-    template<typename T> T& operator[](size_t index) 
-    {
-      return reinterpret_cast<T*>(_bytes.first)[index];
-    }
+    //template<typename T> T& operator[](size_t index) 
+    //{
+    //  return reinterpret_cast<T*>(_bytes.first)[index];
+    //}
 
   public:
     Raw(size_t size = 0) { Allocate(size); }
     Raw(CByteData bytes) { Allocate(bytes.second); SetBytes(bytes); }
-    template<typename T> Raw(size_t count, T value = {}) { Allocate(count * sizeof(T)); for (size_t i = 0; i < count; ++i) { SetElement(value, i); }}
-    template<typename T> Raw(const std::pair<const T*, size_t>& elements) { Allocate(elements.second * sizeof(T)); SetElements(elements); }
+    template<typename T> Raw(size_t count, T value = {}) { Allocate(count * sizeof(T)); for (size_t i = 0; i < count; ++i) { SetItem(value, i); }}
+    template<typename T> Raw(const std::pair<const T*, size_t>& items) { Allocate(items.second * sizeof(T)); SetItems(items); }
 
   public:
     Raw(const Raw& raw) = delete;

@@ -35,28 +35,31 @@ namespace RayGene3D
   template<typename T>
   struct StructureBuffer
   {
-    std::list<Raw> raws;
+  private:
+    Raw _raw;
 
   public:
-    size_t Size() const { return raws.size(); }
-    void Create(size_t count, T value = {}) { raws.push_back(std::move(Raw(count, value))); }
-    void Create(std::pair<const T*, size_t> structures) { raws.push_back(std::move(Raw(structures))); }
-    void Delete() { raws.pop_back(); }
+    size_t Stride() const { return sizeof(T); }
+    size_t Count() const { return _raw.GetItems<T>().second; }
+    void Set(std::pair<const T*, size_t> items, size_t offset = 0) { _raw.SetItems<T>(items, offset); }
+    std::pair<const T*, size_t> Get(size_t offset = 0) const { return _raw.GetItems<T>(offset); }
 
   public:
-    bool Empty(size_t layer) const { return raws.back().AccessBytes().second != 0; }
-    size_t Count() const { return raws.back().AccessBytes().second / sizeof(T); }
-    void Set(size_t index, const T& value) { raws.back().SetElement<T>(value, index); }
-    const T& Get(size_t index) const { return raws.back().GetElement<T>(index); };
-    std::pair<uint8_t*, size_t> Access() { return raws.back().AccessBytes(); }
+    T& operator[](size_t index) { return *_raw.AccessItems<T>(index).first; }
+    std::pair<uint8_t*, size_t> Bytes() { return _raw.AccessBytes(); }
+    std::pair<T*, size_t> Items() { return _raw.AccessItems<T>(); }
+
+  public:
+    void Resize(size_t count, T value = {})
+    { 
+      auto raw = Raw(count, value);
+      raw.SetItems<T>({ _raw.GetItems<T>().first, std::min(_raw.GetItems<T>().second, count) });
+      std::swap(raw, _raw);
+    }
     
-  public:
-    std::list<Raw>::iterator begin() { return raws.begin(); }
-    std::list<Raw>::iterator end() { return raws.end(); }
-    std::list<Raw>::const_iterator cbegin() const { return raws.cbegin(); }
-    std::list<Raw>::const_iterator cend() const { return raws.cend(); }
-    void Push(Raw&& raw) { raws.push_back(std::move(raw)); }
-    void Pop() { raws.pop_back(); }
+  //public:
+  //  Append(Raw raw) {}
+  //  Raw Consume() {}
 
   //public:
   //  void Load(const char* name);
@@ -65,60 +68,29 @@ namespace RayGene3D
   public:
     SPtrProperty Export() const
     {
-      auto length = 0ull;
-      auto counts = std::vector<size_t>();
-      for (const auto& r : raws)
-      {
-        const auto count = r.GetBytes().second / sizeof(T); counts.push_back(count); length += count;
-      }
-
-      auto offset = 0ull;
-      auto raw = Raw(length * sizeof(T));
-      for (const auto& r : raws)
-      {
-        auto bytes = r.GetBytes(); raw.SetBytes(bytes, offset); offset += bytes.second;
-      }
-
-
-      const auto root_property = std::shared_ptr<Property>(new Property(Property::TYPE_OBJECT));
-
-      const auto stride_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
-      stride_property->SetUint(sizeof(T));
-      root_property->SetObjectItem("stride", stride_property);
-
-      const auto counts_property = std::shared_ptr<Property>(new Property(Property::TYPE_ARRAY));
-      counts_property->SetArraySize(counts.size());
-      for (auto i = 0ull; i < counts.size(); ++i)
-      {
-        const auto count_property = std::shared_ptr<Property>(new Property(Property::TYPE_UINT));
-        count_property->SetUint(counts[i]);
-        counts_property->SetArrayItem(i, count_property);
-      }
-      root_property->SetObjectItem("counts", counts_property);
-
-      const auto raw_property = std::shared_ptr<Property>(new Property(Property::TYPE_RAW));
-      raw_property->SetRaw(std::move(raw));
-      root_property->SetObjectItem("raw", raw_property);
-
-      return root_property;
+      return SPtrProperty(new Property({
+        {"stride", SPtrProperty(new Property(uint32_t(sizeof(T))))},
+        {"count", SPtrProperty(new Property(uint32_t(_raw.AccessBytes().second / sizeof(T))))},
+        {"raw", SPtrProperty(new Property(_raw.AccessBytes()))}}));
     }
+
     void Import(SPtrProperty property);
 
   public:
-    StructureBuffer(std::initializer_list<std::pair<const T*, size_t>> initializers = {})
-      : raws(initializers.begin(), initializers.end())
+    StructureBuffer(std::pair<const T*, size_t> items = {})
+      : _raw(items)
     {}
 
   public:
-    StructureBuffer(const StructureBuffer& raw) = delete;
-    StructureBuffer& operator=(const StructureBuffer& raw) = delete;
+    StructureBuffer(const StructureBuffer& buffer) = delete;
+    StructureBuffer& operator=(const StructureBuffer& buffer) = delete;
     StructureBuffer(StructureBuffer&& buffer) noexcept
     {
-      std::swap(raws, buffer.raws);
+      std::swap(_raw, buffer._raw);
     }
     StructureBuffer& operator=(StructureBuffer&& buffer) noexcept
     {
-      std::swap(raws, buffer.raws);
+      std::swap(_raw, buffer._raw);
       return *this;
     }
     ~StructureBuffer() {}

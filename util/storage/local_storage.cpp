@@ -91,7 +91,7 @@ namespace RayGene3D
       file_stream.read(reinterpret_cast<char*>(data), size);
       file_stream.close();
 
-      key->RawAllocate(size);
+      key->AllocateRaw(size);
       key->SetRawBytes({ data, size }, 0);
 
       delete[] data;

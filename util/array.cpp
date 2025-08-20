@@ -80,12 +80,12 @@ namespace RayGene3D
 
   void TextureArrayLDR::Set(size_t layer, size_t index, const glm::u8vec4& value)
   {
-    raws.at(layer).SetElement<glm::u8vec4>(value, index);
+    raws.at(layer).SetItem<glm::u8vec4>(value, index);
   }
 
   const glm::u8vec4& TextureArrayLDR::Get(size_t layer, size_t index) const
   {
-    return raws.at(layer).GetElement<glm::u8vec4>(index);
+    return raws.at(layer).GetItem<glm::u8vec4>(index);
   }
 
   std::pair<uint8_t*, size_t> TextureArrayLDR::Access(size_t layer)
@@ -249,12 +249,12 @@ namespace RayGene3D
 
   void TextureArrayHDR::Set(size_t layer, size_t index, const glm::f32vec4& value)
   {
-    raws.at(layer).SetElement<glm::f32vec4>(value, index);
+    raws.at(layer).SetItem<glm::f32vec4>(value, index);
   }
 
   const glm::f32vec4& TextureArrayHDR::Get(size_t layer, size_t index) const
   {
-    return raws.at(layer).GetElement<glm::f32vec4>(index);
+    return raws.at(layer).GetItem<glm::f32vec4>(index);
   }
 
   std::pair<uint8_t*, size_t> TextureArrayHDR::Access(size_t layer)

@@ -762,7 +762,7 @@ namespace RayGene3D
       file_stream.read(reinterpret_cast<char*>(data), size);
       file_stream.close();
 
-      key->RawAllocate(uint32_t(size));
+      key->AllocateRaw(uint32_t(size));
       key->SetRawBytes({ data, uint32_t(size) }, 0);
 
       delete[] data;
@@ -849,7 +849,7 @@ namespace RayGene3D
   ////  auto raw = Raw(uint32_t(sizeof(glm::u8vec4)) * extent_x * extent_y);
   ////  for (auto i = 0u; i < uint32_t(extent_x * extent_y); ++i)
   ////  {
-  ////    raw.SetElement<glm::u8vec4>(color_fn(i), i);
+  ////    raw.SetItem<glm::u8vec4>(color_fn(i), i);
   ////  }
 
   ////  return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
@@ -861,7 +861,7 @@ namespace RayGene3D
   //  auto raw = Raw(sizeof(glm::u8vec4) * extent_x * extent_y);
   //  for (auto i = 0u; i < extent_x * extent_y; ++i)
   //  {
-  //    raw.SetElement<glm::u8vec4>(color_fn(i), i);
+  //    raw.SetItem<glm::u8vec4>(color_fn(i), i);
   //  }
 
   //  return { std::move(raw), uint32_t(extent_x), uint32_t(extent_y) };
@@ -891,7 +891,7 @@ namespace RayGene3D
   //    const auto g = g_channel < 4 ? g_texels[i][g_channel] : 0u;
   //    const auto b = b_channel < 4 ? b_texels[i][b_channel] : 0u;
   //    const auto a = a_channel < 4 ? a_texels[i][a_channel] : 0u;
-  //    raw.SetElement<glm::u8vec4>({ r, g, b, a }, i);
+  //    raw.SetItem<glm::u8vec4>({ r, g, b, a }, i);
   //  }
 
   //  return { std::move(raw), extent_x, extent_y };
@@ -916,7 +916,7 @@ namespace RayGene3D
   //    const auto g = channels > 1 ? texels[i * channels + 1] : r; //0xFF;
   //    const auto b = channels > 2 ? texels[i * channels + 2] : r; //0xFF;
   //    const auto a = channels > 3 ? texels[i * channels + 3] : r; //0xFF;
-  //    raw.SetElement<glm::f32vec4>({ r, g, b, a }, i);
+  //    raw.SetItem<glm::f32vec4>({ r, g, b, a }, i);
   //  }
   //  delete[] texels;
 
@@ -1089,7 +1089,7 @@ namespace RayGene3D
   //    const auto g = g_channel < 4 ? g_texels[i][g_channel] : 0.0f;
   //    const auto b = b_channel < 4 ? b_texels[i][b_channel] : 0.0f;
   //    const auto a = a_channel < 4 ? a_texels[i][a_channel] : 0.0f;
-  //    raw.SetElement<glm::f32vec4>({ r, g, b, a }, i);
+  //    raw.SetItem<glm::f32vec4>({ r, g, b, a }, i);
   //  }
 
   //  return { std::move(raw), extent_x, extent_y };
