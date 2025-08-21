@@ -35,51 +35,76 @@ namespace RayGene3D
 {
   struct TextureArrayLDR
   {
-    std::vector<Raw> raws;
-    Format format{ Format::FORMAT_UNKNOWN };
-    uint32_t size_x{ 0u };
-    uint32_t size_y{ 0u };
+    Raw _raw;
+    Format _format{ Format::FORMAT_UNKNOWN };
+    uint32_t _size_x{ 0u };
+    uint32_t _size_y{ 0u };
+    size_t _levels{ 0u };
+    size_t _layers{ 0u };
+   
 
-  public:
-    size_t Size() const;
-    void Create(size_t layer, glm::u8vec4 value = glm::zero<glm::u8vec4>());
-    void Create(size_t layer, std::pair<const glm::u8vec4*, size_t> texels);
-    void Delete(size_t layer);
 
-  public:
-    bool Empty(size_t layer) const;
-    size_t Count(size_t layer) const;
-    void Set(size_t layer, size_t index, const glm::u8vec4& value);
-    const glm::u8vec4& Get(size_t layer, size_t index) const;
-    std::pair<uint8_t*, size_t> Access(size_t layer);
+  //public:
+  //  size_t Size() const;
+  //  void Create(size_t layer, glm::u8vec4 value = glm::zero<glm::u8vec4>());
+  //  void Create(size_t layer, std::pair<const glm::u8vec4*, size_t> texels);
+  //  void Delete(size_t layer);
 
-  public:
-    std::vector<Raw>::iterator begin() { return raws.begin(); }
-    std::vector<Raw>::iterator end() { return raws.end(); }
-    std::vector<Raw>::const_iterator cbegin() const { return raws.cbegin(); }
-    std::vector<Raw>::const_iterator cend() const { return raws.cend(); }
-    Raw&& operator[](size_t layer) { return std::move(raws.at(layer)); }
+  //public:
+  //  bool Empty(size_t layer) const;
+  //  size_t Count(size_t layer) const;
+  //  void Set(size_t layer, size_t index, const glm::u8vec4& value);
+  //  const glm::u8vec4& Get(size_t layer, size_t index) const;
+  //  std::pair<uint8_t*, size_t> Access(size_t layer);
+
+  //public:
+  //  std::vector<Raw>::iterator begin() { return raws.begin(); }
+  //  std::vector<Raw>::iterator end() { return raws.end(); }
+  //  std::vector<Raw>::const_iterator cbegin() const { return raws.cbegin(); }
+  //  std::vector<Raw>::const_iterator cend() const { return raws.cend(); }
+  //  Raw&& operator[](size_t layer) { return std::move(raws.at(layer)); }
 
   public:
     void Load(size_t layer, const char* name);
     void Save(size_t layer, const char* name);
 
   public:
+    size_t Stride() const { return Length(_size_x, _size_y, { 0, _levels }); }
+    size_t Count() const { return _layers; }
+    std::pair<uint8_t*, size_t> Bytes() const { return _raw.AccessBytes(); }
+    std::pair<glm::u8vec4*, size_t> Items() const { return _raw.AccessItems<glm::u8vec4>(); }
+    
+  public:
+    glm::u8vec4* operator[](size_t layer) { return *_raw.AccessItems<T>(index).first; }
+    void Set(std::pair<const glm::u8vec4*, size_t> items, size_t layer = 0) const { _raw.SetItems<T>(items, offset); }
+    std::pair<const glm::u8vec4*, size_t> Get(size_t layer = 0) const { return _raw.GetItems<T>(offset); }
+
+  public:
+    void Resize(size_t layers, glm::u8vec4 value = {})
+    {
+      auto raw = Raw(Length(size_x,  size_y,  ), value);
+      raw.SetItems<T>({ _raw.GetItems<T>().first, std::min(_raw.GetItems<T>().second, count) });
+      std::swap(raw, _raw);
+    }
+
+  public:
     SPtrProperty Export() const;
     void Import(SPtrProperty property);
 
   public:
-    TextureArrayLDR(Format format, uint32_t size_x, uint32_t size_y, size_t layers)
-      : format(format)
-      , size_x(size_x)
-      , size_y(size_y)
-      , raws(layers)
+    TextureArrayLDR(Format format, uint32_t size_x, uint32_t size_y, size_t levels)
+      : _format(format)
+      , _size_x(size_x)
+      , _size_y(size_y)
+      , _levels(levels)
     {}
-    TextureArrayLDR(Format format, uint32_t size_x, uint32_t size_y, std::initializer_list<std::pair<const glm::u8vec4*, size_t>> initializers)
-      : format(format)
-      , size_x(size_x)
-      , size_y(size_y)
-      , raws(initializers.begin(), initializers.end())
+    TextureArrayLDR(Format format, uint32_t size_x, uint32_t size_y, size_t levels, std::pair<const glm::u8vec4*, size_t> items = {})
+      : _format(format)
+      , _size_x(size_x)
+      , _size_y(size_y)
+      , _levels(levels)
+      , _layers(items.second / Stride())
+      , _raw(items)
     {}
 
   public:

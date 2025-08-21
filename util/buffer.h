@@ -41,13 +41,14 @@ namespace RayGene3D
   public:
     size_t Stride() const { return sizeof(T); }
     size_t Count() const { return _raw.GetItems<T>().second; }
-    void Set(std::pair<const T*, size_t> items, size_t offset = 0) { _raw.SetItems<T>(items, offset); }
-    std::pair<const T*, size_t> Get(size_t offset = 0) const { return _raw.GetItems<T>(offset); }
+    std::pair<uint8_t*, size_t> Bytes() { return _raw.AccessBytes(); }
+    std::pair<T*, size_t> Items() { return _raw.AccessItems<T>(); }
+    
 
   public:
     T& operator[](size_t index) { return *_raw.AccessItems<T>(index).first; }
-    std::pair<uint8_t*, size_t> Bytes() { return _raw.AccessBytes(); }
-    std::pair<T*, size_t> Items() { return _raw.AccessItems<T>(); }
+    void Set(std::pair<const T*, size_t> items, size_t offset = 0) { _raw.SetItems<T>(items, offset); }
+    std::pair<const T*, size_t> Get(size_t offset = 0) const { return _raw.GetItems<T>(offset); }
 
   public:
     void Resize(size_t count, T value = {})
@@ -69,9 +70,10 @@ namespace RayGene3D
     SPtrProperty Export() const
     {
       return SPtrProperty(new Property({
-        {"stride", SPtrProperty(new Property(uint32_t(sizeof(T))))},
-        {"count", SPtrProperty(new Property(uint32_t(_raw.AccessBytes().second / sizeof(T))))},
-        {"raw", SPtrProperty(new Property(_raw.AccessBytes()))}}));
+          { "stride", SPtrProperty(new Property(uint32_t(sizeof(T)))) },
+          { "count", SPtrProperty(new Property(uint32_t(_raw.AccessBytes().second / sizeof(T)))) },
+          { "raw", SPtrProperty(new Property(_raw.AccessBytes())) }
+        }));
     }
 
     void Import(SPtrProperty property);
