@@ -72,7 +72,7 @@ namespace RayGene3D
       return SPtrProperty(new Property({
           { "stride", SPtrProperty(new Property(uint32_t(sizeof(T)))) },
           { "length", SPtrProperty(new Property(uint32_t(_raw.AccessBytes().second / sizeof(T)))) },
-          { "raw", SPtrProperty(new Property(_raw.AccessBytes())) }
+          { "binary", SPtrProperty(new Property(_raw.AccessBytes())) }
         }));
     }
 

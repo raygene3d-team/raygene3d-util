@@ -47,19 +47,15 @@ namespace RayGene3D
     Raw _raw;
 
   public:
-    size_t Stride() const { return _stride; }
-    size_t Length() const { return _layers; }
+    size_t Levels() const { return _levels; }
+    size_t Layers() const { return _layers; }
     std::pair<uint8_t*, size_t> Bytes(size_t offset = 0) const { return _raw.AccessBytes(offset); }
     std::pair<glm::u8vec4*, size_t> Items(size_t offset = 0) const { return _raw.AccessItems<glm::u8vec4>(offset); }
     
   public:
-    uint32_t constexpr SizeX(size_t level = 0) const { return std::max(1u, _size_x >> level); }
-    uint32_t constexpr SizeY(size_t level = 0) const { return std::max(1u, _size_y >> level); }
     size_t constexpr Offset(size_t layer, size_t level) const
     {
-      auto offset = _stride * layer;
-      for (auto i = 0; i < level; ++i) { offset += size_t(SizeX(i) * SizeY(i)); }
-      return offset;
+      return _stride * layer + Length(_size_x, _size_y, 1u, { 0, level });
     }
     void Set(size_t layer, size_t level, std::pair<const glm::u8vec4*, size_t> items, size_t offset = 0) const
     { 
@@ -98,7 +94,7 @@ namespace RayGene3D
       , _size_y(size_y)
       , _levels(levels)
       , _layers(layers)
-      , _stride(Offset(1, 0))
+      , _stride(Length(_size_x, _size_y, 1u, {0, _levels}))
       , _raw(_stride * _layers, glm::zero<glm::u8vec4>())
     {}
 
@@ -143,19 +139,15 @@ namespace RayGene3D
     Raw _raw;
 
   public:
-    size_t Stride() const { return _stride; }
-    size_t Length() const { return _layers; }
+    size_t Levels() const { return _levels; }
+    size_t Layers() const { return _layers; }
     std::pair<uint8_t*, size_t> Bytes(size_t offset = 0) const { return _raw.AccessBytes(offset); }
     std::pair<glm::f32vec4*, size_t> Items(size_t offset = 0) const { return _raw.AccessItems<glm::f32vec4>(offset); }
 
   public:
-    uint32_t constexpr SizeX(size_t level = 0) const { return std::max(1u, _size_x >> level); }
-    uint32_t constexpr SizeY(size_t level = 0) const { return std::max(1u, _size_y >> level); }
     size_t constexpr Offset(size_t layer, size_t level) const
     {
-      auto offset = _stride * layer;
-      for (auto i = 0; i < level; ++i) { offset += size_t(SizeX(i) * SizeY(i)); }
-      return offset;
+      return _stride * layer + Length(_size_x, _size_y, 1u, { 0, level });
     }
     void Set(size_t layer, size_t level, std::pair<const glm::f32vec4*, size_t> items, size_t offset = 0) const
     {
@@ -179,10 +171,9 @@ namespace RayGene3D
       , _size_y(size_y)
       , _levels(levels)
       , _layers(layers)
-      , _stride(Offset(1, 0))
+      , _stride(Length(_size_x, _size_y, 1u, { 0, _levels }))
       , _raw(_stride * _layers, glm::zero<glm::f32vec4>())
-    {
-    }
+    {}
 
   public:
     TextureArrayHDR(const TextureArrayHDR& raw) = delete;

@@ -50,8 +50,8 @@ namespace RayGene3D
     auto src_stride = 0;
     auto src_texels = stbi_load(name, &src_size_x, &src_size_y, &src_stride, STBI_default);
 
-    auto dst_size_x = SizeX(level);
-    auto dst_size_y = SizeY(level);
+    auto dst_size_x = Mip(_size_x, level);
+    auto dst_size_y = Mip(_size_y, level);
     auto dst_stride = 4;
     auto dst_texels = reinterpret_cast<uint8_t*>(Items(Offset(layer, level)).first);
 
@@ -129,7 +129,7 @@ namespace RayGene3D
         { "size_y", SPtrProperty(new Property(uint32_t(_size_y))) },
         { "levels", SPtrProperty(new Property(uint32_t(_levels))) },
         { "layers", SPtrProperty(new Property(uint32_t(_layers))) },
-        { "raw", SPtrProperty(new Property(_raw.AccessBytes())) }
+        { "binary", SPtrProperty(new Property(_raw.AccessBytes())) }
      }));
   }
 
@@ -148,8 +148,8 @@ namespace RayGene3D
     float* src_texels = nullptr; // stbi_loadf(path.c_str(), &extent_x, &extent_y, &channels, STBI_default);
     LoadEXR(&src_texels, &src_size_x, &src_size_y, name, nullptr);
 
-    auto dst_size_x = SizeX(level);
-    auto dst_size_y = SizeY(level);
+    auto dst_size_x = Mip(_size_x, level);
+    auto dst_size_y = Mip(_size_y, level);
     auto dst_stride = 4;
     auto dst_texels = reinterpret_cast<float*>(Items(Offset(layer, level)).first);
     stbir_resize_float(src_texels, src_size_x, src_size_y, 0, dst_texels, dst_size_x, dst_size_y, 0, dst_stride);
@@ -210,7 +210,7 @@ namespace RayGene3D
         { "size_y", SPtrProperty(new Property(uint32_t(_size_y))) },
         { "levels", SPtrProperty(new Property(uint32_t(_levels))) },
         { "layers", SPtrProperty(new Property(uint32_t(_layers))) },
-        { "raw", SPtrProperty(new Property(_raw.AccessBytes())) }
+        { "binary", SPtrProperty(new Property(_raw.AccessBytes())) }
       }));
   }
 
