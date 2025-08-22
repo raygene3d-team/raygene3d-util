@@ -72,6 +72,21 @@ namespace RayGene3D
     void Load(const char* name, size_t layer, size_t lavel = 0) const;
     void Save(const char* name, size_t layer, size_t lavel = 0) const;
 
+  //public:
+  //  struct Mipmap
+  //  {
+  //    uint32_t size_x, size_y;
+  //    glm::u8vec4& operator[](size_t index) {}
+  //  };
+  //  struct Slice
+  //  {
+  //    std::vector<Mipmap> mipmaps;
+  //    const Mipmap& operator[](size_t index) { return mipmaps[index]; }
+  //  };
+  //  std::vector<Slice> slices;
+  //  const Slice& operator[](size_t index) { return slices[index]; }
+
+
   public:
     SPtrProperty Export() const;
     void Import(SPtrProperty property);
