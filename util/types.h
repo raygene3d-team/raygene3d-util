@@ -293,7 +293,7 @@ namespace RayGene3D
     }
 
 
-    template<typename T> void SetItems(std::pair<const T*, size_t> items, size_t offset = 0u)
+    template<typename T> void SetItems(std::pair<const T*, size_t> items, size_t offset = 0u) const
     {
       if (offset * sizeof(T) > _bytes.second)
       {

@@ -40,7 +40,7 @@ namespace RayGene3D
 
   public:
     size_t Stride() const { return sizeof(T); }
-    size_t Count() const { return _raw.GetItems<T>().second; }
+    size_t Length() const { return _raw.GetItems<T>().second; }
     std::pair<uint8_t*, size_t> Bytes() { return _raw.AccessBytes(); }
     std::pair<T*, size_t> Items() { return _raw.AccessItems<T>(); }
     
@@ -71,7 +71,7 @@ namespace RayGene3D
     {
       return SPtrProperty(new Property({
           { "stride", SPtrProperty(new Property(uint32_t(sizeof(T)))) },
-          { "count", SPtrProperty(new Property(uint32_t(_raw.AccessBytes().second / sizeof(T)))) },
+          { "length", SPtrProperty(new Property(uint32_t(_raw.AccessBytes().second / sizeof(T)))) },
           { "raw", SPtrProperty(new Property(_raw.AccessBytes())) }
         }));
     }

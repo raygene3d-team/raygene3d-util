@@ -33,78 +33,58 @@ THE SOFTWARE.
 
 namespace RayGene3D
 {
-  struct TextureArrayLDR
+  class TextureArrayLDR
   {
-    Raw _raw;
+  private:
     Format _format{ Format::FORMAT_UNKNOWN };
     uint32_t _size_x{ 0u };
     uint32_t _size_y{ 0u };
     size_t _levels{ 0u };
     size_t _layers{ 0u };
-   
+    size_t _stride{ 0u };
 
-
-  //public:
-  //  size_t Size() const;
-  //  void Create(size_t layer, glm::u8vec4 value = glm::zero<glm::u8vec4>());
-  //  void Create(size_t layer, std::pair<const glm::u8vec4*, size_t> texels);
-  //  void Delete(size_t layer);
-
-  //public:
-  //  bool Empty(size_t layer) const;
-  //  size_t Count(size_t layer) const;
-  //  void Set(size_t layer, size_t index, const glm::u8vec4& value);
-  //  const glm::u8vec4& Get(size_t layer, size_t index) const;
-  //  std::pair<uint8_t*, size_t> Access(size_t layer);
-
-  //public:
-  //  std::vector<Raw>::iterator begin() { return raws.begin(); }
-  //  std::vector<Raw>::iterator end() { return raws.end(); }
-  //  std::vector<Raw>::const_iterator cbegin() const { return raws.cbegin(); }
-  //  std::vector<Raw>::const_iterator cend() const { return raws.cend(); }
-  //  Raw&& operator[](size_t layer) { return std::move(raws.at(layer)); }
+  private:
+    Raw _raw;
 
   public:
-    void Load(size_t layer, const char* name);
-    void Save(size_t layer, const char* name);
-
-  public:
-    size_t Stride() const { return Length(_size_x, _size_y, { 0, _levels }); }
-    size_t Count() const { return _layers; }
-    std::pair<uint8_t*, size_t> Bytes() const { return _raw.AccessBytes(); }
-    std::pair<glm::u8vec4*, size_t> Items() const { return _raw.AccessItems<glm::u8vec4>(); }
+    size_t Stride() const { return _stride; }
+    size_t Length() const { return _layers; }
+    std::pair<uint8_t*, size_t> Bytes(size_t offset = 0) const { return _raw.AccessBytes(offset); }
+    std::pair<glm::u8vec4*, size_t> Items(size_t offset = 0) const { return _raw.AccessItems<glm::u8vec4>(offset); }
     
   public:
-    glm::u8vec4* operator[](size_t layer) { return *_raw.AccessItems<T>(index).first; }
-    void Set(std::pair<const glm::u8vec4*, size_t> items, size_t layer = 0) const { _raw.SetItems<T>(items, offset); }
-    std::pair<const glm::u8vec4*, size_t> Get(size_t layer = 0) const { return _raw.GetItems<T>(offset); }
-
-  public:
-    void Resize(size_t layers, glm::u8vec4 value = {})
+    uint32_t constexpr SizeX(size_t level = 0) const { return std::max(1u, _size_x >> level); }
+    uint32_t constexpr SizeY(size_t level = 0) const { return std::max(1u, _size_y >> level); }
+    size_t constexpr Offset(size_t layer, size_t level) const
     {
-      auto raw = Raw(Length(size_x,  size_y,  ), value);
-      raw.SetItems<T>({ _raw.GetItems<T>().first, std::min(_raw.GetItems<T>().second, count) });
-      std::swap(raw, _raw);
+      auto offset = _stride * layer;
+      for (auto i = 0; i < level; ++i) { offset += size_t(SizeX(i) * SizeY(i)); }
+      return offset;
     }
+    void Set(size_t layer, size_t level, std::pair<const glm::u8vec4*, size_t> items, size_t offset = 0) const
+    { 
+      _raw.SetItems<glm::u8vec4>(items, Offset(layer, level));
+    }
+    std::pair<const glm::u8vec4*, size_t> Get(size_t layer, size_t level, size_t offset = 0) const
+    {
+      return _raw.GetItems<glm::u8vec4>(Offset(layer, level));
+    }
+    void Load(const char* name, size_t layer, size_t lavel = 0) const;
+    void Save(const char* name, size_t layer, size_t lavel = 0) const;
 
   public:
     SPtrProperty Export() const;
     void Import(SPtrProperty property);
 
   public:
-    TextureArrayLDR(Format format, uint32_t size_x, uint32_t size_y, size_t levels)
+    TextureArrayLDR(Format format, uint32_t size_x, uint32_t size_y, size_t layers, size_t levels = 1)
       : _format(format)
       , _size_x(size_x)
       , _size_y(size_y)
       , _levels(levels)
-    {}
-    TextureArrayLDR(Format format, uint32_t size_x, uint32_t size_y, size_t levels, std::pair<const glm::u8vec4*, size_t> items = {})
-      : _format(format)
-      , _size_x(size_x)
-      , _size_y(size_y)
-      , _levels(levels)
-      , _layers(items.second / Stride())
-      , _raw(items)
+      , _layers(layers)
+      , _stride(Offset(1, 0))
+      , _raw(_stride * _layers, glm::zero<glm::u8vec4>())
     {}
 
   public:
@@ -112,87 +92,105 @@ namespace RayGene3D
     TextureArrayLDR& operator=(const TextureArrayLDR& raw) = delete;
     TextureArrayLDR(TextureArrayLDR&& array) noexcept 
     {
-      std::swap(raws, array.raws);
-      std::swap(format, array.format);
-      std::swap(size_x, array.size_x);
-      std::swap(size_y, array.size_y);
+      std::swap(_raw, array._raw);
+      std::swap(_format, array._format);
+      std::swap(_size_x, array._size_x);
+      std::swap(_size_y, array._size_y);
+      std::swap(_levels, array._levels);
+      std::swap(_layers, array._layers);
+      std::swap(_stride, array._stride);
     }
     TextureArrayLDR& operator=(TextureArrayLDR&& array) noexcept
     { 
-      std::swap(raws, array.raws);
-      std::swap(format, array.format);
-      std::swap(size_x, array.size_x);
-      std::swap(size_y, array.size_y);
+      std::swap(_raw, array._raw);
+      std::swap(_format, array._format);
+      std::swap(_size_x, array._size_x);
+      std::swap(_size_y, array._size_y);
+      std::swap(_levels, array._levels);
+      std::swap(_layers, array._layers);
+      std::swap(_stride, array._stride);
       return *this;
     }
     ~TextureArrayLDR() {}
   };
 
-  struct TextureArrayHDR
+  class TextureArrayHDR
   {
-    std::vector<Raw> raws;
-    Format format{ Format::FORMAT_UNKNOWN };
-    uint32_t size_x{ 0u };
-    uint32_t size_y{ 0u };   
+  private:
+    Format _format{ Format::FORMAT_UNKNOWN };
+    uint32_t _size_x{ 0u };
+    uint32_t _size_y{ 0u };
+    size_t _levels{ 0u };
+    size_t _layers{ 0u };
+    size_t _stride{ 0u };
+
+  private:
+    Raw _raw;
 
   public:
-    size_t Size() const;
-    void Create(size_t layer, glm::f32vec4 value = glm::zero<glm::f32vec4>());
-    void Create(size_t layer, std::pair<const glm::f32vec4*, size_t> texels);
-    void Delete(size_t layer);
+    size_t Stride() const { return _stride; }
+    size_t Length() const { return _layers; }
+    std::pair<uint8_t*, size_t> Bytes(size_t offset = 0) const { return _raw.AccessBytes(offset); }
+    std::pair<glm::f32vec4*, size_t> Items(size_t offset = 0) const { return _raw.AccessItems<glm::f32vec4>(offset); }
 
   public:
-    bool Empty(size_t layer) const;
-    size_t Count(size_t layer) const;
-    void Set(size_t layer, size_t index, const glm::f32vec4& value);
-    const glm::f32vec4& Get(size_t layer, size_t index) const;
-    std::pair<uint8_t*, size_t> Access(size_t layer);
-    
-  public:
-    std::vector<Raw>::iterator begin() { return raws.begin(); }
-    std::vector<Raw>::iterator end() { return raws.end(); }
-    std::vector<Raw>::const_iterator cbegin() const { return raws.cbegin(); }
-    std::vector<Raw>::const_iterator cend() const { return raws.cend(); }
-    Raw&& operator[](size_t layer) { return std::move(raws.at(layer)); }
-
-  public:
-    void Load(size_t layer, const char* name);
-    void Save(size_t layer, const char* name);
+    uint32_t constexpr SizeX(size_t level = 0) const { return std::max(1u, _size_x >> level); }
+    uint32_t constexpr SizeY(size_t level = 0) const { return std::max(1u, _size_y >> level); }
+    size_t constexpr Offset(size_t layer, size_t level) const
+    {
+      auto offset = _stride * layer;
+      for (auto i = 0; i < level; ++i) { offset += size_t(SizeX(i) * SizeY(i)); }
+      return offset;
+    }
+    void Set(size_t layer, size_t level, std::pair<const glm::f32vec4*, size_t> items, size_t offset = 0) const
+    {
+      _raw.SetItems<glm::f32vec4>(items, Offset(layer, level) + offset);
+    }
+    std::pair<const glm::f32vec4*, size_t> Get(size_t layer, size_t level, size_t offset = 0) const
+    {
+      return _raw.GetItems<glm::f32vec4>(Offset(layer, level) + offset);
+    }
+    void Load(const char* name, size_t layer, size_t lavel = 0) const;
+    void Save(const char* name, size_t layer, size_t lavel = 0) const;
 
   public:
     SPtrProperty Export() const;
     void Import(SPtrProperty property);
 
   public:
-    TextureArrayHDR(Format format, uint32_t size_x, uint32_t size_y, size_t layers)
-      : format(format)
-      , size_x(size_x)
-      , size_y(size_y)
-      , raws(layers)
-    {}
-    TextureArrayHDR(Format format, uint32_t size_x, uint32_t size_y, std::initializer_list<std::pair<const glm::f32vec4*, size_t>> initializers)
-      : format(format)
-      , size_x(size_x)
-      , size_y(size_y)
-      , raws(initializers.begin(), initializers.end())
-    {}
+    TextureArrayHDR(Format format, uint32_t size_x, uint32_t size_y, size_t layers, size_t levels = 1)
+      : _format(format)
+      , _size_x(size_x)
+      , _size_y(size_y)
+      , _levels(levels)
+      , _layers(layers)
+      , _stride(Offset(1, 0))
+      , _raw(_stride * _layers, glm::zero<glm::f32vec4>())
+    {
+    }
 
   public:
     TextureArrayHDR(const TextureArrayHDR& raw) = delete;
-    TextureArrayHDR& operator=(const TextureArrayHDR& raw) = delete;
+    TextureArrayHDR& operator=(const TextureArrayLDR& raw) = delete;
     TextureArrayHDR(TextureArrayHDR&& array) noexcept
     {
-      std::swap(raws, array.raws);
-      std::swap(format, array.format);
-      std::swap(size_x, array.size_x);
-      std::swap(size_y, array.size_y);
+      std::swap(_raw, array._raw);
+      std::swap(_format, array._format);
+      std::swap(_size_x, array._size_x);
+      std::swap(_size_y, array._size_y);
+      std::swap(_levels, array._levels);
+      std::swap(_layers, array._layers);
+      std::swap(_stride, array._stride);
     }
     TextureArrayHDR& operator=(TextureArrayHDR&& array) noexcept
     {
-      std::swap(raws, array.raws);
-      std::swap(format, array.format);
-      std::swap(size_x, array.size_x);
-      std::swap(size_y, array.size_y);
+      std::swap(_raw, array._raw);
+      std::swap(_format, array._format);
+      std::swap(_size_x, array._size_x);
+      std::swap(_size_y, array._size_y);
+      std::swap(_levels, array._levels);
+      std::swap(_layers, array._layers);
+      std::swap(_stride, array._stride);
       return *this;
     }
     ~TextureArrayHDR() {}
