@@ -43,6 +43,28 @@ THE SOFTWARE.
 
 namespace RayGene3D
 {
+  void static ResizeLDR(const glm::u8vec4* src_texels, uint32_t src_size_x, uint32_t src_size_y,
+    glm::u8vec4* dst_texels, uint32_t dst_size_x, uint32_t dst_size_y, bool srgb = false)
+  {
+    if (srgb)
+    {
+      stbir_resize_uint8_srgb(reinterpret_cast<const uint8_t*>(src_texels), src_size_x, src_size_y, 0, 
+        reinterpret_cast<uint8_t*>(dst_texels), dst_size_x, dst_size_y, 0, 4, 3, 0);
+    }
+    else
+    {
+      stbir_resize_uint8(reinterpret_cast<const uint8_t*>(src_texels), src_size_y, src_size_y, 0,
+        reinterpret_cast<uint8_t*>(dst_texels), dst_size_x, dst_size_y, 0, 4);
+    }
+  }
+
+  void static ResizeHDR(const glm::f32vec4* src_texels, uint32_t src_size_x, uint32_t src_size_y,
+    glm::f32vec4* dst_texels, uint32_t dst_size_x, uint32_t dst_size_y, float exp = 1.0f)
+  {
+    stbir_resize_float(reinterpret_cast<const float*>(src_texels), src_size_y, src_size_y, 0,
+      reinterpret_cast<float*>(dst_texels), dst_size_x, dst_size_y, 0, 4);
+  }
+
   void TextureArrayLDR::Load(const char* name, size_t layer, size_t level) const
   {
     auto src_size_x = 0;
@@ -67,12 +89,18 @@ namespace RayGene3D
     stbi_image_free(src_texels);
    }
 
-  void TextureArrayLDR::Save(const char* name, size_t layer, size_t lavel) const
+  void TextureArrayLDR::Save(const char* name, size_t layer, size_t level) const
   {
-    auto src_size_x = 0;
-    auto src_size_y = 0;
-    auto src_stride = 0;
-    //auto src_data = stbi_save(name, &src_extent_x, &src_extent_y, &src_channels, STBI_default);
+    const auto ext = ExtractExtension(name);
+    const auto size_x = Mip(_size_x, level);
+    const auto size_y = Mip(_size_y, level);
+    const auto texels = Get(layer, level).first;
+    const auto stride = Stride(_format);
+
+    if (ext == "png") stbi_write_png(name, size_x, size_y, 4, texels, stride * size_x); else
+    if (ext == "jpg") stbi_write_jpg(name, size_x, size_y, 4, texels, 90); else
+    if (ext == "tga") stbi_write_tga(name, size_x, size_y, 4, texels); else
+    if (ext == "bmp") stbi_write_bmp(name, size_x, size_y, 4, texels);
   }
 
   SPtrProperty TextureArrayLDR::Export() const
@@ -159,7 +187,12 @@ namespace RayGene3D
 
   void TextureArrayHDR::Save(const char* name, size_t layer, size_t level) const
   {
+    const auto size_x = Mip(_size_x, level);
+    const auto size_y = Mip(_size_y, level);
+    const auto texels = reinterpret_cast<const float*>(Get(layer, level).first);
+    const auto stride = Stride(_format);
 
+    SaveEXR(texels, size_x, size_y, 4, 0, name, nullptr);
   }
 
   SPtrProperty TextureArrayHDR::Export() const
@@ -210,7 +243,7 @@ namespace RayGene3D
         { "size_y", SPtrProperty(new Property(uint32_t(_size_y))) },
         { "levels", SPtrProperty(new Property(uint32_t(_levels))) },
         { "layers", SPtrProperty(new Property(uint32_t(_layers))) },
-        { "binary", SPtrProperty(new Property(_raw.AccessBytes())) }
+        { "binary", SPtrProperty(new Property(_raw.AccessBytes()))}
       }));
   }
 
