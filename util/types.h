@@ -163,9 +163,9 @@ namespace RayGene3D
   {
     glm::f32mat3x4 transform;
 
-    uint32_t am_layer{ uint32_t(-1) }; // AM
-    uint32_t snao_layer{ uint32_t(-1) }; // SNAO
-    uint32_t et_layer{ uint32_t(-1) }; // ET
+    uint32_t aaam_layer{ uint32_t(-1) }; // AM
+    uint32_t snno_layer{ uint32_t(-1) }; // SNAO
+    uint32_t eeet_layer{ uint32_t(-1) }; // ET
     uint32_t mask_layer{ uint32_t(-1) };
 
     uint32_t vert_offset{ 0u }; // vert_offset

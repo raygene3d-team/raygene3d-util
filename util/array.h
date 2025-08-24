@@ -59,11 +59,11 @@ namespace RayGene3D
     }
     void Set(size_t layer, size_t level, std::pair<const glm::u8vec4*, size_t> items, size_t offset = 0) const
     { 
-      _raw.SetItems<glm::u8vec4>(items, Offset(layer, level));
+      _raw.SetItems<glm::u8vec4>(items, Offset(layer, level) + offset);
     }
     std::pair<const glm::u8vec4*, size_t> Get(size_t layer, size_t level, size_t offset = 0) const
     {
-      return _raw.GetItems<glm::u8vec4>(Offset(layer, level));
+      return _raw.GetItems<glm::u8vec4>(Offset(layer, level) + offset);
     }
     void Load(const char* name, size_t layer, size_t lavel = 0) const;
     void Save(const char* name, size_t layer, size_t lavel = 0) const;
