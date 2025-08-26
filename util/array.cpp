@@ -43,8 +43,8 @@ THE SOFTWARE.
 
 namespace RayGene3D
 {
-  void static ResizeLDR(const glm::u8vec4* src_texels, uint32_t src_size_x, uint32_t src_size_y,
-    glm::u8vec4* dst_texels, uint32_t dst_size_x, uint32_t dst_size_y, bool srgb = false)
+  void ResizeLDR(const glm::u8vec4* src_texels, uint32_t src_size_x, uint32_t src_size_y,
+    glm::u8vec4* dst_texels, uint32_t dst_size_x, uint32_t dst_size_y, bool srgb)
   {
     if (srgb)
     {
@@ -58,8 +58,8 @@ namespace RayGene3D
     }
   }
 
-  void static ResizeHDR(const glm::f32vec4* src_texels, uint32_t src_size_x, uint32_t src_size_y,
-    glm::f32vec4* dst_texels, uint32_t dst_size_x, uint32_t dst_size_y, float exp = 1.0f)
+  void ResizeHDR(const glm::f32vec4* src_texels, uint32_t src_size_x, uint32_t src_size_y,
+    glm::f32vec4* dst_texels, uint32_t dst_size_x, uint32_t dst_size_y, float exp)
   {
     stbir_resize_float(reinterpret_cast<const float*>(src_texels), src_size_y, src_size_y, 0,
       reinterpret_cast<float*>(dst_texels), dst_size_x, dst_size_y, 0, 4);
