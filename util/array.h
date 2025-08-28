@@ -201,4 +201,10 @@ namespace RayGene3D
     }
     ~TextureArrayHDR() {}
   };
+
+  void ResizeLDR(const glm::u8vec4* src_texels, uint32_t src_size_x, uint32_t src_size_y,
+    glm::u8vec4* dst_texels, uint32_t dst_size_x, uint32_t dst_size_y, bool srgb = false);
+
+  void ResizeHDR(const glm::f32vec4* src_texels, uint32_t src_size_x, uint32_t src_size_y,
+    glm::f32vec4* dst_texels, uint32_t dst_size_x, uint32_t dst_size_y, float exp = 1.0f);
 }
