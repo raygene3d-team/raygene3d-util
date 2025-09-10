@@ -372,8 +372,13 @@ namespace RayGene3D
 
     uint32_t vrt_offset;
     uint32_t vrt_count;
-    uint32_t trg_offset;
-    uint32_t trg_count;
+    uint32_t knt_offset;
+    uint32_t knt_count;
+  };
+
+  struct Knot
+  {
+    uint8_t idx{ uint8_t(-1) };
   };
 
   struct Bone
