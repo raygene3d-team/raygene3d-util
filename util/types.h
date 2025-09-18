@@ -370,15 +370,10 @@ namespace RayGene3D
     //uint32_t trng_offset : 24;
     //uint32_t trng_count : 8;
 
-    uint32_t vrt_offset;
-    uint32_t vrt_count;
-    uint32_t knt_offset;
-    uint32_t knt_count;
-  };
-
-  struct Knot
-  {
-    uint8_t idx{ uint8_t(-1) };
+    uint32_t vidx_offset;
+    uint32_t vidx_count;
+    uint32_t tidx_offset;
+    uint32_t tidx_count;
   };
 
   struct Bone
