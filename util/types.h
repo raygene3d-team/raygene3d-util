@@ -220,7 +220,23 @@ namespace RayGene3D
 
 
 
+  struct Meshlet
+  {
+    //uint32_t vert_offset : 24;
+    //uint32_t vert_count : 8;
+    //uint32_t trng_offset : 24;
+    //uint32_t trng_count : 8;
 
+    uint32_t vidx_offset;
+    uint32_t vidx_count;
+    uint32_t tidx_offset;
+    uint32_t tidx_count;
+  };
+
+  struct Bone
+  {
+    glm::f32mat4x4 transform;
+  };
 
 
 
@@ -363,21 +379,5 @@ namespace RayGene3D
     ~Raw() { Free(); }
   };
 
-  struct Meshlet
-  {
-    //uint32_t vert_offset : 24;
-    //uint32_t vert_count : 8;
-    //uint32_t trng_offset : 24;
-    //uint32_t trng_count : 8;
 
-    uint32_t vidx_offset;
-    uint32_t vidx_count;
-    uint32_t tidx_offset;
-    uint32_t tidx_count;
-  };
-
-  struct Bone
-  {
-    glm::f32mat4x4 transform;
-  };
 }
