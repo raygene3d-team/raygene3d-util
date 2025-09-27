@@ -163,24 +163,31 @@ namespace RayGene3D
   {
     glm::f32mat3x4 transform;
 
-    uint32_t aaam_layer{ uint32_t(-1) }; // AM
-    uint32_t snno_layer{ uint32_t(-1) }; // SNAO
-    uint32_t eeet_layer{ uint32_t(-1) }; // ET
+    uint32_t aaam_layer{ uint32_t(-1) };
+    uint32_t snno_layer{ uint32_t(-1) };
+    uint32_t eeet_layer{ uint32_t(-1) };
     uint32_t mask_layer{ uint32_t(-1) };
 
-    uint32_t vert_offset{ 0u }; // vert_offset
-    uint32_t vert_count{ 0u };  // vert_count
-    uint32_t trng_offset{ 0u }; // prim_offset
-    uint32_t trng_count{ 0u };  // prim_count
-    uint32_t mlet_offset{ 0u }; // mlet_offset
-    uint32_t mlet_count{ 0u };  // mlet_count
-    uint32_t bone_offset{ 0u };
-    uint32_t bone_count{ 0u };
+    uint32_t vert_offset{ 0u };
+    uint32_t vert_count{ 0u };
+    uint32_t trng_offset{ 0u };
+    uint32_t trng_count{ 0u };
+    uint32_t mlet_offset{ 0u };
+    uint32_t mlet_count{ 0u };
+    uint32_t bbox_offset{ 0u };
+    uint32_t bbox_count{ 0u };
+    uint32_t vidx_offset{ 0u };
+    uint32_t vidx_count{ 0u };
+    uint32_t tidx_offset{ 0u };
+    uint32_t tidx_count{ 0u };
 
     glm::f32vec3 aabb_min{ FLT_MAX, FLT_MAX, FLT_MAX };
     uint32_t index{ uint32_t(-1) };
     glm::f32vec3 aabb_max{-FLT_MAX,-FLT_MAX,-FLT_MAX };
     uint32_t flags{ 0 };
+
+    glm::f32vec3 bs_center{ 0.0f, 0.0f, 0.0f };
+    float bs_raduis{ FLT_MAX };
 
     glm::f32vec4 fparam_0{ 0.0f, 0.0f, 0.0f, 0.0f };
     glm::f32vec4 fparam_1{ 0.0f, 0.0f, 0.0f, 0.0f };
@@ -189,8 +196,6 @@ namespace RayGene3D
 
     glm::u32vec4 uparam_0{ 0u, 0u, 0u, 0u };
     glm::u32vec4 uparam_1{ 0u, 0u, 0u, 0u };
-    glm::u32vec4 uparam_2{ 0u, 0u, 0u, 0u };
-    glm::u32vec4 uparam_3{ 0u, 0u, 0u, 0u };
   };
 
   struct Screen
