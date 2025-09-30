@@ -105,52 +105,6 @@ namespace RayGene3D
 
   SPtrProperty TextureArrayLDR::Export() const
   {
-    //auto x = _size_x;
-    //auto y = _size_y;
-    //auto z = uint32_t{ 1u };
-
-    //auto count = 0ull;
-    //while (x > 1 && y > 1)
-    //{
-    //  count += size_t(x * y * z);
-    //  x = std::max(1u, x >> 1);
-    //  y = std::max(1u, y >> 1);
-    //  z = std::max(1u, z >> 1);
-    //}
-
-    //auto raw = Raw(count * _layers, glm::zero<glm::u8vec4>());
-
-    //for (auto i = 0ull; i < _layers; ++i)
-    //{
-    //  raw.SetBytes(raws.at(i).GetBytes(), i * count);
-
-    //  auto src_size_x = _size_x;
-    //  auto src_size_y = _size_y;
-    //  auto src_stride = 4;
-    //  auto src_texels = raw.AccessBytes().first;
-
-    //  for (auto j = 0ull; j < _levels; ++j)
-    //  {
-    //    auto dst_size_x = src_size_x > 1 ? src_size_x >> 1 : 1;
-    //    auto dst_size_y = src_size_y > 1 ? src_size_y >> 1 : 1;
-    //    auto dst_stride = 4;
-    //    auto dst_texels = src_texels + src_stride * src_size_x * src_size_y;
-
-    //    if (_format == Format::FORMAT_R8G8B8A8_SRGB)
-    //    {
-    //      stbir_resize_uint8_srgb(src_texels, src_size_x, src_size_y, 0, dst_texels, dst_size_x, dst_size_y, 0, dst_stride, 3, 0);
-    //    }
-    //    else
-    //    {
-    //      stbir_resize_uint8(src_texels, src_size_y, src_size_y, 0, dst_texels, dst_size_x, dst_size_y, 0, dst_stride);
-    //    }
-
-    //    src_size_x = dst_size_x;
-    //    src_size_y = dst_size_y;
-    //    src_texels = dst_texels;
-    //  }
-    //}
-
     return SPtrProperty(new Property({
         { "format", SPtrProperty(new Property(uint32_t(_format))) },
         { "size_x", SPtrProperty(new Property(uint32_t(_size_x))) },
@@ -163,7 +117,6 @@ namespace RayGene3D
 
   void TextureArrayLDR::Import(SPtrProperty property)
   {
-
   }
 
 
@@ -197,46 +150,6 @@ namespace RayGene3D
 
   SPtrProperty TextureArrayHDR::Export() const
   {
-    //auto x = size_x;
-    //auto y = size_y;
-    //auto count = 0ull;
-    //auto mipmap = 0ull;
-    //auto layers = raws.size();
-
-    //while (x > 1 && y > 1)
-    //{
-    //  ++mipmap;
-    //  count += x * y;
-    //  x = x > 1 ? x >> 1 : 1;
-    //  y = y > 1 ? y >> 1 : 1;
-    //}
-
-    //auto raw = Raw(count * layers, glm::zero<glm::f32vec4>());
-
-    //for (auto i = 0ull; i < layers; ++i)
-    //{
-    //  raw.SetBytes(raws.at(i).GetBytes(), i * count);
-
-    //  auto src_size_x = size_x;
-    //  auto src_size_y = size_y;
-    //  auto src_stride = 4;
-    //  auto src_texels = reinterpret_cast<float*>(raw.AccessBytes().first);
-
-    //  for (auto j = 0ull; j < mipmap; ++j)
-    //  {
-    //    auto dst_size_x = src_size_x > 1 ? src_size_x >> 1 : 1;
-    //    auto dst_size_y = src_size_y > 1 ? src_size_y >> 1 : 1;
-    //    auto dst_stride = 4;
-    //    auto dst_texels = src_texels + src_stride * src_size_x * src_size_y;
-
-    //    stbir_resize_float(src_texels, src_size_y, src_size_y, 0, dst_texels, dst_size_x, dst_size_y, 0, 4);
-
-    //    src_size_x = dst_size_x;
-    //    src_size_y = dst_size_y;
-    //    src_texels = dst_texels;
-    //  }
-    //}
-
     return SPtrProperty(new Property({
         { "format", SPtrProperty(new Property(uint32_t(_format))) },
         { "size_x", SPtrProperty(new Property(uint32_t(_size_x))) },
