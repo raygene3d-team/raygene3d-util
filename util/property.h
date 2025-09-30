@@ -129,19 +129,21 @@ namespace RayGene3D
     //void VisitObjectItem(std::function<void(const std::string&, const std::shared_ptr<Property>&)> visitor) { for (auto& v : std::get<object>(_value)) visitor(v.first, v.second); }
     //uint32_t CountObjectItem(){ return static_cast<uint32_t>(std::get<object>(_value).size()); }
 
-    const std::shared_ptr<Property>& GetArrayItem(uint32_t index) const { return std::get<array_t>(_value).at(index); }
-    void SetArrayItem(uint32_t index, const std::shared_ptr<Property>& property) { std::get<array_t>(_value).at(index) = property; }
+    const std::shared_ptr<Property>& GetArrayItem(size_t index) const { return std::get<array_t>(_value).at(index); }
+    void SetArrayItem(size_t index, const std::shared_ptr<Property>& property) { std::get<array_t>(_value).at(index) = property; }
     //std::shared_ptr<Property>&& GetArrayItem(uint32_t index) noexcept { return std::move(std::get<array_t>(_value).at(index)); }
     //void SetArrayItem(uint32_t index, std::shared_ptr<Property>&& property) noexcept { std::get<array_t>(_value).at(index) = std::move(property); }
-    uint32_t GetArraySize() const { return uint32_t(std::get<array_t>(_value).size()); }
-    void SetArraySize(uint32_t size) { std::get<array_t>(_value).resize(size); }
+    size_t GetArraySize() const { return std::get<array_t>(_value).size(); }
+    void SetArraySize(size_t size) { std::get<array_t>(_value).resize(size); }
 
-    void RawAllocate(uint32_t size) { std::get<raw_t>(_value).Allocate(size); }
-    void RawFree() { std::get<raw_t>(_value).Free(); }
-    void SetRawBytes(std::pair<const void*, uint32_t> bytes, uint32_t offset = 0u) { std::get<raw_t>(_value).SetBytes(bytes, offset); }
-    std::pair<const void*, uint32_t> GetRawBytes(uint32_t offset = 0u) const { return std::get<raw_t>(_value).GetBytes(offset); }
-    template<typename T> void SetTypedBytes(std::pair<const T*, uint32_t> bytes, uint32_t offset = 0u) { std::get<raw_t>(_value).SetElements<T>(bytes, offset); }
-    template<typename T> std::pair<const T*, uint32_t> GetTypedBytes(uint32_t offset = 0u) { return std::get<raw_t>(_value).GetElements<T>(offset); }
+    void AllocateRaw(size_t size) { std::get<raw_t>(_value).Allocate(size); }
+    void FreeRaw() { std::get<raw_t>(_value).Free(); }
+    void SetRawBytes(std::pair<const uint8_t*, size_t> bytes, size_t offset = 0u) { std::get<raw_t>(_value).SetBytes(bytes, offset); }
+    std::pair<const uint8_t*, size_t> GetRawBytes(size_t offset = 0u) const { return std::get<raw_t>(_value).GetBytes(offset); }
+    std::pair<uint8_t*, size_t> AccessRawBytes() const { return std::get<raw_t>(_value).AccessBytes(); }
+    template<typename T> void SetRawItems(std::pair<const T*, size_t> items, size_t offset = 0u) { std::get<raw_t>(_value).SetItems<T>(items, offset); }
+    template<typename T> std::pair<const T*, size_t> GetRawItems(size_t offset = 0u) const { return std::get<raw_t>(_value).GetItems<T>(offset); }
+    template<typename T> std::pair<T*, size_t> AccessRawItems() const { return std::get<raw_t>(_value).AccessItems<T>(); }
 
     void SetRaw(Raw&& raw) noexcept { std::get<raw_t>(_value) = std::move(raw); }
     Raw&& GetRaw() noexcept { return std::move(std::get<raw_t>(_value)); }
@@ -186,6 +188,39 @@ namespace RayGene3D
       case TYPE_RAW:        _value.emplace<8>(); break;
       }
     }
+    Property(bool_t value)
+      : _value(value)
+    {}
+    Property(real_t value)
+      : _value(value)
+    {}
+    Property(sint_t value)
+      : _value(value)
+    {}
+    Property(uint_t value)
+      : _value(value)
+    {}
+    Property(string_t&& value)
+      : _value(std::move(value))
+    {}
+    Property(object_t&& value)
+      : _value(std::move(value))
+    {}
+    Property(array_t&& value)
+      : _value(std::move(value))
+    {}
+    Property(raw_t&& value)
+      : _value(std::move(value))
+    {}
+    Property(array_t::allocator_type values)
+      : _value(std::move(array_t(values)))
+    {}
+    Property(object_t::allocator_type values)
+      : _value(std::move(object_t(values)))
+    {}
+    Property(std::pair<const uint8_t*, size_t> values)
+      : _value(std::move(raw_t(values)))
+    {}
     ~Property() {}
 
   public:
@@ -257,37 +292,13 @@ namespace RayGene3D
   std::shared_ptr<Property> CreateUVec2Property();
   std::shared_ptr<Property> CreateUIntProperty();
 
-  std::shared_ptr<Property> CreateBufferProperty(std::pair<Raw*, uint32_t> raws,
-    uint32_t stride, uint32_t count);
-
-  std::shared_ptr<Property> CreateTextureProperty(std::pair<Raw*, uint32_t> raws,
-    uint32_t extent_x, uint32_t extent_y, uint32_t mipmap, uint32_t layers);
-
   void SaveProperty(const std::string& directory, const std::string& name, const std::shared_ptr<Property>& root);
   std::shared_ptr<Property> LoadProperty(const std::string& directory, const std::string& name);
 
-  std::tuple<Raw, uint32_t, uint32_t> LoadTextureLDR(const std::string& path);
-  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureLDR(uint32_t extent_x, uint32_t extent_y,
-    const std::tuple<Raw, uint32_t, uint32_t>& texture);
-  std::tuple<std::vector<Raw>, uint32_t, uint32_t> MipmapTextureLDR(uint32_t mipmap,
-    const std::tuple<Raw, uint32_t, uint32_t>& texture);
-  void SaveTextureLDR(const std::string& path,
-    const std::tuple<Raw, uint32_t, uint32_t>& texture);
 
-  std::tuple<Raw, uint32_t, uint32_t> LoadTextureHDR(const std::string& path);
-  std::tuple<Raw, uint32_t, uint32_t> ResizeTextureHDR(uint32_t extent_x, uint32_t extent_y,
-    const std::tuple<Raw, uint32_t, uint32_t>& texture);
-  std::tuple<std::vector<Raw>, uint32_t, uint32_t> MipmapTextureHDR(uint32_t mipmap,
-    const std::tuple<Raw, uint32_t, uint32_t>& texture);
-  void SaveTextureHDR(const std::string& path,
-    const std::tuple<Raw, uint32_t, uint32_t>& texture);
-
-  Raw LoadBuffer(const std::string& path);
-  void SaveBuffer(const std::string& path, const Raw& raw);
-  Raw CombineBuffer(std::vector<Raw>&& raws);
-  std::vector<Raw> DivideBuffer(Raw&& raw, std::pair<const uint32_t*, uint32_t> counts);
-
-
+  typedef std::shared_ptr<Property> SPtrProperty;
+  typedef std::weak_ptr<Property> WPtrProperty;
+  typedef std::unique_ptr<Property> UPtrProperty;
 }
 
 

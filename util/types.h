@@ -49,6 +49,8 @@ THE SOFTWARE.
 
 namespace RayGene3D
 {
+  //struct Raw;
+
   //struct Vertex
   //{
   //  glm::f32vec3 pos{ 0.0f, 0.0f, 0.0f };
@@ -104,31 +106,39 @@ namespace RayGene3D
   {
     glm::f32mat3x4 transform;
 
-    uint32_t prim_offset{ 0 };
-    uint32_t prim_count{ 0 };
-    uint32_t vert_offset{ 0 };
-    uint32_t vert_count{ 0 };
+    uint32_t aaam_layer{ uint32_t(-1) };
+    uint32_t snno_layer{ uint32_t(-1) };
+    uint32_t eeet_layer{ uint32_t(-1) };
+    uint32_t mask_layer{ uint32_t(-1) };
 
-    glm::f32vec4 brdf_param0{ 0.0f, 0.0f, 0.0f, 0.0f };
-    glm::f32vec4 brdf_param1{ 0.0f, 0.0f, 0.0f, 0.0f };
-    glm::f32vec4 brdf_param2{ 0.0f, 0.0f, 0.0f, 0.0f };
-    glm::f32vec4 brdf_param3{ 0.0f, 0.0f, 0.0f, 0.0f };
+    uint32_t vert_offset{ 0u };
+    uint32_t vert_count{ 0u };
+    uint32_t trng_offset{ 0u };
+    uint32_t trng_count{ 0u };
+    uint32_t mlet_offset{ 0u };
+    uint32_t mlet_count{ 0u };
+    uint32_t bbox_offset{ 0u };
+    uint32_t bbox_count{ 0u };
+    uint32_t vidx_offset{ 0u };
+    uint32_t vidx_count{ 0u };
+    uint32_t tidx_offset{ 0u };
+    uint32_t tidx_count{ 0u };
 
-    uint32_t texture0_idx{ uint32_t(-1) };
-    uint32_t texture1_idx{ uint32_t(-1) };
-    uint32_t texture2_idx{ uint32_t(-1) };
-    uint32_t texture3_idx{ uint32_t(-1) };
-    uint32_t texture4_idx{ uint32_t(-1) };
-    uint32_t texture5_idx{ uint32_t(-1) };
-    uint32_t texture6_idx{ uint32_t(-1) };
-    uint32_t texture7_idx{ uint32_t(-1) };
+    glm::f32vec3 aabb_min{ FLT_MAX, FLT_MAX, FLT_MAX };
+    uint32_t index{ uint32_t(-1) };
+    glm::f32vec3 aabb_max{-FLT_MAX,-FLT_MAX,-FLT_MAX };
+    uint32_t flags{ 0 };
 
-    glm::f32vec3 bb_min{ FLT_MAX, FLT_MAX, FLT_MAX };
-    uint32_t geom_idx{ uint32_t(-1) };
-    glm::f32vec3 bb_max{-FLT_MAX,-FLT_MAX,-FLT_MAX };
-    uint32_t brdf_idx{ uint32_t(-1) };
+    glm::f32vec3 bs_center{ 0.0f, 0.0f, 0.0f };
+    float bs_raduis{ FLT_MAX };
 
-    glm::u32vec4 padding[4];
+    glm::f32vec4 fparam_0{ 0.0f, 0.0f, 0.0f, 0.0f };
+    glm::f32vec4 fparam_1{ 0.0f, 0.0f, 0.0f, 0.0f };
+    glm::f32vec4 fparam_2{ 0.0f, 0.0f, 0.0f, 0.0f };
+    glm::f32vec4 fparam_3{ 0.0f, 0.0f, 0.0f, 0.0f };
+
+    glm::u32vec4 uparam_0{ 0u, 0u, 0u, 0u };
+    glm::u32vec4 uparam_1{ 0u, 0u, 0u, 0u };
   };
 
   struct Screen
@@ -151,14 +161,30 @@ namespace RayGene3D
   {
     glm::f32vec3 min{ FLT_MAX, FLT_MAX, FLT_MAX };
     uint32_t offset{ uint32_t(-1) };
-    glm::f32vec3 max{ -FLT_MAX,-FLT_MAX,-FLT_MAX };
+    glm::f32vec3 max{-FLT_MAX,-FLT_MAX,-FLT_MAX };
     uint32_t count{ 0 };
   };
 
 
 
 
+  struct Meshlet
+  {
+    //uint32_t vert_offset : 24;
+    //uint32_t vert_count : 8;
+    //uint32_t trng_offset : 24;
+    //uint32_t trng_count : 8;
 
+    uint32_t vidx_offset;
+    uint32_t vidx_count;
+    uint32_t tidx_offset;
+    uint32_t tidx_count;
+  };
+
+  struct Bone
+  {
+    glm::f32mat4x4 transform;
+  };
 
 
 
@@ -171,31 +197,38 @@ namespace RayGene3D
     uint32_t dummy[62];
   };
 
+
+  typedef std::pair<uint8_t*, size_t> ByteData;
+  typedef std::pair<const uint8_t*, size_t> CByteData;
+
   class Raw
   {
   protected:
-    std::pair<void*, uint32_t> _bytes{ nullptr, 0 };
+    ByteData _bytes{ nullptr, 0 };
 
   public:
-    void Allocate(uint32_t size)
+    void Allocate(size_t size)
     {
-      if (_bytes.first == nullptr && _bytes.second == 0 && size != 0u)
+      if (_bytes.first == nullptr && _bytes.second == 0 && size > 0u)
       {
         _bytes.first = new uint8_t[size];
         _bytes.second = size;
-      }      
+      }
     }
 
     void Free()
     {
       if (_bytes.first != nullptr && _bytes.second != 0)
       {
-        delete[] reinterpret_cast<uint8_t*>(_bytes.first);
+        delete[] _bytes.first;
         _bytes = { nullptr, 0 };
       }
     }
 
-    void SetBytes(std::pair<const void*, uint32_t> bytes, uint32_t offset = 0u) const
+    //uint8_t* Data() const { return _bytes.first; }
+    //size_t Size() const { return _bytes.second; }
+
+    void SetBytes(CByteData bytes, size_t offset = 0u) const
     {
       if (offset > _bytes.second)
       {
@@ -204,125 +237,95 @@ namespace RayGene3D
 
       if (bytes.first != nullptr && bytes.second + offset <= _bytes.second)
       {
-        std::memcpy(reinterpret_cast<uint8_t*>(_bytes.first) + offset, bytes.first, bytes.second);
+        std::memcpy(_bytes.first + offset, bytes.first, bytes.second);
       }
     }
- 
-    std::pair<const void*, uint32_t> GetBytes(uint32_t offset = 0u) const
+
+    CByteData GetBytes(size_t offset = 0u) const
     {
       if (offset > _bytes.second)
       {
         throw std::runtime_error("get bytes failed");
       }
 
-      return { reinterpret_cast<uint8_t*>(_bytes.first) + offset, _bytes.second - offset };
+      return { _bytes.first + offset, _bytes.second - offset };
     }
 
-    template<typename T> void SetElements(std::pair<const T*, uint32_t> elements, uint32_t offset = 0u)
+    ByteData AccessBytes(size_t offset = 0) const
     {
-      if (offset * uint32_t(sizeof(T)) > _bytes.second)
+      return { _bytes.first + offset, _bytes.second - offset };
+    }
+
+
+    template<typename T> void SetItems(std::pair<const T*, size_t> items, size_t offset = 0u) const
+    {
+      if (offset * sizeof(T) > _bytes.second)
       {
-        throw std::runtime_error("set elements failed");
+        throw std::runtime_error("set items failed");
       }
 
-      const auto element_data = reinterpret_cast<T*>(_bytes.first);
-      const auto element_size = elements.second * uint32_t(sizeof(T));
+      const auto item_data = reinterpret_cast<T*>(_bytes.first);
+      const auto item_size = items.second * sizeof(T);
 
-      std::memcpy(element_data + offset, elements.first, element_size);
+      std::memcpy(item_data + offset, items.first, item_size);
     }
 
-    template<typename T> std::pair<const T*, uint32_t> GetElements(uint32_t offset = 0u) const
+    template<typename T> std::pair<const T*, size_t> GetItems(size_t offset = 0u) const
     {
-      if (offset * uint32_t(sizeof(T)) > _bytes.second)
+      if (offset * sizeof(T) > _bytes.second)
       {
-        throw std::runtime_error("get elements failed");
+        throw std::runtime_error("get items failed");
       }
 
-      const auto element_data = reinterpret_cast<const T*>(_bytes.first);
-      const auto element_size = _bytes.second - uint32_t(sizeof(T)) * offset;
+      const auto item_data = reinterpret_cast<const T*>(_bytes.first);
+      const auto item_size = _bytes.second - sizeof(T) * offset;
 
-      return { element_data + offset, element_size / uint32_t(sizeof(T)) };
+      return { item_data + offset, item_size / sizeof(T) };
     }
 
-    template<typename T> void SetElement(const T& element, uint32_t index)
+    template<typename T> void SetItem(const T& item, size_t index)
     {
-      if (index * uint32_t(sizeof(T)) > _bytes.second)
+      if (index * sizeof(T) > _bytes.second)
       {
-        throw std::runtime_error("set element failed");
+        throw std::runtime_error("set item failed");
       }
 
-      reinterpret_cast<T*>(_bytes.first)[index] = element;
+      reinterpret_cast<T*>(_bytes.first)[index] = item;
     }
 
-    template<typename T> const T& GetElement(uint32_t index) const
+    template<typename T> const T& GetItem(size_t index) const
     {
-      if (index * uint32_t(sizeof(T)) > _bytes.second)
+      if (index * sizeof(T) > _bytes.second)
       {
-        throw std::runtime_error("get element failed");
-      }
-
-      return reinterpret_cast<T*>(_bytes.first)[index];
-    }
-
-    template<typename T> void SetElement(T&& element, uint32_t index)
-    {
-      if (index * uint32_t(sizeof(T)) > _bytes.second)
-      {
-        throw std::runtime_error("set element failed");
-      }
-
-      reinterpret_cast<T*>(_bytes.first)[index] = element;
-    }
-
-    template<typename T> T&& GetElement(uint32_t index)
-    {
-      if (index * uint32_t(sizeof(T)) > _bytes.second)
-      {
-        throw std::runtime_error("get element failed");
+        throw std::runtime_error("get item failed");
       }
 
       return reinterpret_cast<T*>(_bytes.first)[index];
     }
 
-    std::pair<void*, uint32_t> AccessBytes() const
+    template<typename T> std::pair<T*, size_t> AccessItems(size_t offset = 0) const
     {
-      return _bytes;
+      return { reinterpret_cast<T*>(_bytes.first) + offset, _bytes.second / sizeof(T) - offset };
     }
 
-    //void CommitBytes(std::pair<uint8_t*, uint32_t>&& bytes) { _bytes = bytes; }
-    //std::pair<uint8_t*, uint32_t>&& RetrieveBytes() { return std::move(_bytes); }
+    //template<typename T> T& operator[](size_t index) 
+    //{
+    //  return reinterpret_cast<T*>(_bytes.first)[index];
+    //}
 
   public:
-    Raw(uint32_t size = 0) { Allocate(size); }
-    Raw(const std::pair<const void*, uint32_t>& bytes) { Allocate(bytes.second); SetBytes(bytes); }
-    //Raw(std::pair<void*, uint32_t>&& bytes) noexcept { std::swap(bytes, _bytes); }
-    ~Raw() { Free(); }
+    Raw(size_t size = 0) { Allocate(size); }
+    Raw(CByteData bytes) { Allocate(bytes.second); SetBytes(bytes); }
+    template<typename T> Raw(size_t count, T value = {}) { Allocate(count * sizeof(T)); for (size_t i = 0; i < count; ++i) { SetItem(value, i); }}
+    template<typename T> Raw(const std::pair<const T*, size_t>& items) { Allocate(items.second * sizeof(T)); SetItems(items); }
+
+  public:
     Raw(const Raw& raw) = delete;
     Raw& operator=(const Raw& raw) = delete;
-    Raw(Raw&& raw) noexcept
-    { 
-      std::swap(raw._bytes, _bytes);
-    }
-    Raw& operator=(Raw&& raw) noexcept
-    { 
-      std::swap(raw._bytes, _bytes); 
-      return *this;
-    }
+    Raw(Raw&& raw) noexcept { std::swap(raw._bytes, _bytes); }
+    Raw& operator=(Raw&& raw) noexcept { std::swap(raw._bytes, _bytes); return *this; }
+    ~Raw() { Free(); }
   };
 
 
-  //struct Texture
-  //{
-  //  Raw texels;
-  //  uint32_t extent_x{ 0 };
-  //  uint32_t extent_y{ 0 };
-  //};
-
-  //struct Buffer
-  //{
-  //  Raw bytes;
-  //  uint32_t stride{ 0 };
-  //  uint32_t offset{ 0 };
-  //};
 }
-
