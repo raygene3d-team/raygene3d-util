@@ -292,60 +292,8 @@ namespace RayGene3D
   std::shared_ptr<Property> CreateUVec2Property();
   std::shared_ptr<Property> CreateUIntProperty();
 
-  //std::shared_ptr<Property> CreateStructureBufferProperty(const StructureBuffer& buffer);
-  //std::shared_ptr<Property> CreateTextureArrayLDRProperty(const TextureArrayLDR& array, size_t mipmap);
-  //std::shared_ptr<Property> CreateTextureArrayHDRProperty(const TextureArrayHDR& array, size_t mipmap);
-
-  //std::shared_ptr<Property> CreateItemBufferProperty(Raw&& raw,
-  //  size_t stride, size_t count = 1u);
-  //std::shared_ptr<Property> CreateTextureLDRProperty(Raw&& raw,
-  //  uint32_t extent_x, uint32_t extent_y, size_t mipmap = 1u);
-  //std::shared_ptr<Property> CreateTextureHDRProperty(Raw&& raw,
-  //  uint32_t extent_x, uint32_t extent_y, size_t mipmap = 1u);
-
   void SaveProperty(const std::string& directory, const std::string& name, const std::shared_ptr<Property>& root);
   std::shared_ptr<Property> LoadProperty(const std::string& directory, const std::string& name);
-
-  ////typedef glm::u8vec4(*ColorFuncTextureLDR)(uint32_t i);
-  ////std::tuple<Raw, uint32_t, uint32_t> PopulateTextureLDR(uint32_t extent_x, uint32_t extent_y, 
-  ////  ColorFuncTextureLDR color_fn);
-  //std::tuple<Raw, uint32_t, uint32_t> PopulateTextureLDR(uint32_t extent_x, uint32_t extent_y,
-  //  std::function<glm::u8vec4(uint32_t)> color_fn);
-  //std::tuple<Raw, uint32_t, uint32_t> LoadTextureLDR(const std::string& path);
-  //std::tuple<Raw, uint32_t, uint32_t> CombineTextureLDR(
-  //  const std::tuple<Raw, uint32_t, uint32_t>& r_texture, uint32_t r_channel,
-  //  const std::tuple<Raw, uint32_t, uint32_t>& g_texture, uint32_t g_channel,
-  //  const std::tuple<Raw, uint32_t, uint32_t>& b_texture, uint32_t b_channel,
-  //  const std::tuple<Raw, uint32_t, uint32_t>& a_texture, uint32_t a_channel);
-  //std::tuple<Raw, uint32_t, uint32_t> ResizeTextureLDR(uint32_t extent_x, uint32_t extent_y,
-  //  const std::tuple<Raw, uint32_t, uint32_t>& texture);
-  //std::tuple<std::vector<Raw>, uint32_t, uint32_t> MipmapTextureLDR(uint32_t mipmap,
-  //  const std::tuple<Raw, uint32_t, uint32_t>& texture);
-  //void SaveTextureLDR(const std::string& path,
-  //  const std::tuple<Raw, uint32_t, uint32_t>& texture);
-
-  //Raw LoadTextureLDR(const std::string& path, uint32_t size_x, uint32_t size_y);
-
-  //std::tuple<Raw, uint32_t, uint32_t, size_t> CreateTextureHDR(std::function<glm::f32vec4(uint32_t, uint32_t)> texels_fn, 
-  //  uint32_t extent_x, uint32_t extent_y);
-  //std::tuple<Raw, uint32_t, uint32_t, size_t> LoadTextureHDR(const std::string& path);
-  //std::tuple<Raw, uint32_t, uint32_t, size_t> ResizeTextureHDR(uint32_t extent_x, uint32_t extent_y,
-  //  const std::tuple<Raw, uint32_t, uint32_t, size_t>& texture);
-  //std::tuple<Raw, uint32_t, uint32_t, size_t> MipmapTextureHDR(uint32_t mipmap,
-  //  const std::tuple<Raw, uint32_t, uint32_t, size_t>& texture);
-  //void SaveTextureHDR(const std::string& path,
-  //  const std::tuple<Raw, uint32_t, uint32_t, size_t>& texture);
-  //std::shared_ptr<Property> PropertyTextureHDR(std::vector<std::tuple<Raw, uint32_t, uint32_t>> textures);
-
-  //std::tuple<Raw, size_t> CreateItemBuffer()
-  //std::tuple<Raw, size_t> LoadBuffer(const std::string& path, size_t stride);
-  //void SaveBuffer(const std::string& path, const std::tuple<Raw, size_t>& buffer);
-  //Raw UniteBuffer(std::list<Raw>&& raws);
-  //std::list<Raw> SplitBuffer(Raw&& raw, std::pair<const uint32_t*, uint32_t> counts);
-
-  //LoadTextureHDR;
-  //LoadItemBuffer
-
 
 
   typedef std::shared_ptr<Property> SPtrProperty;
