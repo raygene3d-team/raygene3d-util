@@ -102,63 +102,6 @@ namespace RayGene3D
     glm::u32vec3 idx{ uint32_t(-1), uint32_t(-1) , uint32_t(-1) };
   };
 
-
-
-  //struct Mesh
-  //{
-  //  Raw vtx_array;
-  //  uint32_t vtx_count;
-  //  Raw idx_array;
-  //  uint32_t idx_count;
-  //};
-
-
-
-  //struct Mesh
-  //{
-  //  uint32_t buffer0;
-  //  uint32_t buffer1;
-  //  uint32_t buffer2;
-  //  uint32_t buffer3;
-  //  uint32_t buffer4;
-  //  uint32_t buffer5;
-  //  uint32_t buffer6;
-  //  uint32_t buffer7;
-
-  //  uint32_t texture0;
-  //  uint32_t texture1;
-  //  uint32_t texture2;
-  //  uint32_t texture3;
-  //  uint32_t texture4;
-  //  uint32_t texture5;
-  //  uint32_t texture6;
-  //  uint32_t texture7;
-
-  //  glm::f32vec4 parameter0;
-  //  glm::f32vec4 parameter1;
-  //  glm::f32vec4 parameter2;
-  //  glm::f32vec4 parameter3;
-  //  glm::f32vec4 parameter4;
-  //  glm::f32vec4 parameter5;
-  //  glm::f32vec4 parameter6;
-  //  glm::f32vec4 parameter7;
-
-  //  glm::f32vec3 bb_min;
-  //  uint32_t geom_idx;
-  //  glm::f32vec3 bb_max;
-  //  uint32_t brdf_idx;
-  //};
-
-  //struct Scene
-  //{
-  //  std::vector<Mesh> meshes;
-  //  std::vector<Buffer> buffers;
-  //  std::vector<Texture> textures;
-  //};
-
-
-
-
   struct Instance
   {
     glm::f32mat3x4 transform;
